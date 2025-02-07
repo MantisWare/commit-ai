@@ -4,7 +4,6 @@ import { OpenAI } from 'openai';
 import { outro } from '@clack/prompts';
 import {
   PromptConfig,
-  QualifiedConfig,
   RuleConfigSeverity,
   RuleConfigTuple
 } from '@commitlint/types';

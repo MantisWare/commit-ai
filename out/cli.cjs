@@ -64302,11 +64302,16 @@ var FULL_GITMOJI_SPEC = `${GITMOJI_HELP}
 \u{1F9F5}, Develop or refine multithreading/concurrency features; 
 \u{1F9BA}, Improve validation processes.`;
 var CONVENTIONAL_COMMIT_KEYWORDS = "Do not preface the commit with anything, except for the conventional commit keywords: fix, feat, build, chore, ci, docs, style, refactor, perf, test.";
-var getCommitConvention = (fullGitMojiSpec) => config4.CMT_EMOJI ? fullGitMojiSpec ? FULL_GITMOJI_SPEC : GITMOJI_HELP : CONVENTIONAL_COMMIT_KEYWORDS;
+var getCommitConvention = (fullGitMojiSpec) => {
+  if (!config4.CMT_EMOJI) {
+    return CONVENTIONAL_COMMIT_KEYWORDS;
+  }
+  return fullGitMojiSpec ? FULL_GITMOJI_SPEC : GITMOJI_HELP;
+};
 var getDescriptionInstruction = () => config4.CMT_DESCRIPTION ? `Add a short description of WHY the changes are done after the commit message. Don't start it with "This commit", just describe the changes.` : "Don't add any descriptions to the commit, only commit message.";
 var getOneLineCommitInstruction = () => config4.CMT_ONE_LINE_COMMIT ? "Craft a concise commit message that encapsulates all changes made, with an emphasis on the primary updates. If the modifications share a common theme or scope, mention it succinctly; otherwise, leave the scope out to maintain focus. The goal is to provide a clear and unified overview of the changes in a one single message, without diverging into a list of commit per file change." : "";
 var userInputCodeContext = (context) => {
-  if (context !== "" && context !== " ") {
+  if (context && context !== "" && context !== " ") {
     return `Additional context provided by the user: <context>${context}</context>
 Consider this context when generating the commit message, incorporating relevant information when appropriate.`;
   }
@@ -64373,31 +64378,30 @@ var INIT_CONSISTENCY_PROMPT = (translation4) => ({
 });
 var getMainCommitPrompt = async (fullGitMojiSpec, context) => {
   let returnArray = [];
-  switch (config4.CMT_PROMPT_MODULE) {
-    case "@commitlint":
-      if (!await commitlintLLMConfigExists()) {
-        ie(
-          `CMT_PROMPT_MODULE is @commitlint but you haven't generated consistency for this project yet.`
-        );
-        await configureCommitlintIntegration();
-      }
-      const commitLintConfig = await getCommitlintLLMConfig();
-      returnArray = [
-        commitlintPrompts.INIT_MAIN_PROMPT(
-          translation3.localLanguage,
-          commitLintConfig.prompts
-        ),
-        INIT_DIFF_PROMPT,
-        INIT_CONSISTENCY_PROMPT(
-          commitLintConfig.consistency[translation3.localLanguage]
-        )
-      ];
-    default:
-      returnArray = [
-        INIT_MAIN_PROMPT2(translation3.localLanguage, fullGitMojiSpec, context),
-        INIT_DIFF_PROMPT,
-        INIT_CONSISTENCY_PROMPT(translation3)
-      ];
+  if (config4.CMT_PROMPT_MODULE === "@commitlint") {
+    if (!await commitlintLLMConfigExists()) {
+      ie(
+        `CMT_PROMPT_MODULE is @commitlint but you haven't generated consistency for this project yet.`
+      );
+      await configureCommitlintIntegration();
+    }
+    const commitLintConfig = await getCommitlintLLMConfig();
+    returnArray = [
+      commitlintPrompts.INIT_MAIN_PROMPT(
+        translation3.localLanguage,
+        commitLintConfig.prompts
+      ),
+      INIT_DIFF_PROMPT,
+      INIT_CONSISTENCY_PROMPT(
+        commitLintConfig.consistency[translation3.localLanguage]
+      )
+    ];
+  } else {
+    returnArray = [
+      INIT_MAIN_PROMPT2(translation3.localLanguage, fullGitMojiSpec, context),
+      INIT_DIFF_PROMPT,
+      INIT_CONSISTENCY_PROMPT(translation3)
+    ];
   }
   if (config4.CMT_DEBUG) {
     console.log("DEBUG PROMPT TO AI: ", returnArray);
@@ -64799,7 +64803,7 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
     process.exit(1);
   }
 };
-async function commit(extraArgs2 = [], context = "", isStageAllFlag = false, fullGitMojiSpec = false, skipCommitConfirmation = false) {
+var commit = async (extraArgs2 = [], context = "", isStageAllFlag = false, fullGitMojiSpec = false, skipCommitConfirmation = false) => {
   if (isStageAllFlag) {
     const changedFiles2 = await getChangedFiles();
     if (changedFiles2)
@@ -64866,7 +64870,7 @@ ${stagedFiles.map((file) => `  ${file}`).join("\n")}`
     process.exit(1);
   }
   process.exit(0);
-}
+};
 
 // src/commands/commitlint.ts
 var commitlintConfigCommand = G3(

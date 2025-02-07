@@ -10,7 +10,7 @@ import { getConfig } from './config';
 const [messageFilePath, commitSource] = process.argv.slice(2);
 
 export const prepareCommitMessageHook = async (
-  isStageAllFlag: Boolean = false
+  isStageAllFlag: boolean = false
 ) => {
   try {
     if (!messageFilePath) {

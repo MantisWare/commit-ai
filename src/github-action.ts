@@ -18,9 +18,6 @@ const context = github.context;
 const owner = context.repo.owner;
 const repo = context.repo.repo;
 
-type SHA = string;
-type Diff = string;
-
 async function getCommitDiff(commitSha: string) {
   const diffResponse = await octokit.request<string>(
     'GET /repos/{owner}/{repo}/commits/{ref}',
@@ -37,12 +34,12 @@ async function getCommitDiff(commitSha: string) {
 }
 
 interface DiffAndSHA {
-  sha: SHA;
-  diff: Diff;
+  sha: string;
+  diff: string;
 }
 
 interface MsgAndSHA {
-  sha: SHA;
+  sha: string;
   msg: string;
 }
 

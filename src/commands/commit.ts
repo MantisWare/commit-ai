@@ -200,13 +200,13 @@ ${chalk.grey('——————————————————')}`
   }
 };
 
-export async function commit(
+export const commit = async (
   extraArgs: string[] = [],
   context: string = '',
-  isStageAllFlag: Boolean = false,
+  isStageAllFlag: boolean = false,
   fullGitMojiSpec: boolean = false,
   skipCommitConfirmation: boolean = false
-) {
+) => {
   if (isStageAllFlag) {
     const changedFiles = await getChangedFiles();
 
