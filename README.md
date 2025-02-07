@@ -18,7 +18,7 @@ You can use CommitAI by simply running it via the CLI like this `cmt`. 2 seconds
 1. Install CommitAI globally to use in any repository:
 
    ```sh
-   npm install -g commit-ai
+   npm install -g @mantisware/commit-ai
    ```
 
 2. Get your API key from [OpenAI](https://platform.openai.com/account/api-keys) or other supported LLM providers (we support them all). Make sure that you add your OpenAI payment details to your account, so the API works.
