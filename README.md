@@ -6,7 +6,7 @@
   </div>
 	<h2>Create amazing commits in just seconds</h2>
 	<p>Say farewell to boring commits with AI! 🤯�</p>
-	<a href="https://www.npmjs.com/package/commit-ai"><img src="https://img.shields.io/npm/v/commit-ai" alt="Current version"></a>
+	<a href="https://www.npmjs.com/package/commit-ai"><img src="https://img.shields.io/npm/v/@mantisware/commit-ai" alt="Current version"></a>
 </div>
 
 ---
