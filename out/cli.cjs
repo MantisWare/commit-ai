@@ -65031,7 +65031,7 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
 // src/version.ts
 var getCommitAILatestVersion = async () => {
   try {
-    const { stdout } = await execa("npm", ["view", "commit-ai", "version"]);
+    const { stdout } = await execa("npm", ["view", "@mantisware/commit-ai", "version"]);
     return stdout;
   } catch (_7) {
     ce("Error while getting the latest version of commit-ai");
