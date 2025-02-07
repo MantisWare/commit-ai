@@ -46511,7 +46511,7 @@ function G3(t2, e3) {
 
 // package.json
 var package_default = {
-  name: "commitai",
+  name: "@mantisware/commit-ai",
   version: "1.0.0",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
@@ -46520,7 +46520,7 @@ var package_default = {
     "gpt",
     "ai",
     "openai",
-    "commitai",
+    "commit-ai",
     "aicommit",
     "aicommits",
     "gptcommit",
@@ -46531,11 +46531,11 @@ var package_default = {
   ],
   main: "cli.js",
   bin: {
-    commitai: "out/cli.cjs",
+    "commit-ai": "out/cli.cjs",
     cmt: "out/cli.cjs"
   },
   repository: {
-    url: "git+https://github.com/MantisWare/commitai.git"
+    url: "git+https://github.com/MantisWare/commit-ai.git"
   },
   type: "module",
   author: "https://github.com/MantisWare",
@@ -46561,7 +46561,7 @@ var package_default = {
     "dev:deepseek": "CMT_AI_PROVIDER='deepseek' ts-node ./src/cli.ts",
     build: "rimraf out && node esbuild.config.js",
     "build:push": "npm run build && git add . && git commit -m 'build' && git push",
-    deploy: "npm publish --tag latest",
+    deploy: "npm publish --access=public --tag latest",
     "deploy:build": "npm run build:push && git push --tags && npm run deploy",
     "deploy:patch": "npm version patch && npm run deploy:build",
     lint: "eslint src --ext ts && tsc --noEmit",
@@ -49188,7 +49188,7 @@ var validateConfig = (key, condition, validationMessage) => {
   if (!condition) {
     ce(`${source_default.red("\u2716")} wrong value for ${key}: ${validationMessage}.`);
     ce(
-      "For more help refer to docs https://github.com/MantisWare/commitai"
+      "For more help refer to docs https://github.com/MantisWare/commit-ai"
     );
     process.exit(1);
   }
@@ -49366,7 +49366,7 @@ var CMT_AI_PROVIDER_ENUM = /* @__PURE__ */ ((CMT_AI_PROVIDER_ENUM2) => {
   CMT_AI_PROVIDER_ENUM2["DEEPSEEK"] = "deepseek";
   return CMT_AI_PROVIDER_ENUM2;
 })(CMT_AI_PROVIDER_ENUM || {});
-var defaultConfigPath = (0, import_path.join)((0, import_os.homedir)(), ".commitai");
+var defaultConfigPath = (0, import_path.join)((0, import_os.homedir)(), ".commit-ai");
 var defaultEnvPath = (0, import_path.resolve)(process.cwd(), ".env");
 var DEFAULT_CONFIG = {
   CMT_TOKENS_MAX_INPUT: 40960 /* DEFAULT_MAX_TOKENS_INPUT */,
@@ -49483,7 +49483,7 @@ var setConfig = (keyValues, globalConfigPath = defaultConfigPath) => {
 
 ${supportedKeys}.
 
-For more help refer to our docs: https://github.com/MantisWare/commitai`
+For more help refer to our docs: https://github.com/MantisWare/commit-ai`
       );
     }
     let parsedConfigValue;
@@ -54879,7 +54879,7 @@ var AnthropicEngine = class {
           if (anthropicAiError?.message)
             ce(anthropicAiError.message);
           ce(
-            "For help look into README https://github.com/MantisWare/commitai#setup"
+            "For help look into README https://github.com/MantisWare/commit-ai#setup"
           );
         }
         throw err;
@@ -58572,7 +58572,7 @@ var AzureEngine = class {
           if (openAiError?.message)
             ce(openAiError.message);
           ce(
-            "For help look into README https://github.com/MantisWare/commitai#setup"
+            "For help look into README https://github.com/MantisWare/commit-ai#setup"
           );
         }
         throw err;
@@ -63930,7 +63930,7 @@ function getEngine() {
 }
 
 // src/modules/commitlint/constants.ts
-var COMMITLINT_LLM_CONFIG_PATH = `${process.env.PWD}/.commitai-commitlint`;
+var COMMITLINT_LLM_CONFIG_PATH = `${process.env.PWD}/.commit-ai-commitlint`;
 
 // src/modules/commitlint/crypto.ts
 var import_crypto2 = __toESM(require("crypto"), 1);
@@ -64575,7 +64575,7 @@ var assertGitRepo = async () => {
 var getCommitAIIgnore = () => {
   const ig = (0, import_ignore.default)();
   try {
-    ig.add((0, import_fs3.readFileSync)(".commitaiignore").toString().split("\n"));
+    ig.add((0, import_fs3.readFileSync)(".commit-aiignore").toString().split("\n"));
   } catch (e3) {
   }
   return ig;
@@ -64875,7 +64875,7 @@ var commitlintConfigCommand = G3(
     parameters: ["<mode>"]
   },
   async (argv) => {
-    ae("commitai \u2014 configure @commitlint");
+    ae("commit-ai \u2014 configure @commitlint");
     try {
       const { mode } = argv._;
       if (mode === "get" /* get */) {
@@ -64931,7 +64931,7 @@ var hookCommand = G3(
       await assertGitRepo();
       const { setUnset: mode } = argv._;
       if (mode === "set") {
-        ae(`setting commitai as '${HOOK_NAME}' hook at ${SYMLINK_URL}`);
+        ae(`setting commit-ai as '${HOOK_NAME}' hook at ${SYMLINK_URL}`);
         if (await isHookExists()) {
           let realPath;
           try {
@@ -64943,7 +64943,7 @@ var hookCommand = G3(
           if (realPath === HOOK_URL)
             return ce(`CommitAI is already set as '${HOOK_NAME}'`);
           throw new Error(
-            `Different ${HOOK_NAME} is already set. Remove it before setting commitai as '${HOOK_NAME}' hook.`
+            `Different ${HOOK_NAME} is already set. Remove it before setting commit-ai as '${HOOK_NAME}' hook.`
           );
         }
         await import_promises3.default.mkdir(import_path4.default.dirname(SYMLINK_URL), { recursive: true });
@@ -64953,7 +64953,7 @@ var hookCommand = G3(
       }
       if (mode === "unset") {
         ae(
-          `unsetting commitai as '${HOOK_NAME}' hook from ${SYMLINK_URL}`
+          `unsetting commit-ai as '${HOOK_NAME}' hook from ${SYMLINK_URL}`
         );
         if (!await isHookExists()) {
           return ce(
@@ -65003,11 +65003,11 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
     const staged = await getStagedFiles();
     if (!staged)
       return;
-    ae("commitai");
+    ae("commit-ai");
     const config7 = getConfig();
     if (!config7.CMT_API_KEY) {
       ce(
-        "No CMT_API_KEY is set. Set your key via `cmt config set CMT_API_KEY=<value>. For more info see https://github.com/MantisWare/commitai"
+        "No CMT_API_KEY is set. Set your key via `cmt config set CMT_API_KEY=<value>. For more info see https://github.com/MantisWare/commit-ai"
       );
       return;
     }
@@ -65031,10 +65031,10 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
 // src/version.ts
 var getCommitAILatestVersion = async () => {
   try {
-    const { stdout } = await execa("npm", ["view", "commitai", "version"]);
+    const { stdout } = await execa("npm", ["view", "commit-ai", "version"]);
     return stdout;
   } catch (_7) {
-    ce("Error while getting the latest version of commitai");
+    ce("Error while getting the latest version of commit-ai");
     return void 0;
   }
 };
@@ -65050,7 +65050,7 @@ var checkIsLatestVersion = async () => {
           `
 You are not using the latest stable version of CommitAI with new features and bug fixes.
 Current version: ${currentVersion}. Latest version: ${latestVersion}.
-\u{1F680} To update run: npm i -g commitai@latest.
+\u{1F680} To update run: npm i -g commit-ai@latest.
         `
         )
       );
@@ -65156,7 +65156,7 @@ var migrations = [
 ];
 
 // src/migrations/_run.ts
-var migrationsFile = (0, import_path5.join)((0, import_os2.homedir)(), ".commitai_migrations");
+var migrationsFile = (0, import_path5.join)((0, import_os2.homedir)(), ".commit-ai_migrations");
 var getCompletedMigrations = () => {
   if (!import_fs5.default.existsSync(migrationsFile)) {
     return [];
@@ -65211,7 +65211,7 @@ var extraArgs = process.argv.slice(2);
 Z2(
   {
     version: package_default.version,
-    name: "commitai",
+    name: "commit-ai",
     commands: [configCommand, hookCommand, commitlintConfigCommand],
     flags: {
       fgm: Boolean,
