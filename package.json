@@ -1,5 +1,5 @@
 {
-  "name": "commit-ai",
+  "name": "@mantisware/commit-ai",
   "version": "1.0.0",
   "description": "Create amazing commits in just seconds. Say farewell to boring commits with AI! 🤯🔥",
   "keywords": [
@@ -49,7 +49,7 @@
     "dev:deepseek": "CMT_AI_PROVIDER='deepseek' ts-node ./src/cli.ts",
     "build": "rimraf out && node esbuild.config.js",
     "build:push": "npm run build && git add . && git commit -m 'build' && git push",
-    "deploy": "npm publish --tag latest",
+    "deploy": "npm publish --access=public --tag latest",
     "deploy:build": "npm run build:push && git push --tags && npm run deploy",
     "deploy:patch": "npm version patch && npm run deploy:build",
     "lint": "eslint src --ext ts && tsc --noEmit",
