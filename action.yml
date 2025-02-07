@@ -1,0 +1,37 @@
+name: 'CommitAI — improve commits with AI 🧙'
+description: 'Create amazing commits in just seconds. Say farewell to boring commits with AI! 🤯🔥'
+author: 'https://github.com/MantisWare'
+repo: 'https://github.com/MantisWare/commit-ai/tree/github-action'
+branding:
+  icon: 'git-commit'
+  color: 'blue'
+keywords:
+  [
+    'git',
+    'chatgpt',
+    'gpt',
+    'ai',
+    'openai',
+    'commit-ai',
+    'cmt',
+    'ollama',
+    'mlx',
+    'azure',
+    'gemini',
+    'flowise',
+    'anthropic',
+    'deepseek',
+    'aicommit',
+    'aicommits',
+    'gptcommit',
+    'commit'
+  ]
+
+inputs:
+  GITHUB_TOKEN:
+    description: 'GitHub token'
+    required: true
+
+runs:
+  using: 'node16'
+  main: 'out/github-action.cjs'

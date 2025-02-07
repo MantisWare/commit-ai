@@ -1,0 +1,638 @@
+import { intro, outro } from '@clack/prompts';
+import chalk from 'chalk';
+import { command } from 'cleye';
+import * as dotenv from 'dotenv';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { parse as iniParse, stringify as iniStringify } from 'ini';
+import { homedir } from 'os';
+import { join as pathJoin, resolve as pathResolve } from 'path';
+import { COMMANDS } from './ENUMS';
+import { TEST_MOCK_TYPES } from '../engine/testAi';
+import { getI18nLocal, i18n } from '../i18n';
+
+export enum CONFIG_KEYS {
+  CMT_API_KEY = 'CMT_API_KEY',
+  CMT_TOKENS_MAX_INPUT = 'CMT_TOKENS_MAX_INPUT',
+  CMT_TOKENS_MAX_OUTPUT = 'CMT_TOKENS_MAX_OUTPUT',
+  CMT_DESCRIPTION = 'CMT_DESCRIPTION',
+  CMT_EMOJI = 'CMT_EMOJI',
+  CMT_MODEL = 'CMT_MODEL',
+  CMT_LANGUAGE = 'CMT_LANGUAGE',
+  CMT_WHY = 'CMT_WHY',
+  CMT_MESSAGE_TEMPLATE_PLACEHOLDER = 'CMT_MESSAGE_TEMPLATE_PLACEHOLDER',
+  CMT_PROMPT_MODULE = 'CMT_PROMPT_MODULE',
+  CMT_AI_PROVIDER = 'CMT_AI_PROVIDER',
+  CMT_ONE_LINE_COMMIT = 'CMT_ONE_LINE_COMMIT',
+  CMT_TEST_MOCK_TYPE = 'CMT_TEST_MOCK_TYPE',
+  CMT_API_URL = 'CMT_API_URL',
+  CMT_DEBUG = 'CMT_DEBUG',
+  CMT_GITPUSH = 'CMT_GITPUSH' // todo: deprecate
+}
+
+export enum CONFIG_MODES {
+  get = 'get',
+  set = 'set'
+}
+
+export const MODEL_LIST = {
+  openai: [
+    'gpt-4o-mini',
+    'gpt-3.5-turbo',
+    'gpt-3.5-turbo-instruct',
+    'gpt-3.5-turbo-0613',
+    'gpt-3.5-turbo-0301',
+    'gpt-3.5-turbo-1106',
+    'gpt-3.5-turbo-0125',
+    'gpt-3.5-turbo-16k',
+    'gpt-3.5-turbo-16k-0613',
+    'gpt-3.5-turbo-16k-0301',
+    'gpt-4',
+    'gpt-4-0314',
+    'gpt-4-0613',
+    'gpt-4-1106-preview',
+    'gpt-4-0125-preview',
+    'gpt-4-turbo-preview',
+    'gpt-4-vision-preview',
+    'gpt-4-1106-vision-preview',
+    'gpt-4-turbo',
+    'gpt-4-turbo-2024-04-09',
+    'gpt-4-32k',
+    'gpt-4-32k-0314',
+    'gpt-4-32k-0613',
+    'gpt-4o',
+    'gpt-4o-2024-05-13',
+    'gpt-4o-mini-2024-07-18'
+  ],
+
+  anthropic: [
+    'claude-3-5-sonnet-20240620',
+    'claude-3-opus-20240229',
+    'claude-3-sonnet-20240229',
+    'claude-3-haiku-20240307'
+  ],
+
+  gemini: [
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+    'gemini-1.0-pro',
+    'gemini-pro-vision',
+    'text-embedding-004'
+  ],
+
+  groq: [
+    'llama3-70b-8192', // Meta Llama 3 70B (default one, no daily token limit and 14 400 reqs/day)
+    'llama3-8b-8192', // Meta Llama 3 8B
+    'llama-guard-3-8b', // Llama Guard 3 8B
+    'llama-3.1-8b-instant', // Llama 3.1 8B (Preview)
+    'llama-3.1-70b-versatile', // Llama 3.1 70B (Preview)
+    'gemma-7b-it', // Gemma 7B
+    'gemma2-9b-it' // Gemma 2 9B
+  ],
+
+  mistral: [
+    'ministral-3b-2410',
+    'ministral-3b-latest',
+    'ministral-8b-2410',
+    'ministral-8b-latest',
+    'open-mistral-7b',
+    'mistral-tiny',
+    'mistral-tiny-2312',
+    'open-mistral-nemo',
+    'open-mistral-nemo-2407',
+    'mistral-tiny-2407',
+    'mistral-tiny-latest',
+    'open-mixtral-8x7b',
+    'mistral-small',
+    'mistral-small-2312',
+    'open-mixtral-8x22b',
+    'open-mixtral-8x22b-2404',
+    'mistral-small-2402',
+    'mistral-small-2409',
+    'mistral-small-latest',
+    'mistral-medium-2312',
+    'mistral-medium',
+    'mistral-medium-latest',
+    'mistral-large-2402',
+    'mistral-large-2407',
+    'mistral-large-2411',
+    'mistral-large-latest',
+    'pixtral-large-2411',
+    'pixtral-large-latest',
+    'codestral-2405',
+    'codestral-latest',
+    'codestral-mamba-2407',
+    'open-codestral-mamba',
+    'codestral-mamba-latest',
+    'pixtral-12b-2409',
+    'pixtral-12b',
+    'pixtral-12b-latest',
+    'mistral-embed',
+    'mistral-moderation-2411',
+    'mistral-moderation-latest',
+  ],
+  deepseek: [
+    'deepseek-chat',
+    'deepseek-coder',
+    'deepseek-coder-v2-lite-instruct-mlx',
+    'deepseek-reasoner'
+  ]
+};
+
+const getDefaultModel = (provider: string | undefined): string => {
+  switch (provider) {
+    case 'ollama':
+      return '';
+    case 'mlx':
+      return '';
+    case 'anthropic':
+      return MODEL_LIST.anthropic[0];
+    case 'gemini':
+      return MODEL_LIST.gemini[0];
+    case 'groq':
+      return MODEL_LIST.groq[0];
+    case 'mistral':
+      return MODEL_LIST.mistral[0];
+    case 'deepseek':
+      return MODEL_LIST.deepseek[0];
+    default:
+      return MODEL_LIST.openai[0];
+  }
+};
+
+export enum DEFAULT_TOKEN_LIMITS {
+  DEFAULT_MAX_TOKENS_INPUT = 40960,
+  DEFAULT_MAX_TOKENS_OUTPUT = 4096
+}
+
+const validateConfig = (
+  key: string,
+  condition: any,
+  validationMessage: string
+) => {
+  if (!condition) {
+    outro(`${chalk.red('✖')} wrong value for ${key}: ${validationMessage}.`);
+
+    outro(
+      'For more help refer to docs https://github.com/MantisWare/commit-ai'
+    );
+
+    process.exit(1);
+  }
+};
+
+export const configValidators = {
+  [CONFIG_KEYS.CMT_API_KEY](value: any, config: any = {}) {
+    if (config.CMT_AI_PROVIDER !== 'openai') return value;
+
+    validateConfig(
+      'CMT_API_KEY',
+      typeof value === 'string' && value.length > 0,
+      'Empty value is not allowed'
+    );
+
+    validateConfig(
+      'CMT_API_KEY',
+      value,
+      'You need to provide the CMT_API_KEY when CMT_AI_PROVIDER set to "openai" (default) or "ollama" or "mlx" or "azure" or "gemini" or "flowise" or "anthropic" or "deepseek". Run `cmt config set CMT_API_KEY=your_key CMT_AI_PROVIDER=openai`'
+    );
+
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_DESCRIPTION](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_DESCRIPTION,
+      typeof value === 'boolean',
+      'Must be boolean: true or false'
+    );
+
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_TOKENS_MAX_INPUT](value: any) {
+    value = parseInt(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_TOKENS_MAX_INPUT,
+      !isNaN(value),
+      'Must be a number'
+    );
+
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_TOKENS_MAX_OUTPUT](value: any) {
+    value = parseInt(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_TOKENS_MAX_OUTPUT,
+      !isNaN(value),
+      'Must be a number'
+    );
+
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_EMOJI](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_EMOJI,
+      typeof value === 'boolean',
+      'Must be boolean: true or false'
+    );
+
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_LANGUAGE](value: any) {
+    const supportedLanguages = Object.keys(i18n);
+
+    validateConfig(
+      CONFIG_KEYS.CMT_LANGUAGE,
+      getI18nLocal(value),
+      `${value} is not supported yet. Supported languages: ${supportedLanguages}`
+    );
+
+    return getI18nLocal(value);
+  },
+
+  [CONFIG_KEYS.CMT_API_URL](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_API_URL,
+      typeof value === 'string',
+      `${value} is not a valid URL. It should start with 'http://' or 'https://'.`
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_MODEL](value: any, config: any = {}) {
+    validateConfig(
+      CONFIG_KEYS.CMT_MODEL,
+      typeof value === 'string',
+      `${value} is not supported yet, use:\n\n ${[
+        ...MODEL_LIST.openai,
+        ...MODEL_LIST.anthropic,
+        ...MODEL_LIST.gemini
+      ].join('\n')}`
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_MESSAGE_TEMPLATE_PLACEHOLDER](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_MESSAGE_TEMPLATE_PLACEHOLDER,
+      value.startsWith('$'),
+      `${value} must start with $, for example: '$msg'`
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_PROMPT_MODULE](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_PROMPT_MODULE,
+      ['conventional-commit', '@commitlint'].includes(value),
+      `${value} is not supported yet, use '@commitlint' or 'conventional-commit' (default)`
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_DEBUG](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_DEBUG,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+  },
+
+  // todo: deprecate
+  [CONFIG_KEYS.CMT_GITPUSH](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_GITPUSH,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_AI_PROVIDER](value: any) {
+    if (!value) value = 'openai';
+
+    validateConfig(
+      CONFIG_KEYS.CMT_AI_PROVIDER,
+      [
+        'openai',
+        'deepseek',
+        'mistral',
+        'anthropic',
+        'gemini',
+        'azure',
+        'test',
+        'flowise',
+        'groq'
+      ].includes(value) || value.startsWith('ollama'),
+      `${value} is not supported yet, use 'ollama', 'mlx', 'anthropic', 'azure', 'gemini', 'flowise', 'mistral', 'deepseek' or 'openai' (default)`
+    );
+
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_ONE_LINE_COMMIT](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_ONE_LINE_COMMIT,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_TEST_MOCK_TYPE](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_TEST_MOCK_TYPE,
+      TEST_MOCK_TYPES.includes(value),
+      `${value} is not supported yet, use ${TEST_MOCK_TYPES.map(
+        (t) => `'${t}'`
+      ).join(', ')}`
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_WHY](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_WHY,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
+  }
+};
+
+export enum CMT_AI_PROVIDER_ENUM {
+  OLLAMA = 'ollama',
+  OPENAI = 'openai',
+  ANTHROPIC = 'anthropic',
+  GEMINI = 'gemini',
+  AZURE = 'azure',
+  TEST = 'test',
+  FLOWISE = 'flowise',
+  GROQ = 'groq',
+  MISTRAL = 'mistral',
+  MLX = 'mlx',
+  DEEPSEEK = 'deepseek'
+}
+
+export type ConfigType = {
+  [CONFIG_KEYS.CMT_API_KEY]?: string;
+  [CONFIG_KEYS.CMT_TOKENS_MAX_INPUT]: number;
+  [CONFIG_KEYS.CMT_TOKENS_MAX_OUTPUT]: number;
+  [CONFIG_KEYS.CMT_API_URL]?: string;
+  [CONFIG_KEYS.CMT_DESCRIPTION]: boolean;
+  [CONFIG_KEYS.CMT_EMOJI]: boolean;
+  [CONFIG_KEYS.CMT_WHY]: boolean;
+  [CONFIG_KEYS.CMT_MODEL]: string;
+  [CONFIG_KEYS.CMT_LANGUAGE]: string;
+  [CONFIG_KEYS.CMT_MESSAGE_TEMPLATE_PLACEHOLDER]: string;
+  [CONFIG_KEYS.CMT_PROMPT_MODULE]: CMT_PROMPT_MODULE_ENUM;
+  [CONFIG_KEYS.CMT_AI_PROVIDER]: CMT_AI_PROVIDER_ENUM;
+  [CONFIG_KEYS.CMT_GITPUSH]: boolean;
+  [CONFIG_KEYS.CMT_ONE_LINE_COMMIT]: boolean;
+  [CONFIG_KEYS.CMT_DEBUG]: boolean;
+  [CONFIG_KEYS.CMT_TEST_MOCK_TYPE]: string;
+};
+
+export const defaultConfigPath = pathJoin(homedir(), '.commit-ai');
+export const defaultEnvPath = pathResolve(process.cwd(), '.env');
+
+const assertConfigsAreValid = (config: Record<string, any>) => {
+  for (const [key, value] of Object.entries(config)) {
+    if (!value) continue;
+
+    if (typeof value === 'string' && ['null', 'undefined'].includes(value)) {
+      config[key] = undefined;
+      continue;
+    }
+
+    try {
+      const validate = configValidators[key as CONFIG_KEYS];
+      validate(value, config);
+    } catch (error) {
+      outro(`Unknown '${key}' config option or missing validator.`);
+      outro(
+        `Manually fix the '.env' file or global '~/.commit-ai' config file.`
+      );
+
+      process.exit(1);
+    }
+  }
+};
+
+enum CMT_PROMPT_MODULE_ENUM {
+  CONVENTIONAL_COMMIT = 'conventional-commit',
+  COMMITLINT = '@commitlint'
+}
+
+export const DEFAULT_CONFIG = {
+  CMT_TOKENS_MAX_INPUT: DEFAULT_TOKEN_LIMITS.DEFAULT_MAX_TOKENS_INPUT,
+  CMT_TOKENS_MAX_OUTPUT: DEFAULT_TOKEN_LIMITS.DEFAULT_MAX_TOKENS_OUTPUT,
+  CMT_DESCRIPTION: false,
+  CMT_EMOJI: false,
+  CMT_MODEL: getDefaultModel('openai'),
+  CMT_LANGUAGE: 'en',
+  CMT_MESSAGE_TEMPLATE_PLACEHOLDER: '$msg',
+  CMT_PROMPT_MODULE: CMT_PROMPT_MODULE_ENUM.CONVENTIONAL_COMMIT,
+  CMT_AI_PROVIDER: CMT_AI_PROVIDER_ENUM.OPENAI,
+  CMT_ONE_LINE_COMMIT: false,
+  CMT_TEST_MOCK_TYPE: 'commit-message',
+  CMT_WHY: false,
+  CMT_DEBUG: false,
+  CMT_GITPUSH: true // todo: deprecate
+};
+
+const initGlobalConfig = (configPath: string = defaultConfigPath) => {
+  writeFileSync(configPath, iniStringify(DEFAULT_CONFIG), 'utf8');
+  return DEFAULT_CONFIG;
+};
+
+const parseConfigVarValue = (value?: any) => {
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    return value;
+  }
+};
+
+const getEnvConfig = (envPath: string) => {
+  dotenv.config({ path: envPath });
+
+  return {
+    CMT_MODEL: process.env.CMT_MODEL,
+    CMT_API_URL: process.env.CMT_API_URL,
+    CMT_API_KEY: process.env.CMT_API_KEY,
+    CMT_AI_PROVIDER: process.env.CMT_AI_PROVIDER as CMT_AI_PROVIDER_ENUM,
+
+    CMT_TOKENS_MAX_INPUT: parseConfigVarValue(process.env.CMT_TOKENS_MAX_INPUT),
+    CMT_TOKENS_MAX_OUTPUT: parseConfigVarValue(
+      process.env.CMT_TOKENS_MAX_OUTPUT
+    ),
+
+    CMT_DESCRIPTION: parseConfigVarValue(process.env.CMT_DESCRIPTION),
+    CMT_EMOJI: parseConfigVarValue(process.env.CMT_EMOJI),
+    CMT_LANGUAGE: process.env.CMT_LANGUAGE,
+    CMT_MESSAGE_TEMPLATE_PLACEHOLDER:
+      process.env.CMT_MESSAGE_TEMPLATE_PLACEHOLDER,
+    CMT_PROMPT_MODULE: process.env.CMT_PROMPT_MODULE as CMT_PROMPT_MODULE_ENUM,
+    CMT_ONE_LINE_COMMIT: parseConfigVarValue(process.env.CMT_ONE_LINE_COMMIT),
+    CMT_TEST_MOCK_TYPE: process.env.CMT_TEST_MOCK_TYPE,
+
+    CMT_DEBUG: parseConfigVarValue(process.env.CMT_DEBUG),
+    CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH) // todo: deprecate
+  };
+};
+
+export const setGlobalConfig = (
+  config: ConfigType,
+  configPath: string = defaultConfigPath
+) => {
+  writeFileSync(configPath, iniStringify(config), 'utf8');
+};
+
+export const getIsGlobalConfigFileExist = (
+  configPath: string = defaultConfigPath
+) => {
+  return existsSync(configPath);
+};
+
+export const getGlobalConfig = (configPath: string = defaultConfigPath) => {
+  let globalConfig: ConfigType;
+
+  const isGlobalConfigFileExist = getIsGlobalConfigFileExist(configPath);
+  if (!isGlobalConfigFileExist) globalConfig = initGlobalConfig(configPath);
+  else {
+    const configFile = readFileSync(configPath, 'utf8');
+    globalConfig = iniParse(configFile) as ConfigType;
+  }
+
+  return globalConfig;
+};
+
+/**
+ * Merges two configs.
+ * Env config takes precedence over global ~/.commit-ai config file
+ * @param main - env config
+ * @param fallback - global ~/.commit-ai config file
+ * @returns merged config
+ */
+const mergeConfigs = (main: Partial<ConfigType>, fallback: ConfigType) => {
+  const allKeys = new Set([...Object.keys(main), ...Object.keys(fallback)]);
+  return Array.from(allKeys).reduce((acc, key) => {
+    acc[key] = parseConfigVarValue(main[key] ?? fallback[key]);
+    return acc;
+  }, {} as ConfigType);
+};
+
+interface GetConfigOptions {
+  globalPath?: string;
+  envPath?: string;
+  setDefaultValues?: boolean;
+}
+
+const cleanUndefinedValues = (config: ConfigType) => {
+  return Object.fromEntries(
+    Object.entries(config).map(([_, v]) => {
+      try {
+        if (typeof v === 'string') {
+          if (v === 'undefined') return [_, undefined];
+          if (v === 'null') return [_, null];
+
+          const parsedValue = JSON.parse(v);
+          return [_, parsedValue];
+        }
+        return [_, v];
+      } catch (error) {
+        return [_, v];
+      }
+    })
+  );
+};
+
+export const getConfig = ({
+  envPath = defaultEnvPath,
+  globalPath = defaultConfigPath
+}: GetConfigOptions = {}): ConfigType => {
+  const envConfig = getEnvConfig(envPath);
+  const globalConfig = getGlobalConfig(globalPath);
+
+  const config = mergeConfigs(envConfig, globalConfig);
+
+  const cleanConfig = cleanUndefinedValues(config);
+
+  return cleanConfig as ConfigType;
+};
+
+export const setConfig = (
+  keyValues: [key: string, value: string | boolean | number | null][],
+  globalConfigPath: string = defaultConfigPath
+) => {
+  const config = getConfig({
+    globalPath: globalConfigPath
+  });
+
+  const configToSet = {};
+
+  for (let [key, value] of keyValues) {
+    if (!configValidators.hasOwnProperty(key)) {
+      const supportedKeys = Object.keys(configValidators).join('\n');
+      throw new Error(
+        `Unsupported config key: ${key}. Expected keys are:\n\n${supportedKeys}.\n\nFor more help refer to our docs: https://github.com/MantisWare/commit-ai`
+      );
+    }
+
+    let parsedConfigValue;
+
+    try {
+      if (typeof value === 'string') parsedConfigValue = JSON.parse(value);
+      else parsedConfigValue = value;
+    } catch (error) {
+      parsedConfigValue = value;
+    }
+
+    const validValue = configValidators[key as CONFIG_KEYS](
+      parsedConfigValue,
+      config
+    );
+
+    configToSet[key] = validValue;
+  }
+
+  setGlobalConfig(mergeConfigs(configToSet, config), globalConfigPath);
+
+  outro(`${chalk.green('✔')} config successfully set`);
+};
+
+export const configCommand = command(
+  {
+    name: COMMANDS.config,
+    parameters: ['<mode>', '<key=values...>']
+  },
+  async (argv) => {
+    try {
+      const { mode, keyValues } = argv._;
+      intro(`COMMAND: config ${mode} ${keyValues}`);
+
+      if (mode === CONFIG_MODES.get) {
+        const config = getConfig() || {};
+        for (const key of keyValues) {
+          outro(`${key}=${config[key as keyof typeof config]}`);
+        }
+      } else if (mode === CONFIG_MODES.set) {
+        await setConfig(
+          keyValues.map((keyValue) => keyValue.split('=') as [string, string])
+        );
+      } else {
+        throw new Error(
+          `Unsupported mode: ${mode}. Valid modes are: "set" and "get"`
+        );
+      }
+    } catch (error) {
+      outro(`${chalk.red('✖')} ${error}`);
+      process.exit(1);
+    }
+  }
+);
