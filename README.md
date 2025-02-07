@@ -201,4 +201,5 @@ Ensure the OpenAI API key is stored as a GitHub secret (`CMT_API_KEY`).
 
 ## Payment Information
 
-CommitAI uses OpenAI API, and you are responsible for associated costs. By default, it uses `gpt-3.5-turbo`, which should not exceed **$0.10 per workday**. Upgrading to `gpt-4o` improves quality but increases cost.
+CommitAI uses OpenAI API, and you are responsible for associated costs. 
+By default, it uses `gpt-3.5-turbo`, which should not exceed **$0.10 per workday**. Upgrading to `gpt-4o` improves quality but increases cost.
