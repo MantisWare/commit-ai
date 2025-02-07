@@ -118,8 +118,8 @@ const getOneLineCommitInstruction = () =>
  *  $ cmt -- This is a context used to generate the commit message
  * @returns - The context of the user input
  */
-const userInputCodeContext = (context: string) => {
-  if (context !== '' && context !== ' ') {
+const userInputCodeContext = (context?: string) => {
+  if (context && context !== '' && context !== ' ') {
     return `Additional context provided by the user: <context>${context}</context>\nConsider this context when generating the commit message, incorporating relevant information when appropriate.`;
   }
   return '';
@@ -128,7 +128,7 @@ const userInputCodeContext = (context: string) => {
 const INIT_MAIN_PROMPT = (
   language: string,
   fullGitMojiSpec: boolean,
-  context: string
+  context?: string
 ): OpenAI.Chat.Completions.ChatCompletionMessageParam => ({
   role: 'system',
   content: (() => {
@@ -202,7 +202,7 @@ const INIT_CONSISTENCY_PROMPT = (
 
 export const getMainCommitPrompt = async (
   fullGitMojiSpec: boolean,
-  context: string
+  context?: string
 ): Promise<Array<OpenAI.Chat.Completions.ChatCompletionMessageParam>> => {
   let returnArray: Array<OpenAI.Chat.Completions.ChatCompletionMessageParam> = [];
   switch (config.CMT_PROMPT_MODULE) {
