@@ -17,7 +17,7 @@ export const checkIsLatestVersion = async () => {
           `
 You are not using the latest stable version of CommitAI with new features and bug fixes.
 Current version: ${currentVersion}. Latest version: ${latestVersion}.
-🚀 To update run: npm i -g commit-ai@latest.
+🚀 To update run: npm i -g @mantisware/commit-ai@latest.
         `
         )
       );
