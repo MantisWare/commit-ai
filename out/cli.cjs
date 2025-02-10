@@ -64650,6 +64650,10 @@ ${lockFiles.join(
   ]);
   return diff;
 };
+var getDiffBetweenBranches = async (branch = "master") => {
+  const { stdout: diff } = await execa("git", ["diff", "--name-only", branch]);
+  return diff;
+};
 
 // src/utils/trytm.ts
 var trytm = async (promise) => {
@@ -64675,6 +64679,30 @@ var checkMessageTemplate = (extraArgs2) => {
       return extraArgs2[key];
   }
   return false;
+};
+var getLogMessagesFromGitDiff = async (diff, fullGitMojiSpec = false, context = "") => {
+  const commitGenerationSpinner = le();
+  commitGenerationSpinner.start("Cooking up the log \u{1F373}\u{1F3B6}");
+  try {
+    let commitMessage = await generateCommitMessageByDiff(
+      diff,
+      fullGitMojiSpec,
+      context
+    );
+    commitGenerationSpinner.stop("\u{1F4DD} Log ready");
+    ce(
+      `Generated log:
+${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014")}
+${commitMessage}
+${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014")}`
+    );
+  } catch (error) {
+    commitGenerationSpinner.stop(
+      `${source_default.red("\u2716")} Failed to generate the log`
+    );
+    console.log(error);
+    process.exit(1);
+  }
 };
 var generateCommitMessageFromGitDiff = async ({
   diff,
@@ -64864,6 +64892,22 @@ ${stagedFiles.map((file) => `  ${file}`).join("\n")}`
       fullGitMojiSpec,
       skipCommitConfirmation
     })
+  );
+  if (generateCommitError) {
+    ce(`${source_default.red("\u2716")} ${generateCommitError}`);
+    process.exit(1);
+  }
+  process.exit(0);
+};
+var commitLog = async (branch = "master", fullGitMojiSpec = false) => {
+  const diff = await getDiffBetweenBranches(branch);
+  const context = "It should be a summary of each file changed with the file name, and the commit messages for each file with no extra empty lines. This should allow a software tester to understand all of the changes in the branch.";
+  const [, generateCommitError] = await trytm(
+    getLogMessagesFromGitDiff(
+      diff,
+      fullGitMojiSpec,
+      context
+    )
   );
   if (generateCommitError) {
     ce(`${source_default.red("\u2716")} ${generateCommitError}`);
@@ -65231,6 +65275,11 @@ Z2(
         alias: "y",
         description: "Skip commit confirmation prompt",
         default: false
+      },
+      log: {
+        type: String,
+        alias: "l",
+        description: "Get all the commit messages in the current branch, diff from provided branch"
       }
     },
     ignoreArgv: (type2) => type2 === "unknown-flag" || type2 === "argument",
@@ -65239,7 +65288,10 @@ Z2(
   async ({ flags }) => {
     await runMigrations();
     await checkIsLatestVersion();
-    if (await isHookCalled()) {
+    if (flags.log !== void 0) {
+      const branch = flags.log !== "" ? flags.log : "master";
+      commitLog(branch, flags.fgm);
+    } else if (await isHookCalled()) {
       prepareCommitMessageHook();
     } else {
       commit(extraArgs, flags.context, false, flags.fgm, flags.yes);

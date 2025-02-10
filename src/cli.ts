@@ -3,7 +3,7 @@
 import { cli } from 'cleye';
 
 import packageJSON from '../package.json';
-import { commit } from './commands/commit';
+import { commit, commitLog } from './commands/commit';
 import { commitlintConfigCommand } from './commands/commitlint';
 import { configCommand } from './commands/config';
 import { hookCommand, isHookCalled } from './commands/githook.js';
@@ -32,6 +32,11 @@ cli(
         alias: 'y',
         description: 'Skip commit confirmation prompt',
         default: false
+      },
+      log: {
+        type: String,
+        alias: 'l',
+        description: 'Get all the commit messages in the current branch, diff from provided branch',
       }
     },
     ignoreArgv: (type) => type === 'unknown-flag' || type === 'argument',
@@ -41,11 +46,17 @@ cli(
     await runMigrations();
     await checkIsLatestVersion();
 
-    if (await isHookCalled()) {
+    // console.log(flags);
+
+    if (flags.log !== undefined) {
+      const branch = flags.log !== '' ? flags.log : 'master';
+      commitLog(branch, flags.fgm);
+    } else if (await isHookCalled()) {
       prepareCommitMessageHook();
     } else {
       commit(extraArgs, flags.context, false, flags.fgm, flags.yes);
     }
+    
   },
   extraArgs
 );

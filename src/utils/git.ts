@@ -4,6 +4,10 @@ import ignore, { Ignore } from 'ignore';
 
 import { outro, spinner } from '@clack/prompts';
 
+/**
+ * Assert that the current directory is a git repository
+ * @throws {Error} If the current directory is not a git repository
+ */
 export const assertGitRepo = async () => {
   try {
     await execa('git', ['rev-parse']);
@@ -12,10 +16,10 @@ export const assertGitRepo = async () => {
   }
 };
 
-// const excludeBigFilesFromDiff = ['*-lock.*', '*.lock'].map(
-//   (file) => `:(exclude)${file}`
-// );
-
+/**
+ * Get the commit AI ignore
+ * @returns {Ignore} The commit AI ignore
+ */
 export const getCommitAIIgnore = (): Ignore => {
   const ig = ignore();
 
@@ -26,12 +30,20 @@ export const getCommitAIIgnore = (): Ignore => {
   return ig;
 };
 
+/**
+ * Get the core hooks path
+ * @returns {Promise<string>} The core hooks path
+ */
 export const getCoreHooksPath = async (): Promise<string> => {
   const { stdout } = await execa('git', ['config', 'core.hooksPath']);
 
   return stdout;
 };
 
+/**
+ * Get the staged files
+ * @returns {Promise<string[]>} An array of staged files
+ */
 export const getStagedFiles = async (): Promise<string[]> => {
   const { stdout: gitDir } = await execa('git', [
     'rev-parse',
@@ -58,6 +70,10 @@ export const getStagedFiles = async (): Promise<string[]> => {
   return allowedFiles.sort();
 };
 
+/**
+ * Get the changed files
+ * @returns {Promise<string[]>} An array of changed files
+ */
 export const getChangedFiles = async (): Promise<string[]> => {
   const { stdout: modified } = await execa('git', ['ls-files', '--modified']);
   const { stdout: others } = await execa('git', [
@@ -73,6 +89,10 @@ export const getChangedFiles = async (): Promise<string[]> => {
   return files.sort();
 };
 
+/**
+ * Add files to the commit
+ * @param {string[]} files - The files to add to the commit
+ */
 export const gitAdd = async ({ files }: { files: string[] }) => {
   const gitAddSpinner = spinner();
 
@@ -83,6 +103,11 @@ export const gitAdd = async ({ files }: { files: string[] }) => {
   gitAddSpinner.stop('Done');
 };
 
+/**
+ * Get the diff of the staged files
+ * @param {string[]} files - The files to get the diff for
+ * @returns {Promise<string>} The diff of the staged files
+ */
 export const getDiff = async ({ files }: { files: string[] }) => {
   const lockFiles = files.filter(
     (file) =>
@@ -117,3 +142,35 @@ export const getDiff = async ({ files }: { files: string[] }) => {
 
   return diff;
 };
+
+/**
+ * Get the diff between 2 branches
+ * @param {string} branch - The branch to get the diff for
+ * @returns {Promise<string>} The diff between the 2 branches
+ */
+export const getDiffBetweenBranches = async (branch: string = 'master'): Promise<string> => {
+  const { stdout: diff } = await execa('git', ['diff', '--name-only', branch]);
+  return diff;
+};
+
+// /**
+//  * Get all the commit messages in the current branch
+//  * @returns {Promise<string[]>} An array of commit messages
+//  */
+// export const getCommitMessages = async (branch: string = 'master'): Promise<string> => {
+//   // const { stdout: commitMessages } = await execa('git', ['-P', 'log', '--pretty=fuller', '-100']); // git -P log --pretty=fuller -100
+//   const { stdout: commitMessages } = await execa('git', ['cherry', '-v', branch]); // git cherry -v branch
+//   const removeHashes = (input: string) => {
+//     return input.replace(/\+\s[a-f0-9]{40}/g, '');
+//   };
+//   const formatEmojisToNewLine = (input: string) => {
+//     return input.replace(/([\p{Emoji}])/gu, '\n$1\n')
+//       .replace(/\n+/g, '\n')
+//       .trim();
+//   };
+//   // const messages = commitMessages.split('commit ').map(removeHashes);
+//   return formatEmojisToNewLine(removeHashes(commitMessages));
+// };
+
+
+//git -P log --graph --abbrev-commit --no-merges --first-parent code-improvements

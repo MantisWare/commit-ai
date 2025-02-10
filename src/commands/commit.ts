@@ -14,6 +14,7 @@ import {
   assertGitRepo,
   getChangedFiles,
   getDiff,
+  getDiffBetweenBranches,
   getStagedFiles,
   gitAdd
 } from '../utils/git';
@@ -43,6 +44,34 @@ interface GenerateCommitMessageFromGitDiffParams {
   fullGitMojiSpec?: boolean;
   skipCommitConfirmation?: boolean;
 }
+
+const getLogMessagesFromGitDiff = async (diff: string, fullGitMojiSpec: boolean = false, context: string = '') => {
+  const commitGenerationSpinner = spinner();
+  commitGenerationSpinner.start('Cooking up the log 🍳🎶');
+
+  try {
+    let commitMessage = await generateCommitMessageByDiff(
+      diff,
+      fullGitMojiSpec,
+      context
+    );
+
+    commitGenerationSpinner.stop('📝 Log ready');
+
+    outro(
+      `Generated log:
+${chalk.grey('——————————————————')}
+${commitMessage}
+${chalk.grey('——————————————————')}`
+    );
+  } catch (error) {
+    commitGenerationSpinner.stop(
+      `${chalk.red('✖')} Failed to generate the log`
+    );
+    console.log(error);
+    process.exit(1);
+  }
+};
 
 const generateCommitMessageFromGitDiff = async ({
   diff,
@@ -280,6 +309,28 @@ export const commit = async (
       fullGitMojiSpec,
       skipCommitConfirmation
     })
+  );
+
+  if (generateCommitError) {
+    outro(`${chalk.red('✖')} ${generateCommitError}`);
+    process.exit(1);
+  }
+
+  process.exit(0);
+}
+
+export const commitLog = async (
+  branch: string = 'master',
+  fullGitMojiSpec: boolean = false,
+) => {
+  const diff = await getDiffBetweenBranches(branch);
+  const context = 'It should be a summary of each file changed with the file name, and the commit messages for each file with no extra empty lines. This should allow a software tester to understand all of the changes in the branch.';
+  const [, generateCommitError] = await trytm(
+    getLogMessagesFromGitDiff(
+      diff,
+      fullGitMojiSpec,
+      context
+    )
   );
 
   if (generateCommitError) {
