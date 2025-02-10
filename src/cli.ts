@@ -17,6 +17,7 @@ cli(
   {
     version: packageJSON.version,
     name: 'commit-ai',
+    alias: 'cmt',
     commands: [configCommand, hookCommand, commitlintConfigCommand],
     flags: {
       fgm: Boolean,

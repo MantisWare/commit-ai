@@ -64685,7 +64685,7 @@ var generateCommitMessageFromGitDiff = async ({
 }) => {
   await assertGitRepo();
   const commitGenerationSpinner = le();
-  commitGenerationSpinner.start("Generating the commit message");
+  commitGenerationSpinner.start("Cooking up the commit message \u{1F373}\u{1F3B6}");
   try {
     let commitMessage = await generateCommitMessageByDiff(
       diff,
@@ -64701,7 +64701,7 @@ var generateCommitMessageFromGitDiff = async ({
         commitMessage
       );
     }
-    commitGenerationSpinner.stop("\u{1F4DD} Commit message generated");
+    commitGenerationSpinner.stop("\u{1F4DD} Commit message ready");
     ce(
       `Generated commit message:
 ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014")}
@@ -65216,6 +65216,7 @@ Z2(
   {
     version: package_default.version,
     name: "commit-ai",
+    alias: "cmt",
     commands: [configCommand, hookCommand, commitlintConfigCommand],
     flags: {
       fgm: Boolean,

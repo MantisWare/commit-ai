@@ -53,7 +53,7 @@ const generateCommitMessageFromGitDiff = async ({
 }: GenerateCommitMessageFromGitDiffParams): Promise<void> => {
   await assertGitRepo();
   const commitGenerationSpinner = spinner();
-  commitGenerationSpinner.start('Generating the commit message');
+  commitGenerationSpinner.start('Cooking up the commit message 🍳🎶');
 
   try {
     let commitMessage = await generateCommitMessageByDiff(
@@ -76,7 +76,7 @@ const generateCommitMessageFromGitDiff = async ({
       );
     }
 
-    commitGenerationSpinner.stop('📝 Commit message generated');
+    commitGenerationSpinner.stop('📝 Commit message ready');
 
     outro(
       `Generated commit message:
