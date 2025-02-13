@@ -64650,9 +64650,25 @@ ${lockFiles.join(
   ]);
   return diff;
 };
+var printErrorAndExit = (msg) => {
+  ce(
+    `\u{1F4A5} Oops!
+${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014")}
+${msg}
+${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014")}`
+  );
+  process.exit(1);
+};
 var getDiffBetweenBranches = async (branch = "master") => {
-  const { stdout: diff } = await execa("git", ["diff", "--name-only", branch]);
-  return diff;
+  try {
+    const { stdout: diff } = await execa("git", ["-P", "diff", "--staged", branch]);
+    return diff;
+  } catch (error) {
+    if (error.message.includes("unknown revision or path")) {
+      return printErrorAndExit(`The branch does not exist, please check the branch name and try again. Maybe try origin/${branch}?`);
+    }
+    return printErrorAndExit(error);
+  }
 };
 
 // src/utils/trytm.ts

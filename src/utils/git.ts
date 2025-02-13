@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import ignore, { Ignore } from 'ignore';
 
 import { outro, spinner } from '@clack/prompts';
+import chalk from 'chalk';
 
 /**
  * Assert that the current directory is a git repository
@@ -143,14 +144,31 @@ export const getDiff = async ({ files }: { files: string[] }) => {
   return diff;
 };
 
+const printErrorAndExit = (msg: string) => {
+  outro(
+      `💥 Oops!
+${chalk.grey('——————————————————')}
+${msg}
+${chalk.grey('——————————————————')}`
+    );
+  process.exit(1);
+};
+
 /**
  * Get the diff between 2 branches
  * @param {string} branch - The branch to get the diff for
  * @returns {Promise<string>} The diff between the 2 branches
  */
 export const getDiffBetweenBranches = async (branch: string = 'master'): Promise<string> => {
-  const { stdout: diff } = await execa('git', ['diff', '--name-only', branch]);
-  return diff;
+  try {
+    const { stdout: diff } = await execa('git', ['-P', 'diff', '--staged', branch]); // '--name-only',
+    return diff;
+  } catch (error) {
+    if (error.message.includes('unknown revision or path')) {
+      return printErrorAndExit(`The branch does not exist, please check the branch name and try again. Maybe try origin/${branch}?`);
+    }
+    return printErrorAndExit(error);
+  }
 };
 
 // /**
