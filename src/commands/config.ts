@@ -825,9 +825,32 @@ export const configCommand = command(
           outro(`${key}=${config[key as keyof typeof config]}`);
         }
       } else if (mode === CONFIG_MODES.set) {
-        await setConfig(
-          keyValues.map((keyValue) => keyValue.split('=') as [string, string])
-        );
+        // Support both KEY=VALUE and KEY VALUE formats
+        const parsedKeyValues: [string, string][] = [];
+
+        for (let i = 0; i < keyValues.length; i++) {
+          const keyValue = keyValues[i];
+
+          if (keyValue.includes('=')) {
+            // Format: KEY=VALUE
+            const [key, ...valueParts] = keyValue.split('=');
+            parsedKeyValues.push([key, valueParts.join('=')]);
+          } else {
+            // Format: KEY VALUE (space-separated)
+            if (i + 1 < keyValues.length && !keyValues[i + 1].includes('=')) {
+              parsedKeyValues.push([keyValue, keyValues[i + 1]]);
+              i++; // Skip next value since we consumed it
+            } else {
+              throw new Error(
+                `Invalid format for key "${keyValue}". Use either:\n` +
+                `  cmt config set ${keyValue}=<value>\n` +
+                `  cmt config set ${keyValue} <value>`
+              );
+            }
+          }
+        }
+
+        await setConfig(parsedKeyValues);
       } else {
         throw new Error(
           `Unsupported mode: ${mode}. Valid modes are: "set", "get", and "help"`

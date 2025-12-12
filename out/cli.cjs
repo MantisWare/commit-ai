@@ -49790,9 +49790,26 @@ var configCommand = G3(
           ce(`${key}=${config9[key]}`);
         }
       } else if (mode === "set" /* set */) {
-        await setConfig(
-          keyValues.map((keyValue) => keyValue.split("="))
-        );
+        const parsedKeyValues = [];
+        for (let i3 = 0; i3 < keyValues.length; i3++) {
+          const keyValue = keyValues[i3];
+          if (keyValue.includes("=")) {
+            const [key, ...valueParts] = keyValue.split("=");
+            parsedKeyValues.push([key, valueParts.join("=")]);
+          } else {
+            if (i3 + 1 < keyValues.length && !keyValues[i3 + 1].includes("=")) {
+              parsedKeyValues.push([keyValue, keyValues[i3 + 1]]);
+              i3++;
+            } else {
+              throw new Error(
+                `Invalid format for key "${keyValue}". Use either:
+  cmt config set ${keyValue}=<value>
+  cmt config set ${keyValue} <value>`
+              );
+            }
+          }
+        }
+        await setConfig(parsedKeyValues);
       } else {
         throw new Error(
           `Unsupported mode: ${mode}. Valid modes are: "set", "get", and "help"`
@@ -66882,35 +66899,6 @@ ${stagedFiles.map((file) => `  ${file}`).join("\n")}`
     ce(
       source_default.yellow(
         "All staged files are excluded from AI processing (e.g., lock files / images). Stage at least one non-excluded file and try again."
-      )
-    );
-    process.exit(1);
-  }
-  if (config7.CMT_MAX_FILES && stagedFiles.length > config7.CMT_MAX_FILES) {
-    ce(
-      source_default.red(
-        `\u2716 Too many files staged (${stagedFiles.length}/${config7.CMT_MAX_FILES})
-
-Suggested actions:
-  \u2022 Split changes into smaller, focused commits
-  \u2022 Unstage some files: git reset HEAD <file>
-  \u2022 Adjust limit: cmt config set CMT_MAX_FILES <number>`
-      )
-    );
-    process.exit(1);
-  }
-  if (config7.CMT_MAX_DIFF_BYTES && diff && Buffer.byteLength(diff, "utf8") > config7.CMT_MAX_DIFF_BYTES) {
-    const diffSize = Buffer.byteLength(diff, "utf8");
-    const diffSizeKB = (diffSize / 1024).toFixed(1);
-    const limitKB = (config7.CMT_MAX_DIFF_BYTES / 1024).toFixed(1);
-    ce(
-      source_default.red(
-        `\u2716 Diff too large (${diffSizeKB} KB / ${limitKB} KB limit)
-
-Suggested actions:
-  \u2022 Split changes into multiple smaller commits
-  \u2022 Commit fewer files at once
-  \u2022 Adjust limit: cmt config set CMT_MAX_DIFF_BYTES <bytes>`
       )
     );
     process.exit(1);

@@ -68548,9 +68548,26 @@ var configCommand = G2(
           ce(`${key}=${config6[key]}`);
         }
       } else if (mode === "set" /* set */) {
-        await setConfig(
-          keyValues.map((keyValue) => keyValue.split("="))
-        );
+        const parsedKeyValues = [];
+        for (let i3 = 0; i3 < keyValues.length; i3++) {
+          const keyValue = keyValues[i3];
+          if (keyValue.includes("=")) {
+            const [key, ...valueParts] = keyValue.split("=");
+            parsedKeyValues.push([key, valueParts.join("=")]);
+          } else {
+            if (i3 + 1 < keyValues.length && !keyValues[i3 + 1].includes("=")) {
+              parsedKeyValues.push([keyValue, keyValues[i3 + 1]]);
+              i3++;
+            } else {
+              throw new Error(
+                `Invalid format for key "${keyValue}". Use either:
+  cmt config set ${keyValue}=<value>
+  cmt config set ${keyValue} <value>`
+              );
+            }
+          }
+        }
+        await setConfig(parsedKeyValues);
       } else {
         throw new Error(
           `Unsupported mode: ${mode}. Valid modes are: "set", "get", and "help"`
