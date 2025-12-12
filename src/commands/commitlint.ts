@@ -13,7 +13,10 @@ export enum CONFIG_MODES {
 export const commitlintConfigCommand = command(
   {
     name: COMMANDS.commitlint,
-    parameters: ['<mode>']
+    parameters: ['<mode>'],
+    help: {
+      description: 'Manage @commitlint integration for project-specific commit rules (get/force)'
+    }
   },
   async (argv) => {
     intro('commit-ai — configure @commitlint');

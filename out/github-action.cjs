@@ -68111,6 +68111,24 @@ var configValidators = {
       "Must be true or false"
     );
   },
+  ["CMT_MAX_FILES" /* CMT_MAX_FILES */](value) {
+    value = parseInt(value);
+    validateConfig(
+      "CMT_MAX_FILES" /* CMT_MAX_FILES */,
+      !isNaN(value) && value > 0,
+      "Must be a positive number"
+    );
+    return value;
+  },
+  ["CMT_MAX_DIFF_BYTES" /* CMT_MAX_DIFF_BYTES */](value) {
+    value = parseInt(value);
+    validateConfig(
+      "CMT_MAX_DIFF_BYTES" /* CMT_MAX_DIFF_BYTES */,
+      !isNaN(value) && value > 0,
+      "Must be a positive number (size in bytes)"
+    );
+    return value;
+  },
   ["CMT_GITPUSH" /* CMT_GITPUSH */](value) {
     validateConfig(
       "CMT_GITPUSH" /* CMT_GITPUSH */,
@@ -68122,20 +68140,12 @@ var configValidators = {
   ["CMT_AI_PROVIDER" /* CMT_AI_PROVIDER */](value) {
     if (!value)
       value = "openai";
+    const validProviders = Object.values(CMT_AI_PROVIDER_ENUM);
+    const isValid = validProviders.includes(value) || value.startsWith("ollama");
     validateConfig(
       "CMT_AI_PROVIDER" /* CMT_AI_PROVIDER */,
-      [
-        "openai",
-        "deepseek",
-        "mistral",
-        "anthropic",
-        "gemini",
-        "azure",
-        "test",
-        "flowise",
-        "groq"
-      ].includes(value) || value.startsWith("ollama"),
-      `${value} is not supported yet, use 'ollama', 'mlx', 'anthropic', 'azure', 'gemini', 'flowise', 'mistral', 'deepseek' or 'openai' (default)`
+      isValid,
+      `${value} is not supported. Valid providers: ${validProviders.join(", ")}`
     );
     return value;
   },
@@ -68166,11 +68176,23 @@ var configValidators = {
     return value;
   }
 };
+var CMT_AI_PROVIDER_ENUM = /* @__PURE__ */ ((CMT_AI_PROVIDER_ENUM2) => {
+  CMT_AI_PROVIDER_ENUM2["OLLAMA"] = "ollama";
+  CMT_AI_PROVIDER_ENUM2["OPENAI"] = "openai";
+  CMT_AI_PROVIDER_ENUM2["ANTHROPIC"] = "anthropic";
+  CMT_AI_PROVIDER_ENUM2["GEMINI"] = "gemini";
+  CMT_AI_PROVIDER_ENUM2["AZURE"] = "azure";
+  CMT_AI_PROVIDER_ENUM2["TEST"] = "test";
+  CMT_AI_PROVIDER_ENUM2["FLOWISE"] = "flowise";
+  CMT_AI_PROVIDER_ENUM2["GROQ"] = "groq";
+  CMT_AI_PROVIDER_ENUM2["MISTRAL"] = "mistral";
+  CMT_AI_PROVIDER_ENUM2["MLX"] = "mlx";
+  CMT_AI_PROVIDER_ENUM2["DEEPSEEK"] = "deepseek";
+  return CMT_AI_PROVIDER_ENUM2;
+})(CMT_AI_PROVIDER_ENUM || {});
 var defaultConfigPath = (0, import_path.join)((0, import_os.homedir)(), ".commit-ai");
 var defaultEnvPath = (0, import_path.resolve)(process.cwd(), ".env");
 var DEFAULT_CONFIG = {
-  CMT_TOKENS_MAX_INPUT: 40960 /* DEFAULT_MAX_TOKENS_INPUT */,
-  CMT_TOKENS_MAX_OUTPUT: 4096 /* DEFAULT_MAX_TOKENS_OUTPUT */,
   CMT_DESCRIPTION: false,
   CMT_EMOJI: false,
   CMT_MODEL: getDefaultModel("openai"),
@@ -68207,6 +68229,7 @@ var getEnvConfig = (envPath) => {
       process.env.CMT_TOKENS_MAX_OUTPUT
     ),
     CMT_DESCRIPTION: parseConfigVarValue(process.env.CMT_DESCRIPTION),
+    CMT_WHY: parseConfigVarValue(process.env.CMT_WHY),
     CMT_EMOJI: parseConfigVarValue(process.env.CMT_EMOJI),
     CMT_LANGUAGE: process.env.CMT_LANGUAGE,
     CMT_MESSAGE_TEMPLATE_PLACEHOLDER: process.env.CMT_MESSAGE_TEMPLATE_PLACEHOLDER,
@@ -68214,6 +68237,8 @@ var getEnvConfig = (envPath) => {
     CMT_ONE_LINE_COMMIT: parseConfigVarValue(process.env.CMT_ONE_LINE_COMMIT),
     CMT_TEST_MOCK_TYPE: process.env.CMT_TEST_MOCK_TYPE,
     CMT_DEBUG: parseConfigVarValue(process.env.CMT_DEBUG),
+    CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
+    CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH)
   };
 };
@@ -68304,14 +68329,130 @@ For more help refer to our docs: https://github.com/MantisWare/commit-ai`
   setGlobalConfig(mergeConfigs(configToSet, config6), globalConfigPath);
   ce(`${source_default.green("\u2714")} config successfully set`);
 };
+var CONFIG_HELP = {
+  CMT_API_KEY: {
+    description: "API key for the AI provider",
+    example: "sk-...",
+    default: "none (required)"
+  },
+  CMT_AI_PROVIDER: {
+    description: "AI provider to use",
+    example: "openai",
+    default: "openai"
+  },
+  CMT_MODEL: {
+    description: "AI model to use",
+    example: "gpt-4o-mini",
+    default: "gpt-4o-mini (openai)"
+  },
+  CMT_API_URL: {
+    description: "Custom API endpoint URL",
+    example: "http://localhost:11434/api/chat",
+    default: "provider default"
+  },
+  CMT_TOKENS_MAX_INPUT: {
+    description: "Maximum input tokens for AI requests",
+    example: "40960",
+    default: "not set (provider/model specific)"
+  },
+  CMT_TOKENS_MAX_OUTPUT: {
+    description: "Maximum output tokens for AI responses",
+    example: "4096",
+    default: "not set (provider/model specific)"
+  },
+  CMT_DESCRIPTION: {
+    description: "Add description to commit messages",
+    example: "true",
+    default: "false"
+  },
+  CMT_WHY: {
+    description: "Focus description on WHY (vs WHAT) changes were made",
+    example: "true",
+    default: "false"
+  },
+  CMT_EMOJI: {
+    description: "Enable GitMoji in commit messages",
+    example: "true",
+    default: "false"
+  },
+  CMT_LANGUAGE: {
+    description: "Language for commit messages",
+    example: "en",
+    default: "en"
+  },
+  CMT_ONE_LINE_COMMIT: {
+    description: "Generate single-line commit messages",
+    example: "true",
+    default: "false"
+  },
+  CMT_MESSAGE_TEMPLATE_PLACEHOLDER: {
+    description: "Template placeholder for commit messages",
+    example: "$msg",
+    default: "$msg"
+  },
+  CMT_PROMPT_MODULE: {
+    description: "Prompt module to use",
+    example: "conventional-commit",
+    default: "conventional-commit"
+  },
+  CMT_DEBUG: {
+    description: "Enable debug logging",
+    example: "true",
+    default: "false"
+  },
+  CMT_MAX_FILES: {
+    description: "Maximum files allowed in a commit",
+    example: "50",
+    default: "unlimited"
+  },
+  CMT_MAX_DIFF_BYTES: {
+    description: "Maximum diff size in bytes",
+    example: "102400",
+    default: "unlimited"
+  }
+};
+var printConfigHelp = () => {
+  console.log(source_default.bold.cyan("\nAvailable Configuration Options:\n"));
+  Object.entries(CONFIG_HELP).forEach(([key, info]) => {
+    console.log(source_default.bold(key));
+    console.log(`  ${source_default.gray("Description:")} ${info.description}`);
+    console.log(`  ${source_default.gray("Example:")}     ${source_default.yellow(info.example)}`);
+    console.log(`  ${source_default.gray("Default:")}     ${info.default}`);
+    console.log("");
+  });
+  console.log(source_default.bold.cyan("Usage Examples:\n"));
+  console.log(`  ${source_default.gray("Get a config value:")}`);
+  console.log(`    ${source_default.yellow("cmt config get CMT_MODEL")}
+`);
+  console.log(`  ${source_default.gray("Set a config value:")}`);
+  console.log(`    ${source_default.yellow("cmt config set CMT_MODEL=gpt-4o-mini")}
+`);
+  console.log(`  ${source_default.gray("Set multiple values:")}`);
+  console.log(`    ${source_default.yellow("cmt config set CMT_EMOJI=true CMT_DESCRIPTION=true")}
+`);
+};
 var configCommand = G2(
   {
     name: "config" /* config */,
-    parameters: ["<mode>", "<key=values...>"]
+    parameters: ["<mode>", "[key=values...]"],
+    help: {
+      description: "Manage global CommitAI configuration stored in ~/.commit-ai (get/set/help)"
+    }
   },
   async (argv) => {
     try {
       const { mode, keyValues } = argv._;
+      if (mode === "help") {
+        printConfigHelp();
+        return;
+      }
+      if (!keyValues || keyValues.length === 0) {
+        throw new Error(
+          `Missing key=value pairs. Usage:
+  cmt config ${mode} KEY=VALUE
+  cmt config help`
+        );
+      }
       ae(`COMMAND: config ${mode} ${keyValues}`);
       if (mode === "get" /* get */) {
         const config6 = getConfig() || {};
@@ -68324,7 +68465,7 @@ var configCommand = G2(
         );
       } else {
         throw new Error(
-          `Unsupported mode: ${mode}. Valid modes are: "set" and "get"`
+          `Unsupported mode: ${mode}. Valid modes are: "set", "get", and "help"`
         );
       }
     } catch (error) {
@@ -83151,7 +83292,15 @@ var getCommitConvention = (fullGitMojiSpec) => {
   }
   return fullGitMojiSpec ? FULL_GITMOJI_SPEC : GITMOJI_HELP;
 };
-var getDescriptionInstruction = () => config4.CMT_DESCRIPTION ? `Add a short description of WHY the changes are done after the commit message. Don't start it with "This commit", just describe the changes.` : "Don't add any descriptions to the commit, only commit message.";
+var getDescriptionInstruction = () => {
+  if (!config4.CMT_DESCRIPTION) {
+    return "Don't add any descriptions to the commit, only commit message.";
+  }
+  if (config4.CMT_WHY) {
+    return `Add a short description explaining WHY the changes were made after the commit message. Focus on the reasoning, motivation, and business/technical context behind the changes. Don't start with "This commit", just explain the rationale.`;
+  }
+  return `Add a short description of WHAT the changes do after the commit message. Keep it concise and factual. Don't start with "This commit", just describe the changes.`;
+};
 var getOneLineCommitInstruction = () => config4.CMT_ONE_LINE_COMMIT ? "Craft a concise commit message that encapsulates all changes made, with an emphasis on the primary updates. If the modifications share a common theme or scope, mention it succinctly; otherwise, leave the scope out to maintain focus. The goal is to provide a clear and unified overview of the changes in a one single message, without diverging into a list of commit per file change." : "";
 var userInputCodeContext = (context2) => {
   if (context2 && context2 !== "" && context2 !== " ") {
@@ -83278,8 +83427,8 @@ function mergeDiffs(arr, maxStringLength) {
 
 // src/generateCommitMessageFromGitDiff.ts
 var config5 = getConfig();
-var MAX_TOKENS_INPUT = config5.CMT_TOKENS_MAX_INPUT;
-var MAX_TOKENS_OUTPUT = config5.CMT_TOKENS_MAX_OUTPUT;
+var MAX_TOKENS_INPUT = config5.CMT_TOKENS_MAX_INPUT || 8192;
+var MAX_TOKENS_OUTPUT = config5.CMT_TOKENS_MAX_OUTPUT || 2048;
 var generateCommitMessageChatCompletionPrompt = async (diff, fullGitMojiSpec, context2) => {
   const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(fullGitMojiSpec, context2);
   const chatContextAsCompletionRequest = [...INIT_MESSAGES_PROMPT];
@@ -83290,7 +83439,7 @@ var generateCommitMessageChatCompletionPrompt = async (diff, fullGitMojiSpec, co
   });
   return chatContextAsCompletionRequest;
 };
-var getOutputTokensErrorMessage = () => `Token limit exceeded, CMT_TOKENS_MAX_OUTPUT must not be much higher than the default ${4096 /* DEFAULT_MAX_TOKENS_OUTPUT */} tokens.`;
+var getOutputTokensErrorMessage = () => `Token limit exceeded. Please adjust CMT_TOKENS_MAX_OUTPUT to match your provider's limits.`;
 var ADJUSTMENT_FACTOR = 20;
 var getErrorMessage2 = (error) => {
   if (error instanceof Error)
@@ -83488,10 +83637,50 @@ function sleep3(ms) {
 
 // src/github-action.ts
 var GITHUB_TOKEN = import_core22.default.getInput("GITHUB_TOKEN");
+var ENABLE_FORCE_PUSH = import_core22.default.getInput("enable_force_push") === "true";
+var ALLOWED_BRANCHES = import_core22.default.getInput("allowed_branches") || "";
+var REQUIRE_CONFIRMATION = import_core22.default.getInput("require_confirmation") !== "false";
+var PROTECTED_BRANCHES = ["main", "master", "production", "prod"];
 var octokit = import_github.default.getOctokit(GITHUB_TOKEN);
 var context = import_github.default.context;
 var owner = context.repo.owner;
 var repo = context.repo.repo;
+function isBranchAllowed(branchName) {
+  if (!ALLOWED_BRANCHES)
+    return true;
+  const allowedList = ALLOWED_BRANCHES.split(",").map((b3) => b3.trim());
+  return allowedList.includes(branchName);
+}
+function isProtectedBranch(branchName) {
+  return PROTECTED_BRANCHES.some(
+    (protectedBranch) => branchName === protectedBranch || branchName.endsWith(`/${protectedBranch}`)
+  );
+}
+function getBranchName() {
+  const ref = context.ref;
+  return ref.replace("refs/heads/", "");
+}
+function performSafetyChecks() {
+  const branchName = getBranchName();
+  if (!isBranchAllowed(branchName)) {
+    return {
+      proceed: false,
+      message: `Branch '${branchName}' is not in the allowed branches list: ${ALLOWED_BRANCHES}`
+    };
+  }
+  if (!ENABLE_FORCE_PUSH && isProtectedBranch(branchName)) {
+    return {
+      proceed: false,
+      message: `Force push to protected branch '${branchName}' is not allowed. Set enable_force_push: true to override.`
+    };
+  }
+  if (REQUIRE_CONFIRMATION && ENABLE_FORCE_PUSH && isProtectedBranch(branchName)) {
+    import_core22.default.warning(
+      `\u26A0\uFE0F  Force pushing to protected branch '${branchName}'. Ensure this is intentional.`
+    );
+  }
+  return { proceed: true, message: "Safety checks passed" };
+}
 async function getCommitDiff(commitSha) {
   const diffResponse = await octokit.request(
     "GET /repos/{owner}/{repo}/commits/{ref}",
@@ -83599,14 +83788,33 @@ async function improveCommitMessages(commitsToImprove) {
   commitsToImprove.forEach((_commit, i3) => deleteCommitMessageFile(i3));
   (0, import_fs3.unlinkSync)("./count.txt");
   (0, import_fs3.unlinkSync)("./rebase-exec.sh");
-  ce("Force pushing non-interactively rebased commits into remote.");
+  ce("Preparing to push rebased commits to remote.");
   await import_exec.default.exec("git", ["status"]);
+  if (!ENABLE_FORCE_PUSH) {
+    ce("\u26A0\uFE0F  Force push is disabled. Rebased commits will NOT be pushed.");
+    ce("Set enable_force_push: true in your workflow to enable force push.");
+    return;
+  }
+  const branchName = getBranchName();
+  if (isProtectedBranch(branchName)) {
+    import_core22.default.warning(
+      `\u26A0\uFE0F  Force pushing to protected branch '${branchName}'`
+    );
+  }
+  ce("Force pushing rebased commits to remote.");
   await import_exec.default.exec("git", ["push", `--force`]);
   ce("Done \u{1F9D9}");
 }
 async function run() {
   ae("CommitAI \u2014 improving lame commit messages");
   try {
+    const safetyCheck = performSafetyChecks();
+    if (!safetyCheck.proceed) {
+      ce(`\u274C Safety check failed: ${safetyCheck.message}`);
+      import_core22.default.setFailed(safetyCheck.message);
+      return;
+    }
+    ce(`\u2713 ${safetyCheck.message}`);
     if (import_github.default.context.eventName === "push") {
       ce(`Processing commits in a Push event`);
       const payload = import_github.default.context.payload;

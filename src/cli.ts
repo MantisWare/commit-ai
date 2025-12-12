@@ -9,6 +9,7 @@ import { commitlintConfigCommand } from './commands/commitlint';
 import { configCommand } from './commands/config';
 import { hookCommand, isHookCalled } from './commands/githook';
 import { prepareCommitMessageHook } from './commands/prepare-commit-msg-hook';
+import { prCommand, changelogCommand } from './commands/pr';
 import { checkIsLatestVersion } from './utils/checkIsLatestVersion';
 import { runMigrations } from './migrations/_run';
 
@@ -19,7 +20,7 @@ cli(
     version: packageJSON.version,
     name: 'commit-ai',
     alias: 'cmt',
-    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand],
+    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand, prCommand, changelogCommand],
     flags: {
       fgm: Boolean,
       context: {

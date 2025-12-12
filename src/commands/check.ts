@@ -115,7 +115,10 @@ const runCheck = async (): Promise<CheckResult[]> => {
 
 export const checkCommand = command(
   {
-    name: COMMANDS.check
+    name: COMMANDS.check,
+    help: {
+      description: 'Validate your CommitAI environment, configuration, and dependencies'
+    }
   },
   async () => {
     printCommitAiBanner({ version: packageJSON.version });
@@ -155,6 +158,42 @@ export const checkCommand = command(
       const summaryPadding = ' '.repeat(Math.max(0, boxWidth - summary.replace(/\x1b\[[0-9;]*m/g, '').length - 1));
       console.log(chalk.hex('#2563eb')('│') + ` ${summary}${summaryPadding}` + chalk.hex('#2563eb')('│'));
       console.log(borderBottom);
+      console.log('');
+
+      // Print usage box
+      const usageBoxTop = chalk.hex('#2563eb')('┌') + chalk.hex('#2563eb')('─'.repeat(boxWidth)) + chalk.hex('#2563eb')('┐');
+      const usageBoxBottom = chalk.hex('#4f46e5')('└') + chalk.hex('#4f46e5')('─'.repeat(boxWidth)) + chalk.hex('#4f46e5')('┘');
+      const usageBoxBorder = chalk.hex('#5b21b6')('─'.repeat(boxWidth));
+
+      const usageCommands = [
+        { cmd: 'cmt', desc: 'Generate commit message from staged files' },
+        { cmd: 'cmt pr [branch]', desc: 'Generate PR description' },
+        { cmd: 'cmt changelog <version>', desc: 'Generate changelog entry' },
+        { cmd: 'cmt config help', desc: 'View all configuration options' },
+        { cmd: 'cmt --help', desc: 'Show all available commands' }
+      ];
+
+      console.log(usageBoxTop);
+      console.log(chalk.hex('#2563eb')('│') + chalk.bold.white(' Quick Start Guide'.padEnd(boxWidth)) + chalk.hex('#2563eb')('│'));
+      console.log(chalk.hex('#5b21b6')('├') + usageBoxBorder + chalk.hex('#5b21b6')('┤'));
+
+      for (const { cmd, desc } of usageCommands) {
+        const cmdFormatted = chalk.yellow(cmd.padEnd(30));
+        const descFormatted = chalk.gray(desc);
+        const line = ` ${cmdFormatted} ${descFormatted}`;
+        const strippedLength = line.replace(/\x1b\[[0-9;]*m/g, '').length;
+        const padding = ' '.repeat(Math.max(0, boxWidth - strippedLength));
+        console.log(chalk.hex('#6366f1')('│') + line + padding + chalk.hex('#6366f1')('│'));
+      }
+
+      console.log(chalk.hex('#4f46e5')('├') + chalk.hex('#4f46e5')('─'.repeat(boxWidth)) + chalk.hex('#4f46e5')('┤'));
+
+      const docsLine = ` ${chalk.cyan('Documentation:')} ${chalk.gray('https://github.com/MantisWare/commit-ai')}`;
+      const docsStrippedLength = docsLine.replace(/\x1b\[[0-9;]*m/g, '').length;
+      const docsPadding = ' '.repeat(Math.max(0, boxWidth - docsStrippedLength));
+      console.log(chalk.hex('#4f46e5')('│') + docsLine + docsPadding + chalk.hex('#4f46e5')('│'));
+
+      console.log(usageBoxBottom);
       console.log('');
 
       process.exit(fails === 0 ? 0 : 1);

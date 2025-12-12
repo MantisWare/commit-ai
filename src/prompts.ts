@@ -102,10 +102,17 @@ const getCommitConvention = (fullGitMojiSpec: boolean) => {
   return fullGitMojiSpec ? FULL_GITMOJI_SPEC : GITMOJI_HELP;
 };
 
-const getDescriptionInstruction = () =>
-  config.CMT_DESCRIPTION
-    ? 'Add a short description of WHY the changes are done after the commit message. Don\'t start it with "This commit", just describe the changes.'
-    : "Don't add any descriptions to the commit, only commit message.";
+const getDescriptionInstruction = () => {
+  if (!config.CMT_DESCRIPTION) {
+    return "Don't add any descriptions to the commit, only commit message.";
+  }
+
+  if (config.CMT_WHY) {
+    return 'Add a short description explaining WHY the changes were made after the commit message. Focus on the reasoning, motivation, and business/technical context behind the changes. Don\'t start with "This commit", just explain the rationale.';
+  }
+
+  return 'Add a short description of WHAT the changes do after the commit message. Keep it concise and factual. Don\'t start with "This commit", just describe the changes.';
+};
 
 const getOneLineCommitInstruction = () =>
   config.CMT_ONE_LINE_COMMIT

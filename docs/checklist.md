@@ -12,6 +12,7 @@ This is a living checklist of what CommitAI **already supports** and what we may
 
 - [x] `cmt` default command (generate commit message from staged diff)
 - [x] `cmt check` environment/version check command (prints banner + validates toolchain basics)
+- [x] Refresh console banner to match Commit-AI branding (cyan→purple gradient + “AI-Powered Git Commits”)
 - [x] Interactive staging when nothing is staged (stage all or choose files)
 - [x] `--context` / `-c` additional context support
 - [x] `--yes` / `-y` skip commit confirmation
@@ -76,22 +77,22 @@ This is a living checklist of what CommitAI **already supports** and what we may
 
 ### Prompting & quality
 
-- [ ] Wire up `CMT_WHY` (currently present as a config key) to explicitly control “why” behavior
+- [x] Wire up `CMT_WHY` (currently present as a config key) to explicitly control "why" behavior
 - [ ] Add deterministic unit tests around prompt text generation for key combinations
-- [ ] Add a configurable “max files” or “max diff bytes” guardrail with actionable errors
+- [x] Add a configurable "max files" or "max diff bytes" guardrail with actionable errors
 - [x] Add timeout-safe chunking fallback (split large diffs into smaller chunks and combine results)
 
 ### Config & compatibility
 
-- [ ] Align README defaults with code defaults (tokens/models) and keep them in sync
-- [ ] Make `CMT_AI_PROVIDER` validation accept all supported engines uniformly when using `cmt config set`
-- [ ] Add config command autocompletion / improved help output
+- [x] Align README defaults with code defaults (tokens/models) and keep them in sync
+- [x] Make `CMT_AI_PROVIDER` validation accept all supported engines uniformly when using `cmt config set`
+- [x] Add config command autocompletion / improved help output
 
 ### Providers / integrations
 
-- [ ] Add provider-specific docs for required env vars and example model names
-- [ ] Add GitHub Action safety rails (opt-in force push, allowlist branches, explicit confirmation)
-- [ ] Add support for generating PR descriptions / changelogs from diffs (adjacent capability)
+- [x] Add provider-specific docs for required env vars and example model names
+- [x] Add GitHub Action safety rails (opt-in force push, allowlist branches, explicit confirmation)
+- [x] Add support for generating PR descriptions / changelogs from diffs (adjacent capability)
 
 ### Code Review
 

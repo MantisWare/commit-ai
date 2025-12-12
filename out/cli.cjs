@@ -1230,7 +1230,7 @@ var require_main = __commonJS({
         return { parsed: parsedAll };
       }
     }
-    function config7(options) {
+    function config8(options) {
       if (_dotenvKey(options).length === 0) {
         return DotenvModule.configDotenv(options);
       }
@@ -1297,7 +1297,7 @@ var require_main = __commonJS({
       configDotenv,
       _configVault,
       _parseVault,
-      config: config7,
+      config: config8,
       decrypt,
       parse,
       populate
@@ -22706,12 +22706,12 @@ var require_tiktoken_bg = __commonJS({
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_tiktoken_free(ptr);
       }
-      encode(text, allowed_special, disallowed_special) {
+      encode(text2, allowed_special, disallowed_special) {
         if (wasm == null)
           throw new Error("tiktoken: WASM binary has not been propery initialized.");
         try {
           const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-          const ptr0 = passStringToWasm0(text, wasm.__wbindgen_export_0, wasm.__wbindgen_export_1);
+          const ptr0 = passStringToWasm0(text2, wasm.__wbindgen_export_0, wasm.__wbindgen_export_1);
           const len0 = WASM_VECTOR_LEN;
           wasm.tiktoken_encode(retptr, this.__wbg_ptr, ptr0, len0, addHeapObject(allowed_special), addHeapObject(disallowed_special));
           var r0 = getInt32Memory0()[retptr / 4 + 0];
@@ -22728,12 +22728,12 @@ var require_tiktoken_bg = __commonJS({
           wasm.__wbindgen_add_to_stack_pointer(16);
         }
       }
-      encode_ordinary(text) {
+      encode_ordinary(text2) {
         if (wasm == null)
           throw new Error("tiktoken: WASM binary has not been propery initialized.");
         try {
           const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-          const ptr0 = passStringToWasm0(text, wasm.__wbindgen_export_0, wasm.__wbindgen_export_1);
+          const ptr0 = passStringToWasm0(text2, wasm.__wbindgen_export_0, wasm.__wbindgen_export_1);
           const len0 = WASM_VECTOR_LEN;
           wasm.tiktoken_encode_ordinary(retptr, this.__wbg_ptr, ptr0, len0);
           var r0 = getInt32Memory0()[retptr / 4 + 0];
@@ -22745,12 +22745,12 @@ var require_tiktoken_bg = __commonJS({
           wasm.__wbindgen_add_to_stack_pointer(16);
         }
       }
-      encode_with_unstable(text, allowed_special, disallowed_special) {
+      encode_with_unstable(text2, allowed_special, disallowed_special) {
         if (wasm == null)
           throw new Error("tiktoken: WASM binary has not been propery initialized.");
         try {
           const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-          const ptr0 = passStringToWasm0(text, wasm.__wbindgen_export_0, wasm.__wbindgen_export_1);
+          const ptr0 = passStringToWasm0(text2, wasm.__wbindgen_export_0, wasm.__wbindgen_export_1);
           const len0 = WASM_VECTOR_LEN;
           wasm.tiktoken_encode_with_unstable(retptr, this.__wbg_ptr, ptr0, len0, addHeapObject(allowed_special), addHeapObject(disallowed_special));
           var r0 = getInt32Memory0()[retptr / 4 + 0];
@@ -31943,7 +31943,7 @@ var require_matchers = __commonJS({
     exports.jsonErr = jsonErr;
     exports.json = json;
     exports.textErr = textErr;
-    exports.text = text;
+    exports.text = text2;
     exports.bytesErr = bytesErr;
     exports.bytes = bytes;
     exports.streamErr = streamErr;
@@ -31979,7 +31979,7 @@ var require_matchers = __commonJS({
     function textErr(codes, schema, options) {
       return { ...options, err: true, enc: "text", codes, schema };
     }
-    function text(codes, schema, options) {
+    function text2(codes, schema, options) {
       return { ...options, enc: "text", codes, schema };
     }
     function bytesErr(codes, schema, options) {
@@ -49208,8 +49208,8 @@ var validateConfig = (key, condition, validationMessage) => {
   }
 };
 var configValidators = {
-  ["CMT_API_KEY" /* CMT_API_KEY */](value, config7 = {}) {
-    if (config7.CMT_AI_PROVIDER !== "openai")
+  ["CMT_API_KEY" /* CMT_API_KEY */](value, config8 = {}) {
+    if (config8.CMT_AI_PROVIDER !== "openai")
       return value;
     validateConfig(
       "CMT_API_KEY",
@@ -49274,7 +49274,7 @@ var configValidators = {
     );
     return value;
   },
-  ["CMT_MODEL" /* CMT_MODEL */](value, config7 = {}) {
+  ["CMT_MODEL" /* CMT_MODEL */](value, config8 = {}) {
     validateConfig(
       "CMT_MODEL" /* CMT_MODEL */,
       typeof value === "string",
@@ -49311,6 +49311,24 @@ var configValidators = {
       "Must be true or false"
     );
   },
+  ["CMT_MAX_FILES" /* CMT_MAX_FILES */](value) {
+    value = parseInt(value);
+    validateConfig(
+      "CMT_MAX_FILES" /* CMT_MAX_FILES */,
+      !isNaN(value) && value > 0,
+      "Must be a positive number"
+    );
+    return value;
+  },
+  ["CMT_MAX_DIFF_BYTES" /* CMT_MAX_DIFF_BYTES */](value) {
+    value = parseInt(value);
+    validateConfig(
+      "CMT_MAX_DIFF_BYTES" /* CMT_MAX_DIFF_BYTES */,
+      !isNaN(value) && value > 0,
+      "Must be a positive number (size in bytes)"
+    );
+    return value;
+  },
   ["CMT_GITPUSH" /* CMT_GITPUSH */](value) {
     validateConfig(
       "CMT_GITPUSH" /* CMT_GITPUSH */,
@@ -49322,20 +49340,12 @@ var configValidators = {
   ["CMT_AI_PROVIDER" /* CMT_AI_PROVIDER */](value) {
     if (!value)
       value = "openai";
+    const validProviders = Object.values(CMT_AI_PROVIDER_ENUM);
+    const isValid = validProviders.includes(value) || value.startsWith("ollama");
     validateConfig(
       "CMT_AI_PROVIDER" /* CMT_AI_PROVIDER */,
-      [
-        "openai",
-        "deepseek",
-        "mistral",
-        "anthropic",
-        "gemini",
-        "azure",
-        "test",
-        "flowise",
-        "groq"
-      ].includes(value) || value.startsWith("ollama"),
-      `${value} is not supported yet, use 'ollama', 'mlx', 'anthropic', 'azure', 'gemini', 'flowise', 'mistral', 'deepseek' or 'openai' (default)`
+      isValid,
+      `${value} is not supported. Valid providers: ${validProviders.join(", ")}`
     );
     return value;
   },
@@ -49383,8 +49393,6 @@ var CMT_AI_PROVIDER_ENUM = /* @__PURE__ */ ((CMT_AI_PROVIDER_ENUM2) => {
 var defaultConfigPath = (0, import_path.join)((0, import_os.homedir)(), ".commit-ai");
 var defaultEnvPath = (0, import_path.resolve)(process.cwd(), ".env");
 var DEFAULT_CONFIG = {
-  CMT_TOKENS_MAX_INPUT: 40960 /* DEFAULT_MAX_TOKENS_INPUT */,
-  CMT_TOKENS_MAX_OUTPUT: 4096 /* DEFAULT_MAX_TOKENS_OUTPUT */,
   CMT_DESCRIPTION: false,
   CMT_EMOJI: false,
   CMT_MODEL: getDefaultModel("openai"),
@@ -49421,6 +49429,7 @@ var getEnvConfig = (envPath) => {
       process.env.CMT_TOKENS_MAX_OUTPUT
     ),
     CMT_DESCRIPTION: parseConfigVarValue(process.env.CMT_DESCRIPTION),
+    CMT_WHY: parseConfigVarValue(process.env.CMT_WHY),
     CMT_EMOJI: parseConfigVarValue(process.env.CMT_EMOJI),
     CMT_LANGUAGE: process.env.CMT_LANGUAGE,
     CMT_MESSAGE_TEMPLATE_PLACEHOLDER: process.env.CMT_MESSAGE_TEMPLATE_PLACEHOLDER,
@@ -49428,11 +49437,13 @@ var getEnvConfig = (envPath) => {
     CMT_ONE_LINE_COMMIT: parseConfigVarValue(process.env.CMT_ONE_LINE_COMMIT),
     CMT_TEST_MOCK_TYPE: process.env.CMT_TEST_MOCK_TYPE,
     CMT_DEBUG: parseConfigVarValue(process.env.CMT_DEBUG),
+    CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
+    CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH)
   };
 };
-var setGlobalConfig = (config7, configPath = defaultConfigPath) => {
-  (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(config7), "utf8");
+var setGlobalConfig = (config8, configPath = defaultConfigPath) => {
+  (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(config8), "utf8");
 };
 var getIsGlobalConfigFileExist = (configPath = defaultConfigPath) => {
   return (0, import_fs.existsSync)(configPath);
@@ -49455,9 +49466,9 @@ var mergeConfigs = (main, fallback) => {
     return acc;
   }, {});
 };
-var cleanUndefinedValues = (config7) => {
+var cleanUndefinedValues = (config8) => {
   return Object.fromEntries(
-    Object.entries(config7).map(([_7, v5]) => {
+    Object.entries(config8).map(([_7, v5]) => {
       try {
         if (typeof v5 === "string") {
           if (v5 === "undefined")
@@ -49480,12 +49491,12 @@ var getConfig = ({
 } = {}) => {
   const envConfig = getEnvConfig(envPath);
   const globalConfig = getGlobalConfig(globalPath);
-  const config7 = mergeConfigs(envConfig, globalConfig);
-  const cleanConfig = cleanUndefinedValues(config7);
+  const config8 = mergeConfigs(envConfig, globalConfig);
+  const cleanConfig = cleanUndefinedValues(config8);
   return cleanConfig;
 };
 var setConfig = (keyValues, globalConfigPath = defaultConfigPath) => {
-  const config7 = getConfig({
+  const config8 = getConfig({
     globalPath: globalConfigPath
   });
   const configToSet = {};
@@ -49511,26 +49522,142 @@ For more help refer to our docs: https://github.com/MantisWare/commit-ai`
     }
     const validValue = configValidators[key](
       parsedConfigValue,
-      config7
+      config8
     );
     configToSet[key] = validValue;
   }
-  setGlobalConfig(mergeConfigs(configToSet, config7), globalConfigPath);
+  setGlobalConfig(mergeConfigs(configToSet, config8), globalConfigPath);
   ce(`${source_default.green("\u2714")} config successfully set`);
+};
+var CONFIG_HELP = {
+  CMT_API_KEY: {
+    description: "API key for the AI provider",
+    example: "sk-...",
+    default: "none (required)"
+  },
+  CMT_AI_PROVIDER: {
+    description: "AI provider to use",
+    example: "openai",
+    default: "openai"
+  },
+  CMT_MODEL: {
+    description: "AI model to use",
+    example: "gpt-4o-mini",
+    default: "gpt-4o-mini (openai)"
+  },
+  CMT_API_URL: {
+    description: "Custom API endpoint URL",
+    example: "http://localhost:11434/api/chat",
+    default: "provider default"
+  },
+  CMT_TOKENS_MAX_INPUT: {
+    description: "Maximum input tokens for AI requests",
+    example: "40960",
+    default: "not set (provider/model specific)"
+  },
+  CMT_TOKENS_MAX_OUTPUT: {
+    description: "Maximum output tokens for AI responses",
+    example: "4096",
+    default: "not set (provider/model specific)"
+  },
+  CMT_DESCRIPTION: {
+    description: "Add description to commit messages",
+    example: "true",
+    default: "false"
+  },
+  CMT_WHY: {
+    description: "Focus description on WHY (vs WHAT) changes were made",
+    example: "true",
+    default: "false"
+  },
+  CMT_EMOJI: {
+    description: "Enable GitMoji in commit messages",
+    example: "true",
+    default: "false"
+  },
+  CMT_LANGUAGE: {
+    description: "Language for commit messages",
+    example: "en",
+    default: "en"
+  },
+  CMT_ONE_LINE_COMMIT: {
+    description: "Generate single-line commit messages",
+    example: "true",
+    default: "false"
+  },
+  CMT_MESSAGE_TEMPLATE_PLACEHOLDER: {
+    description: "Template placeholder for commit messages",
+    example: "$msg",
+    default: "$msg"
+  },
+  CMT_PROMPT_MODULE: {
+    description: "Prompt module to use",
+    example: "conventional-commit",
+    default: "conventional-commit"
+  },
+  CMT_DEBUG: {
+    description: "Enable debug logging",
+    example: "true",
+    default: "false"
+  },
+  CMT_MAX_FILES: {
+    description: "Maximum files allowed in a commit",
+    example: "50",
+    default: "unlimited"
+  },
+  CMT_MAX_DIFF_BYTES: {
+    description: "Maximum diff size in bytes",
+    example: "102400",
+    default: "unlimited"
+  }
+};
+var printConfigHelp = () => {
+  console.log(source_default.bold.cyan("\nAvailable Configuration Options:\n"));
+  Object.entries(CONFIG_HELP).forEach(([key, info]) => {
+    console.log(source_default.bold(key));
+    console.log(`  ${source_default.gray("Description:")} ${info.description}`);
+    console.log(`  ${source_default.gray("Example:")}     ${source_default.yellow(info.example)}`);
+    console.log(`  ${source_default.gray("Default:")}     ${info.default}`);
+    console.log("");
+  });
+  console.log(source_default.bold.cyan("Usage Examples:\n"));
+  console.log(`  ${source_default.gray("Get a config value:")}`);
+  console.log(`    ${source_default.yellow("cmt config get CMT_MODEL")}
+`);
+  console.log(`  ${source_default.gray("Set a config value:")}`);
+  console.log(`    ${source_default.yellow("cmt config set CMT_MODEL=gpt-4o-mini")}
+`);
+  console.log(`  ${source_default.gray("Set multiple values:")}`);
+  console.log(`    ${source_default.yellow("cmt config set CMT_EMOJI=true CMT_DESCRIPTION=true")}
+`);
 };
 var configCommand = G3(
   {
     name: "config" /* config */,
-    parameters: ["<mode>", "<key=values...>"]
+    parameters: ["<mode>", "[key=values...]"],
+    help: {
+      description: "Manage global CommitAI configuration stored in ~/.commit-ai (get/set/help)"
+    }
   },
   async (argv) => {
     try {
       const { mode, keyValues } = argv._;
+      if (mode === "help") {
+        printConfigHelp();
+        return;
+      }
+      if (!keyValues || keyValues.length === 0) {
+        throw new Error(
+          `Missing key=value pairs. Usage:
+  cmt config ${mode} KEY=VALUE
+  cmt config help`
+        );
+      }
       ae(`COMMAND: config ${mode} ${keyValues}`);
       if (mode === "get" /* get */) {
-        const config7 = getConfig() || {};
+        const config8 = getConfig() || {};
         for (const key of keyValues) {
-          ce(`${key}=${config7[key]}`);
+          ce(`${key}=${config8[key]}`);
         }
       } else if (mode === "set" /* set */) {
         await setConfig(
@@ -49538,7 +49665,7 @@ var configCommand = G3(
         );
       } else {
         throw new Error(
-          `Unsupported mode: ${mode}. Valid modes are: "set" and "get"`
+          `Unsupported mode: ${mode}. Valid modes are: "set", "get", and "help"`
         );
       }
     } catch (error) {
@@ -50362,20 +50489,20 @@ var LineDecoder = class {
     this.trailingCR = false;
   }
   decode(chunk) {
-    let text = this.decodeText(chunk);
+    let text2 = this.decodeText(chunk);
     if (this.trailingCR) {
-      text = "\r" + text;
+      text2 = "\r" + text2;
       this.trailingCR = false;
     }
-    if (text.endsWith("\r")) {
+    if (text2.endsWith("\r")) {
       this.trailingCR = true;
-      text = text.slice(0, -1);
+      text2 = text2.slice(0, -1);
     }
-    if (!text) {
+    if (!text2) {
       return [];
     }
-    const trailingNewline = LineDecoder.NEWLINE_CHARS.has(text[text.length - 1] || "");
-    let lines = text.split(LineDecoder.NEWLINE_REGEXP);
+    const trailingNewline = LineDecoder.NEWLINE_CHARS.has(text2[text2.length - 1] || "");
+    let lines = text2.split(LineDecoder.NEWLINE_REGEXP);
     if (trailingNewline) {
       lines.pop();
     }
@@ -50556,9 +50683,9 @@ async function defaultParseResponse(props) {
     debug("response", response.status, response.url, response.headers, json);
     return json;
   }
-  const text = await response.text();
-  debug("response", response.status, response.url, response.headers, text);
-  return text;
+  const text2 = await response.text();
+  debug("response", response.status, response.url, response.headers, text2);
+  return text2;
 }
 var APIPromise = class extends Promise {
   constructor(responsePromise, parseResponse = defaultParseResponse) {
@@ -51028,9 +51155,9 @@ var _platformHeaders;
 var getPlatformHeaders = () => {
   return _platformHeaders ?? (_platformHeaders = getPlatformProperties());
 };
-var safeJSON = (text) => {
+var safeJSON = (text2) => {
   try {
-    return JSON.parse(text);
+    return JSON.parse(text2);
   } catch (err) {
     return void 0;
   }
@@ -52027,7 +52154,7 @@ var utils_default = {
 };
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/core/AxiosError.js
-function AxiosError(message, code, config7, request3, response) {
+function AxiosError(message, code, config8, request3, response) {
   Error.call(this);
   if (Error.captureStackTrace) {
     Error.captureStackTrace(this, this.constructor);
@@ -52037,7 +52164,7 @@ function AxiosError(message, code, config7, request3, response) {
   this.message = message;
   this.name = "AxiosError";
   code && (this.code = code);
-  config7 && (this.config = config7);
+  config8 && (this.config = config8);
   request3 && (this.request = request3);
   response && (this.response = response);
 }
@@ -52078,14 +52205,14 @@ var descriptors2 = {};
 });
 Object.defineProperties(AxiosError, descriptors2);
 Object.defineProperty(prototype, "isAxiosError", { value: true });
-AxiosError.from = (error, code, config7, request3, response, customProps) => {
+AxiosError.from = (error, code, config8, request3, response, customProps) => {
   const axiosError = Object.create(prototype);
   utils_default.toFlatObject(error, axiosError, function filter2(obj) {
     return obj !== Error.prototype;
   }, (prop) => {
     return prop !== "isAxiosError";
   });
-  AxiosError.call(axiosError, error.message, code, config7, request3, response);
+  AxiosError.call(axiosError, error.message, code, config8, request3, response);
   axiosError.cause = error;
   axiosError.name = error.name;
   customProps && Object.assign(axiosError, customProps);
@@ -52790,12 +52917,12 @@ var AxiosHeaders_default = AxiosHeaders;
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/core/transformData.js
 function transformData(fns, response) {
-  const config7 = this || defaults_default;
-  const context = response || config7;
+  const config8 = this || defaults_default;
+  const context = response || config8;
   const headers = AxiosHeaders_default.from(context.headers);
   let data = context.data;
   utils_default.forEach(fns, function transform(fn) {
-    data = fn.call(config7, data, headers.normalize(), response ? response.status : void 0);
+    data = fn.call(config8, data, headers.normalize(), response ? response.status : void 0);
   });
   headers.normalize();
   return data;
@@ -52807,8 +52934,8 @@ function isCancel(value) {
 }
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/cancel/CanceledError.js
-function CanceledError(message, config7, request3) {
-  AxiosError_default.call(this, message == null ? "canceled" : message, AxiosError_default.ERR_CANCELED, config7, request3);
+function CanceledError(message, config8, request3) {
+  AxiosError_default.call(this, message == null ? "canceled" : message, AxiosError_default.ERR_CANCELED, config8, request3);
   this.name = "CanceledError";
 }
 utils_default.inherits(CanceledError, AxiosError_default, {
@@ -53350,11 +53477,11 @@ var resolveFamily = ({ address, family }) => {
   };
 };
 var buildAddressEntry = (address, family) => resolveFamily(utils_default.isObject(address) ? address : { address, family });
-var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
+var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
   return wrapAsync(async function dispatchHttpRequest(resolve, reject, onDone) {
-    let { data, lookup, family } = config7;
-    const { responseType, responseEncoding } = config7;
-    const method = config7.method.toUpperCase();
+    let { data, lookup, family } = config8;
+    const { responseType, responseEncoding } = config8;
+    const method = config8.method.toUpperCase();
     let isDone;
     let rejected = false;
     let req;
@@ -53372,11 +53499,11 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
     }
     const emitter = new import_events.EventEmitter();
     const onFinished = () => {
-      if (config7.cancelToken) {
-        config7.cancelToken.unsubscribe(abort);
+      if (config8.cancelToken) {
+        config8.cancelToken.unsubscribe(abort);
       }
-      if (config7.signal) {
-        config7.signal.removeEventListener("abort", abort);
+      if (config8.signal) {
+        config8.signal.removeEventListener("abort", abort);
       }
       emitter.removeAllListeners();
     };
@@ -53388,16 +53515,16 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
       }
     });
     function abort(reason) {
-      emitter.emit("abort", !reason || reason.type ? new CanceledError_default(null, config7, req) : reason);
+      emitter.emit("abort", !reason || reason.type ? new CanceledError_default(null, config8, req) : reason);
     }
     emitter.once("abort", reject);
-    if (config7.cancelToken || config7.signal) {
-      config7.cancelToken && config7.cancelToken.subscribe(abort);
-      if (config7.signal) {
-        config7.signal.aborted ? abort() : config7.signal.addEventListener("abort", abort);
+    if (config8.cancelToken || config8.signal) {
+      config8.cancelToken && config8.cancelToken.subscribe(abort);
+      if (config8.signal) {
+        config8.signal.aborted ? abort() : config8.signal.addEventListener("abort", abort);
       }
     }
-    const fullPath = buildFullPath(config7.baseURL, config7.url);
+    const fullPath = buildFullPath(config8.baseURL, config8.url);
     const parsed = new URL(fullPath, utils_default.hasBrowserEnv ? platform_default.origin : void 0);
     const protocol = parsed.protocol || supportedProtocols[0];
     if (protocol === "data:") {
@@ -53407,15 +53534,15 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
           status: 405,
           statusText: "method not allowed",
           headers: {},
-          config: config7
+          config: config8
         });
       }
       try {
-        convertedData = fromDataURI(config7.url, responseType === "blob", {
-          Blob: config7.env && config7.env.Blob
+        convertedData = fromDataURI(config8.url, responseType === "blob", {
+          Blob: config8.env && config8.env.Blob
         });
       } catch (err) {
-        throw AxiosError_default.from(err, AxiosError_default.ERR_BAD_REQUEST, config7);
+        throw AxiosError_default.from(err, AxiosError_default.ERR_BAD_REQUEST, config8);
       }
       if (responseType === "text") {
         convertedData = convertedData.toString(responseEncoding);
@@ -53430,20 +53557,20 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
         status: 200,
         statusText: "OK",
         headers: new AxiosHeaders_default(),
-        config: config7
+        config: config8
       });
     }
     if (supportedProtocols.indexOf(protocol) === -1) {
       return reject(new AxiosError_default(
         "Unsupported protocol " + protocol,
         AxiosError_default.ERR_BAD_REQUEST,
-        config7
+        config8
       ));
     }
-    const headers = AxiosHeaders_default.from(config7.headers).normalize();
+    const headers = AxiosHeaders_default.from(config8.headers).normalize();
     headers.set("User-Agent", "axios/" + VERSION2, false);
-    const { onUploadProgress, onDownloadProgress } = config7;
-    const maxRate = config7.maxRate;
+    const { onUploadProgress, onDownloadProgress } = config8;
+    const maxRate = config8.maxRate;
     let maxUploadRate = void 0;
     let maxDownloadRate = void 0;
     if (utils_default.isSpecCompliantForm(data)) {
@@ -53477,15 +53604,15 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
         return reject(new AxiosError_default(
           "Data after transformation must be a string, an ArrayBuffer, a Buffer, or a Stream",
           AxiosError_default.ERR_BAD_REQUEST,
-          config7
+          config8
         ));
       }
       headers.setContentLength(data.length, false);
-      if (config7.maxBodyLength > -1 && data.length > config7.maxBodyLength) {
+      if (config8.maxBodyLength > -1 && data.length > config8.maxBodyLength) {
         return reject(new AxiosError_default(
           "Request body larger than maxBodyLength limit",
           AxiosError_default.ERR_BAD_REQUEST,
-          config7
+          config8
         ));
       }
     }
@@ -53512,9 +53639,9 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
       ));
     }
     let auth = void 0;
-    if (config7.auth) {
-      const username = config7.auth.username || "";
-      const password = config7.auth.password || "";
+    if (config8.auth) {
+      const username = config8.auth.username || "";
+      const password = config8.auth.password || "";
       auth = username + ":" + password;
     }
     if (!auth && parsed.username) {
@@ -53527,13 +53654,13 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
     try {
       path5 = buildURL(
         parsed.pathname + parsed.search,
-        config7.params,
-        config7.paramsSerializer
+        config8.params,
+        config8.paramsSerializer
       ).replace(/^\?/, "");
     } catch (err) {
       const customErr = new Error(err.message);
-      customErr.config = config7;
-      customErr.url = config7.url;
+      customErr.config = config8;
+      customErr.url = config8.url;
       customErr.exists = true;
       return reject(customErr);
     }
@@ -53546,7 +53673,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
       path: path5,
       method,
       headers: headers.toJSON(),
-      agents: { http: config7.httpAgent, https: config7.httpsAgent },
+      agents: { http: config8.httpAgent, https: config8.httpsAgent },
       auth,
       protocol,
       family,
@@ -53554,36 +53681,36 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
       beforeRedirects: {}
     };
     !utils_default.isUndefined(lookup) && (options.lookup = lookup);
-    if (config7.socketPath) {
-      options.socketPath = config7.socketPath;
+    if (config8.socketPath) {
+      options.socketPath = config8.socketPath;
     } else {
       options.hostname = parsed.hostname;
       options.port = parsed.port;
-      setProxy(options, config7.proxy, protocol + "//" + parsed.hostname + (parsed.port ? ":" + parsed.port : "") + options.path);
+      setProxy(options, config8.proxy, protocol + "//" + parsed.hostname + (parsed.port ? ":" + parsed.port : "") + options.path);
     }
     let transport;
     const isHttpsRequest = isHttps.test(options.protocol);
-    options.agent = isHttpsRequest ? config7.httpsAgent : config7.httpAgent;
-    if (config7.transport) {
-      transport = config7.transport;
-    } else if (config7.maxRedirects === 0) {
+    options.agent = isHttpsRequest ? config8.httpsAgent : config8.httpAgent;
+    if (config8.transport) {
+      transport = config8.transport;
+    } else if (config8.maxRedirects === 0) {
       transport = isHttpsRequest ? import_https.default : import_http.default;
     } else {
-      if (config7.maxRedirects) {
-        options.maxRedirects = config7.maxRedirects;
+      if (config8.maxRedirects) {
+        options.maxRedirects = config8.maxRedirects;
       }
-      if (config7.beforeRedirect) {
-        options.beforeRedirects.config = config7.beforeRedirect;
+      if (config8.beforeRedirect) {
+        options.beforeRedirects.config = config8.beforeRedirect;
       }
       transport = isHttpsRequest ? httpsFollow : httpFollow;
     }
-    if (config7.maxBodyLength > -1) {
-      options.maxBodyLength = config7.maxBodyLength;
+    if (config8.maxBodyLength > -1) {
+      options.maxBodyLength = config8.maxBodyLength;
     } else {
       options.maxBodyLength = Infinity;
     }
-    if (config7.insecureHTTPParser) {
-      options.insecureHTTPParser = config7.insecureHTTPParser;
+    if (config8.insecureHTTPParser) {
+      options.insecureHTTPParser = config8.insecureHTTPParser;
     }
     req = transport.request(options, function handleResponse(res) {
       if (req.destroyed)
@@ -53605,7 +53732,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
       }
       let responseStream = res;
       const lastRequest = res.req || req;
-      if (config7.decompress !== false && res.headers["content-encoding"]) {
+      if (config8.decompress !== false && res.headers["content-encoding"]) {
         if (method === "HEAD" || res.statusCode === 204) {
           delete res.headers["content-encoding"];
         }
@@ -53638,7 +53765,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
         status: res.statusCode,
         statusText: res.statusMessage,
         headers: new AxiosHeaders_default(res.headers),
-        config: config7,
+        config: config8,
         request: lastRequest
       };
       if (responseType === "stream") {
@@ -53650,13 +53777,13 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
         responseStream.on("data", function handleStreamData(chunk) {
           responseBuffer.push(chunk);
           totalResponseBytes += chunk.length;
-          if (config7.maxContentLength > -1 && totalResponseBytes > config7.maxContentLength) {
+          if (config8.maxContentLength > -1 && totalResponseBytes > config8.maxContentLength) {
             rejected = true;
             responseStream.destroy();
             reject(new AxiosError_default(
-              "maxContentLength size of " + config7.maxContentLength + " exceeded",
+              "maxContentLength size of " + config8.maxContentLength + " exceeded",
               AxiosError_default.ERR_BAD_RESPONSE,
-              config7,
+              config8,
               lastRequest
             ));
           }
@@ -53666,9 +53793,9 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
             return;
           }
           const err = new AxiosError_default(
-            "maxContentLength size of " + config7.maxContentLength + " exceeded",
+            "maxContentLength size of " + config8.maxContentLength + " exceeded",
             AxiosError_default.ERR_BAD_RESPONSE,
-            config7,
+            config8,
             lastRequest
           );
           responseStream.destroy(err);
@@ -53677,7 +53804,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
         responseStream.on("error", function handleStreamError(err) {
           if (req.destroyed)
             return;
-          reject(AxiosError_default.from(err, null, config7, lastRequest));
+          reject(AxiosError_default.from(err, null, config8, lastRequest));
         });
         responseStream.on("end", function handleStreamEnd() {
           try {
@@ -53690,7 +53817,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
             }
             response.data = responseData;
           } catch (err) {
-            return reject(AxiosError_default.from(err, null, config7, response.request, response));
+            return reject(AxiosError_default.from(err, null, config8, response.request, response));
           }
           settle(resolve, reject, response);
         });
@@ -53707,18 +53834,18 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
       req.destroy(err);
     });
     req.on("error", function handleRequestError(err) {
-      reject(AxiosError_default.from(err, null, config7, req));
+      reject(AxiosError_default.from(err, null, config8, req));
     });
     req.on("socket", function handleRequestSocket(socket) {
       socket.setKeepAlive(true, 1e3 * 60);
     });
-    if (config7.timeout) {
-      const timeout = parseInt(config7.timeout, 10);
+    if (config8.timeout) {
+      const timeout = parseInt(config8.timeout, 10);
       if (Number.isNaN(timeout)) {
         reject(new AxiosError_default(
           "error trying to parse `config.timeout` to int",
           AxiosError_default.ERR_BAD_OPTION_VALUE,
-          config7,
+          config8,
           req
         ));
         return;
@@ -53726,15 +53853,15 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
       req.setTimeout(timeout, function handleRequestTimeout() {
         if (isDone)
           return;
-        let timeoutErrorMessage = config7.timeout ? "timeout of " + config7.timeout + "ms exceeded" : "timeout exceeded";
-        const transitional2 = config7.transitional || transitional_default;
-        if (config7.timeoutErrorMessage) {
-          timeoutErrorMessage = config7.timeoutErrorMessage;
+        let timeoutErrorMessage = config8.timeout ? "timeout of " + config8.timeout + "ms exceeded" : "timeout exceeded";
+        const transitional2 = config8.transitional || transitional_default;
+        if (config8.timeoutErrorMessage) {
+          timeoutErrorMessage = config8.timeoutErrorMessage;
         }
         reject(new AxiosError_default(
           timeoutErrorMessage,
           transitional2.clarifyTimeoutError ? AxiosError_default.ETIMEDOUT : AxiosError_default.ECONNABORTED,
-          config7,
+          config8,
           req
         ));
         abort();
@@ -53752,7 +53879,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config7) {
       });
       data.on("close", () => {
         if (!ended && !errored) {
-          abort(new CanceledError_default("Request stream has been aborted", config7, req));
+          abort(new CanceledError_default("Request stream has been aborted", config8, req));
         }
       });
       data.pipe(req);
@@ -53827,7 +53954,7 @@ var cookies_default = platform_default.hasStandardBrowserEnv ? {
 var headersToObject = (thing) => thing instanceof AxiosHeaders_default ? { ...thing } : thing;
 function mergeConfig(config1, config22) {
   config22 = config22 || {};
-  const config7 = {};
+  const config8 = {};
   function getMergedValue(target, source, caseless) {
     if (utils_default.isPlainObject(target) && utils_default.isPlainObject(source)) {
       return utils_default.merge.call({ caseless }, target, source);
@@ -53898,17 +54025,17 @@ function mergeConfig(config1, config22) {
   utils_default.forEach(Object.keys(Object.assign({}, config1, config22)), function computeConfigValue(prop) {
     const merge2 = mergeMap[prop] || mergeDeepProperties;
     const configValue = merge2(config1[prop], config22[prop], prop);
-    utils_default.isUndefined(configValue) && merge2 !== mergeDirectKeys || (config7[prop] = configValue);
+    utils_default.isUndefined(configValue) && merge2 !== mergeDirectKeys || (config8[prop] = configValue);
   });
-  return config7;
+  return config8;
 }
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/helpers/resolveConfig.js
-var resolveConfig_default = (config7) => {
-  const newConfig = mergeConfig({}, config7);
+var resolveConfig_default = (config8) => {
+  const newConfig = mergeConfig({}, config8);
   let { data, withXSRFToken, xsrfHeaderName, xsrfCookieName, headers, auth } = newConfig;
   newConfig.headers = headers = AxiosHeaders_default.from(headers);
-  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url), config7.params, config7.paramsSerializer);
+  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url), config8.params, config8.paramsSerializer);
   if (auth) {
     headers.set(
       "Authorization",
@@ -53938,9 +54065,9 @@ var resolveConfig_default = (config7) => {
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/adapters/xhr.js
 var isXHRAdapterSupported = typeof XMLHttpRequest !== "undefined";
-var xhr_default = isXHRAdapterSupported && function(config7) {
+var xhr_default = isXHRAdapterSupported && function(config8) {
   return new Promise(function dispatchXhrRequest(resolve, reject) {
-    const _config = resolveConfig_default(config7);
+    const _config = resolveConfig_default(config8);
     let requestData = _config.data;
     const requestHeaders = AxiosHeaders_default.from(_config.headers).normalize();
     let { responseType, onUploadProgress, onDownloadProgress } = _config;
@@ -53969,7 +54096,7 @@ var xhr_default = isXHRAdapterSupported && function(config7) {
         status: request3.status,
         statusText: request3.statusText,
         headers: responseHeaders,
-        config: config7,
+        config: config8,
         request: request3
       };
       settle(function _resolve(value) {
@@ -53998,11 +54125,11 @@ var xhr_default = isXHRAdapterSupported && function(config7) {
       if (!request3) {
         return;
       }
-      reject(new AxiosError_default("Request aborted", AxiosError_default.ECONNABORTED, config7, request3));
+      reject(new AxiosError_default("Request aborted", AxiosError_default.ECONNABORTED, config8, request3));
       request3 = null;
     };
     request3.onerror = function handleError() {
-      reject(new AxiosError_default("Network Error", AxiosError_default.ERR_NETWORK, config7, request3));
+      reject(new AxiosError_default("Network Error", AxiosError_default.ERR_NETWORK, config8, request3));
       request3 = null;
     };
     request3.ontimeout = function handleTimeout() {
@@ -54014,7 +54141,7 @@ var xhr_default = isXHRAdapterSupported && function(config7) {
       reject(new AxiosError_default(
         timeoutErrorMessage,
         transitional2.clarifyTimeoutError ? AxiosError_default.ETIMEDOUT : AxiosError_default.ECONNABORTED,
-        config7,
+        config8,
         request3
       ));
       request3 = null;
@@ -54045,7 +54172,7 @@ var xhr_default = isXHRAdapterSupported && function(config7) {
         if (!request3) {
           return;
         }
-        reject(!cancel || cancel.type ? new CanceledError_default(null, config7, request3) : cancel);
+        reject(!cancel || cancel.type ? new CanceledError_default(null, config8, request3) : cancel);
         request3.abort();
         request3 = null;
       };
@@ -54056,7 +54183,7 @@ var xhr_default = isXHRAdapterSupported && function(config7) {
     }
     const protocol = parseProtocol(_config.url);
     if (protocol && platform_default.protocols.indexOf(protocol) === -1) {
-      reject(new AxiosError_default("Unsupported protocol " + protocol + ":", AxiosError_default.ERR_BAD_REQUEST, config7));
+      reject(new AxiosError_default("Unsupported protocol " + protocol + ":", AxiosError_default.ERR_BAD_REQUEST, config8));
       return;
     }
     request3.send(requestData || null);
@@ -54187,8 +54314,8 @@ var resolvers = {
 };
 isFetchSupported && ((res) => {
   ["text", "arrayBuffer", "blob", "formData", "stream"].forEach((type2) => {
-    !resolvers[type2] && (resolvers[type2] = utils_default.isFunction(res[type2]) ? (res2) => res2[type2]() : (_7, config7) => {
-      throw new AxiosError_default(`Response type '${type2}' is not supported`, AxiosError_default.ERR_NOT_SUPPORT, config7);
+    !resolvers[type2] && (resolvers[type2] = utils_default.isFunction(res[type2]) ? (res2) => res2[type2]() : (_7, config8) => {
+      throw new AxiosError_default(`Response type '${type2}' is not supported`, AxiosError_default.ERR_NOT_SUPPORT, config8);
     });
   });
 })(new Response());
@@ -54216,7 +54343,7 @@ var resolveBodyLength = async (headers, body) => {
   const length = utils_default.toFiniteNumber(headers.getContentLength());
   return length == null ? getBodyLength(body) : length;
 };
-var fetch_default = isFetchSupported && (async (config7) => {
+var fetch_default = isFetchSupported && (async (config8) => {
   let {
     url: url2,
     method,
@@ -54230,7 +54357,7 @@ var fetch_default = isFetchSupported && (async (config7) => {
     headers,
     withCredentials = "same-origin",
     fetchOptions
-  } = resolveConfig_default(config7);
+  } = resolveConfig_default(config8);
   responseType = responseType ? (responseType + "").toLowerCase() : "text";
   let [composedSignal, stopTimeout] = signal || cancelToken || timeout ? composeSignals_default([signal, cancelToken], timeout) : [];
   let finished, request3;
@@ -54293,7 +54420,7 @@ var fetch_default = isFetchSupported && (async (config7) => {
       );
     }
     responseType = responseType || "text";
-    let responseData = await resolvers[utils_default.findKey(resolvers, responseType) || "text"](response, config7);
+    let responseData = await resolvers[utils_default.findKey(resolvers, responseType) || "text"](response, config8);
     !isStreamResponse && onFinish();
     stopTimeout && stopTimeout();
     return await new Promise((resolve, reject) => {
@@ -54302,7 +54429,7 @@ var fetch_default = isFetchSupported && (async (config7) => {
         headers: AxiosHeaders_default.from(response.headers),
         status: response.status,
         statusText: response.statusText,
-        config: config7,
+        config: config8,
         request: request3
       });
     });
@@ -54310,13 +54437,13 @@ var fetch_default = isFetchSupported && (async (config7) => {
     onFinish();
     if (err && err.name === "TypeError" && /fetch/i.test(err.message)) {
       throw Object.assign(
-        new AxiosError_default("Network Error", AxiosError_default.ERR_NETWORK, config7, request3),
+        new AxiosError_default("Network Error", AxiosError_default.ERR_NETWORK, config8, request3),
         {
           cause: err.cause || err
         }
       );
     }
-    throw AxiosError_default.from(err, err && err.code, config7, request3);
+    throw AxiosError_default.from(err, err && err.code, config8, request3);
   }
 });
 
@@ -54375,41 +54502,41 @@ var adapters_default = {
 };
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/core/dispatchRequest.js
-function throwIfCancellationRequested(config7) {
-  if (config7.cancelToken) {
-    config7.cancelToken.throwIfRequested();
+function throwIfCancellationRequested(config8) {
+  if (config8.cancelToken) {
+    config8.cancelToken.throwIfRequested();
   }
-  if (config7.signal && config7.signal.aborted) {
-    throw new CanceledError_default(null, config7);
+  if (config8.signal && config8.signal.aborted) {
+    throw new CanceledError_default(null, config8);
   }
 }
-function dispatchRequest(config7) {
-  throwIfCancellationRequested(config7);
-  config7.headers = AxiosHeaders_default.from(config7.headers);
-  config7.data = transformData.call(
-    config7,
-    config7.transformRequest
+function dispatchRequest(config8) {
+  throwIfCancellationRequested(config8);
+  config8.headers = AxiosHeaders_default.from(config8.headers);
+  config8.data = transformData.call(
+    config8,
+    config8.transformRequest
   );
-  if (["post", "put", "patch"].indexOf(config7.method) !== -1) {
-    config7.headers.setContentType("application/x-www-form-urlencoded", false);
+  if (["post", "put", "patch"].indexOf(config8.method) !== -1) {
+    config8.headers.setContentType("application/x-www-form-urlencoded", false);
   }
-  const adapter = adapters_default.getAdapter(config7.adapter || defaults_default.adapter);
-  return adapter(config7).then(function onAdapterResolution(response) {
-    throwIfCancellationRequested(config7);
+  const adapter = adapters_default.getAdapter(config8.adapter || defaults_default.adapter);
+  return adapter(config8).then(function onAdapterResolution(response) {
+    throwIfCancellationRequested(config8);
     response.data = transformData.call(
-      config7,
-      config7.transformResponse,
+      config8,
+      config8.transformResponse,
       response
     );
     response.headers = AxiosHeaders_default.from(response.headers);
     return response;
   }, function onAdapterRejection(reason) {
     if (!isCancel(reason)) {
-      throwIfCancellationRequested(config7);
+      throwIfCancellationRequested(config8);
       if (reason && reason.response) {
         reason.response.data = transformData.call(
-          config7,
-          config7.transformResponse,
+          config8,
+          config8.transformResponse,
           reason.response
         );
         reason.response.headers = AxiosHeaders_default.from(reason.response.headers);
@@ -54487,9 +54614,9 @@ var Axios = class {
       response: new InterceptorManager_default()
     };
   }
-  async request(configOrUrl, config7) {
+  async request(configOrUrl, config8) {
     try {
-      return await this._request(configOrUrl, config7);
+      return await this._request(configOrUrl, config8);
     } catch (err) {
       if (err instanceof Error) {
         let dummy;
@@ -54507,15 +54634,15 @@ var Axios = class {
       throw err;
     }
   }
-  _request(configOrUrl, config7) {
+  _request(configOrUrl, config8) {
     if (typeof configOrUrl === "string") {
-      config7 = config7 || {};
-      config7.url = configOrUrl;
+      config8 = config8 || {};
+      config8.url = configOrUrl;
     } else {
-      config7 = configOrUrl || {};
+      config8 = configOrUrl || {};
     }
-    config7 = mergeConfig(this.defaults, config7);
-    const { transitional: transitional2, paramsSerializer, headers } = config7;
+    config8 = mergeConfig(this.defaults, config8);
+    const { transitional: transitional2, paramsSerializer, headers } = config8;
     if (transitional2 !== void 0) {
       validator_default.assertOptions(transitional2, {
         silentJSONParsing: validators2.transitional(validators2.boolean),
@@ -54525,7 +54652,7 @@ var Axios = class {
     }
     if (paramsSerializer != null) {
       if (utils_default.isFunction(paramsSerializer)) {
-        config7.paramsSerializer = {
+        config8.paramsSerializer = {
           serialize: paramsSerializer
         };
       } else {
@@ -54535,10 +54662,10 @@ var Axios = class {
         }, true);
       }
     }
-    config7.method = (config7.method || this.defaults.method || "get").toLowerCase();
+    config8.method = (config8.method || this.defaults.method || "get").toLowerCase();
     let contextHeaders = headers && utils_default.merge(
       headers.common,
-      headers[config7.method]
+      headers[config8.method]
     );
     headers && utils_default.forEach(
       ["delete", "get", "head", "post", "put", "patch", "common"],
@@ -54546,11 +54673,11 @@ var Axios = class {
         delete headers[method];
       }
     );
-    config7.headers = AxiosHeaders_default.concat(contextHeaders, headers);
+    config8.headers = AxiosHeaders_default.concat(contextHeaders, headers);
     const requestInterceptorChain = [];
     let synchronousRequestInterceptors = true;
     this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
-      if (typeof interceptor.runWhen === "function" && interceptor.runWhen(config7) === false) {
+      if (typeof interceptor.runWhen === "function" && interceptor.runWhen(config8) === false) {
         return;
       }
       synchronousRequestInterceptors = synchronousRequestInterceptors && interceptor.synchronous;
@@ -54568,14 +54695,14 @@ var Axios = class {
       chain.unshift.apply(chain, requestInterceptorChain);
       chain.push.apply(chain, responseInterceptorChain);
       len = chain.length;
-      promise = Promise.resolve(config7);
+      promise = Promise.resolve(config8);
       while (i3 < len) {
         promise = promise.then(chain[i3++], chain[i3++]);
       }
       return promise;
     }
     len = requestInterceptorChain.length;
-    let newConfig = config7;
+    let newConfig = config8;
     i3 = 0;
     while (i3 < len) {
       const onFulfilled = requestInterceptorChain[i3++];
@@ -54599,25 +54726,25 @@ var Axios = class {
     }
     return promise;
   }
-  getUri(config7) {
-    config7 = mergeConfig(this.defaults, config7);
-    const fullPath = buildFullPath(config7.baseURL, config7.url);
-    return buildURL(fullPath, config7.params, config7.paramsSerializer);
+  getUri(config8) {
+    config8 = mergeConfig(this.defaults, config8);
+    const fullPath = buildFullPath(config8.baseURL, config8.url);
+    return buildURL(fullPath, config8.params, config8.paramsSerializer);
   }
 };
 utils_default.forEach(["delete", "get", "head", "options"], function forEachMethodNoData(method) {
-  Axios.prototype[method] = function(url2, config7) {
-    return this.request(mergeConfig(config7 || {}, {
+  Axios.prototype[method] = function(url2, config8) {
+    return this.request(mergeConfig(config8 || {}, {
       method,
       url: url2,
-      data: (config7 || {}).data
+      data: (config8 || {}).data
     }));
   };
 });
 utils_default.forEach(["post", "put", "patch"], function forEachMethodWithData(method) {
   function generateHTTPMethod(isForm) {
-    return function httpMethod(url2, data, config7) {
-      return this.request(mergeConfig(config7 || {}, {
+    return function httpMethod(url2, data, config8) {
+      return this.request(mergeConfig(config8 || {}, {
         method,
         headers: isForm ? {
           "Content-Type": "multipart/form-data"
@@ -54663,11 +54790,11 @@ var CancelToken = class {
       };
       return promise;
     };
-    executor(function cancel(message, config7, request3) {
+    executor(function cancel(message, config8, request3) {
       if (token.reason) {
         return;
       }
-      token.reason = new CanceledError_default(message, config7, request3);
+      token.reason = new CanceledError_default(message, config8, request3);
       resolvePromise(token.reason);
     });
   }
@@ -54882,7 +55009,7 @@ function tokenCount(content) {
 
 // src/engine/anthropic.ts
 var AnthropicEngine = class {
-  constructor(config7) {
+  constructor(config8) {
     this.generateCommitMessage = async (messages) => {
       const systemMessage = messages.find((msg) => msg.role === "system")?.content;
       const restMessages = messages.filter(
@@ -54918,7 +55045,7 @@ var AnthropicEngine = class {
         throw err;
       }
     };
-    this.config = config7;
+    this.config = config8;
     this.client = new sdk_default({
       apiKey: this.config.apiKey,
       timeout: 12e4,
@@ -57860,8 +57987,8 @@ function serializeOnYourDataVectorizationSourceUnion(obj) {
 async function getStream2(response) {
   const { body, status } = await response.asNodeStream();
   if (status !== "200" && body !== void 0) {
-    const text = await streamToText2(body);
-    throw wrapError(() => JSON.parse(text).error, "Error parsing response body");
+    const text2 = await streamToText2(body);
+    throw wrapError(() => JSON.parse(text2).error, "Error parsing response body");
   }
   if (!body)
     throw new Error("No stream found in response. Did you enable the stream option?");
@@ -58584,7 +58711,7 @@ var OpenAIClient = class {
 
 // src/engine/azure.ts
 var AzureEngine = class {
-  constructor(config7) {
+  constructor(config8) {
     this.generateCommitMessage = async (messages) => {
       try {
         const REQUEST_TOKENS = messages.map((msg) => tokenCount(msg.content) + 4).reduce((a4, b7) => a4 + b7, 0);
@@ -58615,7 +58742,7 @@ var AzureEngine = class {
         throw err;
       }
     };
-    this.config = config7;
+    this.config = config8;
     this.client = new OpenAIClient(
       this.config.baseURL,
       new AzureKeyCredential(this.config.apiKey)
@@ -58625,10 +58752,10 @@ var AzureEngine = class {
 
 // src/engine/flowise.ts
 var FlowiseEngine = class {
-  constructor(config7) {
-    this.config = config7;
+  constructor(config8) {
+    this.config = config8;
     this.client = axios_default.create({
-      url: `${config7.baseURL}/${config7.apiKey}`,
+      url: `${config8.baseURL}/${config8.apiKey}`,
       headers: { "Content-Type": "application/json" }
     });
   }
@@ -59430,9 +59557,9 @@ function withTimeout(promise, timeoutMs, errorMessage = "Operation timed out") {
 
 // src/engine/gemini.ts
 var GeminiEngine = class {
-  constructor(config7) {
-    this.client = new GoogleGenerativeAI(config7.apiKey);
-    this.config = config7;
+  constructor(config8) {
+    this.client = new GoogleGenerativeAI(config8.apiKey);
+    this.config = config8;
   }
   async generateCommitMessage(messages) {
     const systemInstruction = messages.filter((m5) => m5.role === "system").map((m5) => m5.content).join("\n");
@@ -59492,10 +59619,10 @@ var GeminiEngine = class {
 
 // src/engine/ollama.ts
 var OllamaEngine = class {
-  constructor(config7) {
-    this.config = config7;
+  constructor(config8) {
+    this.config = config8;
     this.client = axios_default.create({
-      url: config7.baseURL ? `${config7.baseURL}/${config7.apiKey}` : "http://localhost:11434/api/chat",
+      url: config8.baseURL ? `${config8.baseURL}/${config8.apiKey}` : "http://localhost:11434/api/chat",
       headers: { "Content-Type": "application/json" }
     });
   }
@@ -59904,20 +60031,20 @@ var LineDecoder2 = class {
     this.trailingCR = false;
   }
   decode(chunk) {
-    let text = this.decodeText(chunk);
+    let text2 = this.decodeText(chunk);
     if (this.trailingCR) {
-      text = "\r" + text;
+      text2 = "\r" + text2;
       this.trailingCR = false;
     }
-    if (text.endsWith("\r")) {
+    if (text2.endsWith("\r")) {
       this.trailingCR = true;
-      text = text.slice(0, -1);
+      text2 = text2.slice(0, -1);
     }
-    if (!text) {
+    if (!text2) {
       return [];
     }
-    const trailingNewline = LineDecoder2.NEWLINE_CHARS.has(text[text.length - 1] || "");
-    let lines = text.split(LineDecoder2.NEWLINE_REGEXP);
+    const trailingNewline = LineDecoder2.NEWLINE_CHARS.has(text2[text2.length - 1] || "");
+    let lines = text2.split(LineDecoder2.NEWLINE_REGEXP);
     if (trailingNewline) {
       lines.pop();
     }
@@ -60129,9 +60256,9 @@ async function defaultParseResponse2(props) {
     debug2("response", response.status, response.url, response.headers, json);
     return json;
   }
-  const text = await response.text();
-  debug2("response", response.status, response.url, response.headers, text);
-  return text;
+  const text2 = await response.text();
+  debug2("response", response.status, response.url, response.headers, text2);
+  return text2;
 }
 var APIPromise2 = class extends Promise {
   constructor(responsePromise, parseResponse = defaultParseResponse2) {
@@ -60625,9 +60752,9 @@ var _platformHeaders2;
 var getPlatformHeaders2 = () => {
   return _platformHeaders2 ?? (_platformHeaders2 = getPlatformProperties2());
 };
-var safeJSON2 = (text) => {
+var safeJSON2 = (text2) => {
   try {
-    return JSON.parse(text);
+    return JSON.parse(text2);
   } catch (err) {
     return void 0;
   }
@@ -63791,7 +63918,7 @@ var { OpenAIError: OpenAIError2, APIError: APIError4, APIConnectionError: APICon
 
 // src/engine/openAi.ts
 var OpenAiEngine = class {
-  constructor(config7) {
+  constructor(config8) {
     this.generateCommitMessage = async (messages) => {
       const params = {
         model: this.config.model,
@@ -63817,16 +63944,16 @@ var OpenAiEngine = class {
         throw err;
       }
     };
-    this.config = config7;
+    this.config = config8;
     const clientConfig = {
-      apiKey: config7.apiKey,
+      apiKey: config8.apiKey,
       timeout: 12e4,
       maxRetries: 2
     };
-    if (!config7.baseURL) {
+    if (!config8.baseURL) {
       this.client = new OpenAI(clientConfig);
     } else {
-      this.client = new OpenAI({ ...clientConfig, baseURL: config7.baseURL });
+      this.client = new OpenAI({ ...clientConfig, baseURL: config8.baseURL });
     }
   }
 };
@@ -63834,7 +63961,7 @@ var OpenAiEngine = class {
 // src/engine/mistral.ts
 var import_mistralai = __toESM(require_mistralai());
 var MistralAiEngine = class {
-  constructor(config7) {
+  constructor(config8) {
     this.generateCommitMessage = async (messages) => {
       const params = {
         model: this.config.model,
@@ -63863,29 +63990,29 @@ var MistralAiEngine = class {
         throw err;
       }
     };
-    this.config = config7;
-    if (!config7.baseURL) {
-      this.client = new import_mistralai.Mistral({ apiKey: config7.apiKey });
+    this.config = config8;
+    if (!config8.baseURL) {
+      this.client = new import_mistralai.Mistral({ apiKey: config8.apiKey });
     } else {
-      this.client = new import_mistralai.Mistral({ apiKey: config7.apiKey, serverURL: config7.baseURL });
+      this.client = new import_mistralai.Mistral({ apiKey: config8.apiKey, serverURL: config8.baseURL });
     }
   }
 };
 
 // src/engine/groq.ts
 var GroqEngine = class extends OpenAiEngine {
-  constructor(config7) {
-    config7.baseURL = "https://api.groq.com/openai/v1";
-    super(config7);
+  constructor(config8) {
+    config8.baseURL = "https://api.groq.com/openai/v1";
+    super(config8);
   }
 };
 
 // src/engine/mlx.ts
 var MLXEngine = class {
-  constructor(config7) {
-    this.config = config7;
+  constructor(config8) {
+    this.config = config8;
     this.client = axios_default.create({
-      url: config7.baseURL ? `${config7.baseURL}/${config7.apiKey}` : "http://localhost:8080/v1/chat/completions",
+      url: config8.baseURL ? `${config8.baseURL}/${config8.apiKey}` : "http://localhost:8080/v1/chat/completions",
       headers: { "Content-Type": "application/json" }
     });
   }
@@ -63914,7 +64041,7 @@ var MLXEngine = class {
 
 // src/engine/deepseek.ts
 var DeepseekEngine = class {
-  constructor(config7) {
+  constructor(config8) {
     this.generateCommitMessage = async (messages) => {
       const params = {
         model: this.config.model,
@@ -63944,21 +64071,21 @@ var DeepseekEngine = class {
         throw err;
       }
     };
-    this.config = config7;
+    this.config = config8;
     this.client = new OpenAI({ apiKey: "" });
   }
 };
 
 // src/utils/engine.ts
 function getEngine() {
-  const config7 = getConfig();
-  const provider = config7.CMT_AI_PROVIDER;
+  const config8 = getConfig();
+  const provider = config8.CMT_AI_PROVIDER;
   const DEFAULT_CONFIG2 = {
-    model: config7.CMT_MODEL,
-    maxTokensOutput: config7.CMT_TOKENS_MAX_OUTPUT,
-    maxTokensInput: config7.CMT_TOKENS_MAX_INPUT,
-    baseURL: config7.CMT_API_URL,
-    apiKey: config7.CMT_API_KEY
+    model: config8.CMT_MODEL,
+    maxTokensOutput: config8.CMT_TOKENS_MAX_OUTPUT,
+    maxTokensInput: config8.CMT_TOKENS_MAX_INPUT,
+    baseURL: config8.CMT_API_URL,
+    apiKey: config8.CMT_API_KEY
   };
   switch (provider) {
     case "ollama" /* OLLAMA */:
@@ -63966,7 +64093,7 @@ function getEngine() {
     case "anthropic" /* ANTHROPIC */:
       return new AnthropicEngine(DEFAULT_CONFIG2);
     case "test" /* TEST */:
-      return new TestAi(config7.CMT_TEST_MOCK_TYPE);
+      return new TestAi(config8.CMT_TEST_MOCK_TYPE);
     case "gemini" /* GEMINI */:
       return new GeminiEngine(DEFAULT_CONFIG2);
     case "azure" /* AZURE */:
@@ -64073,8 +64200,8 @@ var getPrompt = (ruleName, ruleConfig, prompt) => {
   ce(`${source_default.red("\u2716")} No prompt handler for rule "${ruleName}".`);
   return `Please manualy set the prompt for rule "${ruleName}".`;
 };
-var inferPromptsFromCommitlintConfig = (config7) => {
-  const { rules, prompt } = config7;
+var inferPromptsFromCommitlintConfig = (config8) => {
+  const { rules, prompt } = config8;
   if (!rules)
     return [];
   return Object.keys(rules).map(
@@ -64365,7 +64492,15 @@ var getCommitConvention = (fullGitMojiSpec) => {
   }
   return fullGitMojiSpec ? FULL_GITMOJI_SPEC : GITMOJI_HELP;
 };
-var getDescriptionInstruction = () => config4.CMT_DESCRIPTION ? `Add a short description of WHY the changes are done after the commit message. Don't start it with "This commit", just describe the changes.` : "Don't add any descriptions to the commit, only commit message.";
+var getDescriptionInstruction = () => {
+  if (!config4.CMT_DESCRIPTION) {
+    return "Don't add any descriptions to the commit, only commit message.";
+  }
+  if (config4.CMT_WHY) {
+    return `Add a short description explaining WHY the changes were made after the commit message. Focus on the reasoning, motivation, and business/technical context behind the changes. Don't start with "This commit", just explain the rationale.`;
+  }
+  return `Add a short description of WHAT the changes do after the commit message. Keep it concise and factual. Don't start with "This commit", just describe the changes.`;
+};
 var getOneLineCommitInstruction = () => config4.CMT_ONE_LINE_COMMIT ? "Craft a concise commit message that encapsulates all changes made, with an emphasis on the primary updates. If the modifications share a common theme or scope, mention it succinctly; otherwise, leave the scope out to maintain focus. The goal is to provide a clear and unified overview of the changes in a one single message, without diverging into a list of commit per file change." : "";
 var userInputCodeContext = (context) => {
   if (context && context !== "" && context !== " ") {
@@ -64468,8 +64603,8 @@ var getMainCommitPrompt = async (fullGitMojiSpec, context) => {
 
 // src/utils/debug.ts
 function debug3(...args) {
-  const config7 = getConfig();
-  if (config7.CMT_DEBUG) {
+  const config8 = getConfig();
+  if (config8.CMT_DEBUG) {
     console.error("[DEBUG]", ...args);
   }
 }
@@ -64492,8 +64627,8 @@ function mergeDiffs(arr, maxStringLength) {
 
 // src/generateCommitMessageFromGitDiff.ts
 var config5 = getConfig();
-var MAX_TOKENS_INPUT = config5.CMT_TOKENS_MAX_INPUT;
-var MAX_TOKENS_OUTPUT = config5.CMT_TOKENS_MAX_OUTPUT;
+var MAX_TOKENS_INPUT = config5.CMT_TOKENS_MAX_INPUT || 8192;
+var MAX_TOKENS_OUTPUT = config5.CMT_TOKENS_MAX_OUTPUT || 2048;
 var generateCommitMessageChatCompletionPrompt = async (diff, fullGitMojiSpec, context) => {
   const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(fullGitMojiSpec, context);
   const chatContextAsCompletionRequest = [...INIT_MESSAGES_PROMPT];
@@ -64504,7 +64639,7 @@ var generateCommitMessageChatCompletionPrompt = async (diff, fullGitMojiSpec, co
   });
   return chatContextAsCompletionRequest;
 };
-var getOutputTokensErrorMessage = () => `Token limit exceeded, CMT_TOKENS_MAX_OUTPUT must not be much higher than the default ${4096 /* DEFAULT_MAX_TOKENS_OUTPUT */} tokens.`;
+var getOutputTokensErrorMessage = () => `Token limit exceeded. Please adjust CMT_TOKENS_MAX_OUTPUT to match your provider's limits.`;
 var ADJUSTMENT_FACTOR = 20;
 var getErrorMessage2 = (error) => {
   if (error instanceof Error)
@@ -65125,6 +65260,35 @@ ${stagedFiles.map((file) => `  ${file}`).join("\n")}`
     );
     process.exit(1);
   }
+  if (config6.CMT_MAX_FILES && stagedFiles.length > config6.CMT_MAX_FILES) {
+    ce(
+      source_default.red(
+        `\u2716 Too many files staged (${stagedFiles.length}/${config6.CMT_MAX_FILES})
+
+Suggested actions:
+  \u2022 Split changes into smaller, focused commits
+  \u2022 Unstage some files: git reset HEAD <file>
+  \u2022 Adjust limit: cmt config set CMT_MAX_FILES <number>`
+      )
+    );
+    process.exit(1);
+  }
+  if (config6.CMT_MAX_DIFF_BYTES && diff && Buffer.byteLength(diff, "utf8") > config6.CMT_MAX_DIFF_BYTES) {
+    const diffSize = Buffer.byteLength(diff, "utf8");
+    const diffSizeKB = (diffSize / 1024).toFixed(1);
+    const limitKB = (config6.CMT_MAX_DIFF_BYTES / 1024).toFixed(1);
+    ce(
+      source_default.red(
+        `\u2716 Diff too large (${diffSizeKB} KB / ${limitKB} KB limit)
+
+Suggested actions:
+  \u2022 Split changes into multiple smaller commits
+  \u2022 Commit fewer files at once
+  \u2022 Adjust limit: cmt config set CMT_MAX_DIFF_BYTES <bytes>`
+      )
+    );
+    process.exit(1);
+  }
   const [, generateCommitError] = await trytm(
     generateCommitMessageFromGitDiff({
       diff: diff ?? "",
@@ -65233,9 +65397,9 @@ var runCheck = async () => {
     status: (0, import_fs5.existsSync)(envPath) ? "pass" : "warn",
     details: (0, import_fs5.existsSync)(envPath) ? "found" : "not found (optional)"
   });
-  const config7 = getConfig();
-  const provider = config7.CMT_AI_PROVIDER;
-  const model = config7.CMT_MODEL;
+  const config8 = getConfig();
+  const provider = config8.CMT_AI_PROVIDER;
+  const model = config8.CMT_MODEL;
   results.push({
     label: "Provider",
     status: provider !== void 0 ? "pass" : "warn",
@@ -65246,7 +65410,7 @@ var runCheck = async () => {
     status: model !== void 0 && model !== "" ? "pass" : "warn",
     details: String(model ?? "(default)")
   });
-  const apiKey = config7.CMT_API_KEY;
+  const apiKey = config8.CMT_API_KEY;
   results.push({
     label: "API key",
     status: apiKey !== void 0 && apiKey !== "" ? "pass" : "warn",
@@ -65262,7 +65426,10 @@ var runCheck = async () => {
 };
 var checkCommand = G3(
   {
-    name: "check" /* check */
+    name: "check" /* check */,
+    help: {
+      description: "Validate your CommitAI environment, configuration, and dependencies"
+    }
   },
   async () => {
     printCommitAiBanner({ version: package_default.version });
@@ -65292,6 +65459,34 @@ var checkCommand = G3(
       console.log(source_default.hex("#2563eb")("\u2502") + ` ${summary}${summaryPadding}` + source_default.hex("#2563eb")("\u2502"));
       console.log(borderBottom);
       console.log("");
+      const usageBoxTop = source_default.hex("#2563eb")("\u250C") + source_default.hex("#2563eb")("\u2500".repeat(boxWidth)) + source_default.hex("#2563eb")("\u2510");
+      const usageBoxBottom = source_default.hex("#4f46e5")("\u2514") + source_default.hex("#4f46e5")("\u2500".repeat(boxWidth)) + source_default.hex("#4f46e5")("\u2518");
+      const usageBoxBorder = source_default.hex("#5b21b6")("\u2500".repeat(boxWidth));
+      const usageCommands = [
+        { cmd: "cmt", desc: "Generate commit message from staged files" },
+        { cmd: "cmt pr [branch]", desc: "Generate PR description" },
+        { cmd: "cmt changelog <version>", desc: "Generate changelog entry" },
+        { cmd: "cmt config help", desc: "View all configuration options" },
+        { cmd: "cmt --help", desc: "Show all available commands" }
+      ];
+      console.log(usageBoxTop);
+      console.log(source_default.hex("#2563eb")("\u2502") + source_default.bold.white(" Quick Start Guide".padEnd(boxWidth)) + source_default.hex("#2563eb")("\u2502"));
+      console.log(source_default.hex("#5b21b6")("\u251C") + usageBoxBorder + source_default.hex("#5b21b6")("\u2524"));
+      for (const { cmd, desc } of usageCommands) {
+        const cmdFormatted = source_default.yellow(cmd.padEnd(30));
+        const descFormatted = source_default.gray(desc);
+        const line = ` ${cmdFormatted} ${descFormatted}`;
+        const strippedLength = line.replace(/\x1b\[[0-9;]*m/g, "").length;
+        const padding = " ".repeat(Math.max(0, boxWidth - strippedLength));
+        console.log(source_default.hex("#6366f1")("\u2502") + line + padding + source_default.hex("#6366f1")("\u2502"));
+      }
+      console.log(source_default.hex("#4f46e5")("\u251C") + source_default.hex("#4f46e5")("\u2500".repeat(boxWidth)) + source_default.hex("#4f46e5")("\u2524"));
+      const docsLine = ` ${source_default.cyan("Documentation:")} ${source_default.gray("https://github.com/MantisWare/commit-ai")}`;
+      const docsStrippedLength = docsLine.replace(/\x1b\[[0-9;]*m/g, "").length;
+      const docsPadding = " ".repeat(Math.max(0, boxWidth - docsStrippedLength));
+      console.log(source_default.hex("#4f46e5")("\u2502") + docsLine + docsPadding + source_default.hex("#4f46e5")("\u2502"));
+      console.log(usageBoxBottom);
+      console.log("");
       process.exit(fails === 0 ? 0 : 1);
     } catch (error) {
       ce(`${source_default.red("\u2716")} ${error}`);
@@ -65304,7 +65499,10 @@ var checkCommand = G3(
 var commitlintConfigCommand = G3(
   {
     name: "commitlint" /* commitlint */,
-    parameters: ["<mode>"]
+    parameters: ["<mode>"],
+    help: {
+      description: "Manage @commitlint integration for project-specific commit rules (get/force)"
+    }
   },
   async (argv) => {
     ae("commit-ai \u2014 configure @commitlint");
@@ -65354,7 +65552,10 @@ var isHookExists = async () => {
 var hookCommand = G3(
   {
     name: "hook" /* hook */,
-    parameters: ["<set/unset>"]
+    parameters: ["<set/unset>"],
+    help: {
+      description: "Install or uninstall Git prepare-commit-msg hook for automatic commit message generation"
+    }
   },
   async (argv) => {
     const HOOK_URL = __filename;
@@ -65436,8 +65637,8 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
     if (!staged)
       return;
     ae("commit-ai");
-    const config7 = getConfig();
-    if (!config7.CMT_API_KEY) {
+    const config8 = getConfig();
+    if (!config8.CMT_API_KEY) {
       ce(
         "No CMT_API_KEY is set. Set your key via `cmt config set CMT_API_KEY=<value>. For more info see https://github.com/MantisWare/commit-ai"
       );
@@ -65467,6 +65668,266 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
     process.exit(1);
   }
 };
+
+// src/commands/pr.ts
+var import_fs7 = require("fs");
+var config7 = getConfig();
+var PR_DESCRIPTION_PROMPT = (baseBranch) => `You are an expert at writing clear, comprehensive pull request descriptions.
+
+Your task is to analyze the diff between the current branch and the base branch (${baseBranch}) and generate a professional PR description.
+
+**Requirements:**
+1. **Title**: A concise, descriptive title (max 72 characters)
+2. **Summary**: A brief 2-3 sentence overview of what changed and why
+3. **Changes**: A bulleted list of key changes organized by category:
+   - \u2728 Features: New functionality added
+   - \u{1F41B} Bug Fixes: Issues resolved
+   - \u267B\uFE0F  Refactoring: Code improvements without behavior changes
+   - \u{1F4DD} Documentation: Docs updates
+   - \u{1F3A8} Styling: UI/UX changes
+   - \u26A1\uFE0F Performance: Performance improvements
+   - \u{1F9EA} Tests: Test additions or updates
+4. **Technical Details**: Any important technical decisions or implementation notes
+5. **Testing**: How the changes were tested or should be tested
+6. **Breaking Changes**: Any breaking changes (if applicable)
+
+Use markdown formatting. Be specific but concise. Focus on WHAT changed and WHY it matters.
+
+The output should be ready to paste into a GitHub PR description.`;
+var CHANGELOG_PROMPT = (version, fromRef, toRef) => `You are an expert at writing changelogs following the Keep a Changelog format.
+
+Your task is to analyze the commits and diff between ${fromRef} and ${toRef} and generate a changelog entry for version ${version}.
+
+**Format (Keep a Changelog):**
+## [${version}] - YYYY-MM-DD
+
+### Added
+- New features and capabilities
+
+### Changed
+- Changes to existing functionality
+
+### Deprecated
+- Features that will be removed in upcoming releases
+
+### Removed
+- Features that were removed
+
+### Fixed
+- Bug fixes
+
+### Security
+- Security improvements or fixes
+
+**Requirements:**
+1. Use present tense, imperative mood ("Add feature" not "Added feature")
+2. Group changes by type (Added, Changed, Fixed, etc.)
+3. Be specific but concise
+4. Include relevant context for breaking changes
+5. Order entries within each category by importance
+6. Omit empty categories
+
+Generate only the changelog entry. Do not include the full diff or commit messages verbatim.`;
+async function getCurrentBranch() {
+  const { stdout } = await execa("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
+  return stdout.trim();
+}
+async function getDefaultBaseBranch() {
+  try {
+    const { stdout } = await execa("git", ["symbolic-ref", "refs/remotes/origin/HEAD"]);
+    return stdout.replace("refs/remotes/origin/", "").trim();
+  } catch {
+    const branches = ["main", "master", "develop"];
+    for (const branch of branches) {
+      try {
+        await execa("git", ["rev-parse", "--verify", branch]);
+        return branch;
+      } catch {
+        continue;
+      }
+    }
+    return "main";
+  }
+}
+async function generatePRDescription(baseBranch) {
+  const stopHeartbeat = startElapsedHeartbeat({ label: "Generating PR description" });
+  try {
+    const { stdout: diff } = await execa("git", ["diff", baseBranch]);
+    if (!diff || diff.trim() === "") {
+      throw new Error(`No diff found between current branch and ${baseBranch}`);
+    }
+    const { stdout: commits } = await execa("git", [
+      "log",
+      `${baseBranch}..HEAD`,
+      "--pretty=format:%s"
+    ]);
+    const prompt = [
+      {
+        role: "system",
+        content: PR_DESCRIPTION_PROMPT(baseBranch)
+      },
+      {
+        role: "user",
+        content: `Commit messages for context:
+${commits}
+
+Diff:
+${diff}`
+      }
+    ];
+    const engine = getEngine();
+    const description = await engine.generateCommitMessage(prompt);
+    return description || "Failed to generate PR description";
+  } finally {
+    stopHeartbeat();
+  }
+}
+async function generateChangelog(version, fromRef, toRef) {
+  const stopHeartbeat = startElapsedHeartbeat({ label: "Generating changelog" });
+  try {
+    const { stdout: diff } = await execa("git", ["diff", fromRef, toRef]);
+    if (!diff || diff.trim() === "") {
+      throw new Error(`No diff found between ${fromRef} and ${toRef}`);
+    }
+    const { stdout: commits } = await execa("git", [
+      "log",
+      `${fromRef}..${toRef}`,
+      "--pretty=format:- %s (%an)"
+    ]);
+    const today = new Date().toISOString().split("T")[0];
+    const prompt = [
+      {
+        role: "system",
+        content: CHANGELOG_PROMPT(version, fromRef, toRef)
+      },
+      {
+        role: "user",
+        content: `Commits:
+${commits}
+
+Diff (for context):
+${diff.slice(0, 1e4)}`
+      }
+    ];
+    const engine = getEngine();
+    let changelog = await engine.generateCommitMessage(prompt);
+    if (changelog && !changelog.includes(today)) {
+      changelog = changelog.replace(
+        `## [${version}]`,
+        `## [${version}] - ${today}`
+      );
+    }
+    return changelog || "Failed to generate changelog";
+  } finally {
+    stopHeartbeat();
+  }
+}
+var prCommand = G3(
+  {
+    name: "pr" /* pr */,
+    parameters: ["[base-branch]"],
+    flags: {
+      output: {
+        type: String,
+        alias: "o",
+        description: "Output file path (default: prints to console)"
+      }
+    },
+    help: {
+      description: "Generate comprehensive pull request descriptions from branch diffs with categorized changes"
+    }
+  },
+  async (argv) => {
+    ae(source_default.bold.cyan("CommitAI PR Description Generator"));
+    try {
+      const { baseBranch: baseBranchArg } = argv._;
+      const { output } = argv.flags;
+      const currentBranch = await getCurrentBranch();
+      const defaultBase = await getDefaultBaseBranch();
+      const baseBranch = baseBranchArg || defaultBase;
+      if (currentBranch === baseBranch) {
+        ce(
+          source_default.red(
+            `\u2716 Current branch (${currentBranch}) is the same as base branch (${baseBranch})`
+          )
+        );
+        process.exit(1);
+      }
+      ce(
+        `Generating PR description for ${source_default.cyan(currentBranch)} \u2192 ${source_default.cyan(baseBranch)}`
+      );
+      const description = await generatePRDescription(baseBranch);
+      if (output) {
+        (0, import_fs7.writeFileSync)(output, description, "utf-8");
+        ce(source_default.green(`\u2713 PR description saved to ${output}`));
+      } else {
+        console.log("\n" + source_default.bold("\u2550".repeat(80)));
+        console.log(description);
+        console.log(source_default.bold("\u2550".repeat(80)) + "\n");
+        ce(source_default.green("\u2713 PR description generated successfully"));
+      }
+    } catch (error) {
+      ce(source_default.red(`\u2716 ${error instanceof Error ? error.message : error}`));
+      process.exit(1);
+    }
+  }
+);
+var changelogCommand = G3(
+  {
+    name: "changelog" /* changelog */,
+    parameters: ["<version>", "[from-ref]", "[to-ref]"],
+    flags: {
+      output: {
+        type: String,
+        alias: "o",
+        description: "Output file path (default: CHANGELOG.md)",
+        default: "CHANGELOG.md"
+      },
+      append: {
+        type: Boolean,
+        alias: "a",
+        description: "Append to existing changelog (default: prepend)",
+        default: false
+      }
+    },
+    help: {
+      description: "Generate changelog entries following Keep a Changelog format from git history"
+    }
+  },
+  async (argv) => {
+    ae(source_default.bold.cyan("CommitAI Changelog Generator"));
+    try {
+      const { version, fromRef: fromRefArg, toRef: toRefArg } = argv._;
+      const { output, append: append2 } = argv.flags;
+      if (!version) {
+        ce(source_default.red("\u2716 Version is required (e.g., cmt changelog v1.0.0)"));
+        process.exit(1);
+      }
+      const fromRef = fromRefArg || await getDefaultBaseBranch();
+      const toRef = toRefArg || "HEAD";
+      ce(
+        `Generating changelog for ${source_default.cyan(version)}: ${source_default.cyan(fromRef)} \u2192 ${source_default.cyan(toRef)}`
+      );
+      const changelog = await generateChangelog(
+        version,
+        fromRef,
+        toRef
+      );
+      if (output) {
+        (0, import_fs7.writeFileSync)(output, changelog + "\n", "utf-8");
+        ce(source_default.green(`\u2713 Changelog saved to ${output}`));
+      } else {
+        console.log("\n" + source_default.bold("\u2550".repeat(80)));
+        console.log(changelog);
+        console.log(source_default.bold("\u2550".repeat(80)) + "\n");
+        ce(source_default.green("\u2713 Changelog generated successfully"));
+      }
+    } catch (error) {
+      ce(source_default.red(`\u2716 ${error instanceof Error ? error.message : error}`));
+      process.exit(1);
+    }
+  }
+);
 
 // src/version.ts
 var getCommitAILatestVersion = async () => {
@@ -65499,34 +65960,34 @@ Current version: ${currentVersion}. Latest version: ${latestVersion}.
 };
 
 // src/migrations/_run.ts
-var import_fs7 = __toESM(require("fs"));
+var import_fs8 = __toESM(require("fs"));
 var import_os4 = require("os");
 var import_path7 = require("path");
 
 // src/migrations/00_use_single_api_key_and_url.ts
 function use_single_api_key_and_url_default() {
-  const config7 = getConfig({ setDefaultValues: false });
-  const aiProvider = config7.CMT_AI_PROVIDER;
+  const config8 = getConfig({ setDefaultValues: false });
+  const aiProvider = config8.CMT_AI_PROVIDER;
   let apiKey;
   let apiUrl;
   if (aiProvider === "ollama" /* OLLAMA */) {
-    apiKey = config7["CMT_OLLAMA_API_KEY"];
-    apiUrl = config7["CMT_OLLAMA_API_URL"];
+    apiKey = config8["CMT_OLLAMA_API_KEY"];
+    apiUrl = config8["CMT_OLLAMA_API_URL"];
   } else if (aiProvider === "anthropic" /* ANTHROPIC */) {
-    apiKey = config7["CMT_ANTHROPIC_API_KEY"];
-    apiUrl = config7["CMT_ANTHROPIC_BASE_PATH"];
+    apiKey = config8["CMT_ANTHROPIC_API_KEY"];
+    apiUrl = config8["CMT_ANTHROPIC_BASE_PATH"];
   } else if (aiProvider === "openai" /* OPENAI */) {
-    apiKey = config7["CMT_OPENAI_API_KEY"];
-    apiUrl = config7["CMT_OPENAI_BASE_PATH"];
+    apiKey = config8["CMT_OPENAI_API_KEY"];
+    apiUrl = config8["CMT_OPENAI_BASE_PATH"];
   } else if (aiProvider === "azure" /* AZURE */) {
-    apiKey = config7["CMT_AZURE_API_KEY"];
-    apiUrl = config7["CMT_AZURE_ENDPOINT"];
+    apiKey = config8["CMT_AZURE_API_KEY"];
+    apiUrl = config8["CMT_AZURE_ENDPOINT"];
   } else if (aiProvider === "gemini" /* GEMINI */) {
-    apiKey = config7["CMT_GEMINI_API_KEY"];
-    apiUrl = config7["CMT_GEMINI_BASE_PATH"];
+    apiKey = config8["CMT_GEMINI_API_KEY"];
+    apiUrl = config8["CMT_GEMINI_BASE_PATH"];
   } else if (aiProvider === "flowise" /* FLOWISE */) {
-    apiKey = config7["CMT_FLOWISE_API_KEY"];
-    apiUrl = config7["CMT_FLOWISE_ENDPOINT"];
+    apiKey = config8["CMT_FLOWISE_API_KEY"];
+    apiUrl = config8["CMT_FLOWISE_ENDPOINT"];
   } else {
     throw new Error(
       `Migration failed, set AI provider first. Run "cmt config set CMT_AI_PROVIDER=<provider>", where <provider> is one of: ${Object.values(
@@ -65565,11 +66026,11 @@ function remove_obsolete_config_keys_from_global_file_default() {
 
 // src/migrations/02_set_missing_default_values.ts
 function set_missing_default_values_default() {
-  const setDefaultConfigValues = (config7) => {
+  const setDefaultConfigValues = (config8) => {
     const entriesToSet = [];
     for (const entry of Object.entries(DEFAULT_CONFIG)) {
       const [key, _value] = entry;
-      if (config7[key] === "undefined" || config7[key] === void 0)
+      if (config8[key] === "undefined" || config8[key] === void 0)
         entriesToSet.push(entry);
     }
     if (entriesToSet.length > 0)
@@ -65598,16 +66059,16 @@ var migrations = [
 // src/migrations/_run.ts
 var migrationsFile = (0, import_path7.join)((0, import_os4.homedir)(), ".commit-ai_migrations");
 var getCompletedMigrations = () => {
-  if (!import_fs7.default.existsSync(migrationsFile)) {
+  if (!import_fs8.default.existsSync(migrationsFile)) {
     return [];
   }
-  const data = import_fs7.default.readFileSync(migrationsFile, "utf-8");
+  const data = import_fs8.default.readFileSync(migrationsFile, "utf-8");
   return data ? JSON.parse(data) : [];
 };
 var saveCompletedMigration = (migrationName) => {
   const completedMigrations = getCompletedMigrations();
   completedMigrations.push(migrationName);
-  import_fs7.default.writeFileSync(
+  import_fs8.default.writeFileSync(
     migrationsFile,
     JSON.stringify(completedMigrations, null, 2)
   );
@@ -65615,8 +66076,8 @@ var saveCompletedMigration = (migrationName) => {
 var runMigrations = async () => {
   if (!getIsGlobalConfigFileExist())
     return;
-  const config7 = getConfig();
-  if (config7.CMT_AI_PROVIDER === "test" /* TEST */)
+  const config8 = getConfig();
+  if (config8.CMT_AI_PROVIDER === "test" /* TEST */)
     return;
   const completedMigrations = getCompletedMigrations();
   let isMigrated = false;
@@ -65653,7 +66114,7 @@ Z2(
     version: package_default.version,
     name: "commit-ai",
     alias: "cmt",
-    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand],
+    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand, prCommand, changelogCommand],
     flags: {
       fgm: Boolean,
       context: {

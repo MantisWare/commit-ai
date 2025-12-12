@@ -32,7 +32,10 @@ const isHookExists = async (): Promise<boolean> => {
 export const hookCommand = command(
   {
     name: COMMANDS.hook,
-    parameters: ['<set/unset>']
+    parameters: ['<set/unset>'],
+    help: {
+      description: 'Install or uninstall Git prepare-commit-msg hook for automatic commit message generation'
+    }
   },
   async (argv) => {
     const HOOK_URL = __filename;

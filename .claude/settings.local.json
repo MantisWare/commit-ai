@@ -13,7 +13,11 @@
       "Bash(npm whoami:*)",
       "Bash(pnpm config:*)",
       "Bash(cat:*)",
-      "Bash(npm publish:*)"
+      "Bash(npm publish:*)",
+      "Bash(node out/cli.cjs check:*)",
+      "Bash(node out/cli.cjs config set:*)",
+      "Bash(node:*)",
+      "Bash(node out/cli.cjs config get:*)"
     ],
     "deny": [],
     "ask": []

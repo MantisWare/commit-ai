@@ -2,13 +2,18 @@
 
 This document summarizes **features that exist in the codebase today** (not aspirations).
 
-> Version reference: `package.json` currently indicates **v1.0.5**.
+> Version reference: `package.json` currently indicates **v1.0.6**.
 
 ---
 
 ## CLI surface area
 
 CommitAI is a CLI tool named `commit-ai` with alias **`cmt`**.
+
+### Branding / banner
+
+- CommitAI prints a modern **cyan→purple gradient** ASCII banner (see `src/utils/banner.ts`).
+- Banner includes the version and the line **“AI-Powered Git Commits”**.
 
 ### Primary command (default)
 
@@ -24,17 +29,30 @@ CommitAI is a CLI tool named `commit-ai` with alias **`cmt`**.
 - `--yes`, `-y`: Skip commit confirmation prompt.
 - `--fgm`: Use the *full* GitMoji specification in prompts (when `CMT_EMOJI=true`).
 - `--log <branch>`, `-l <branch>`: Generates a **tester-friendly summary** from the diff vs a branch (defaults to `master` when omitted).
+- `--dry-run`: Generate commit message without actually committing.
+- `--edit`, `-e`: Open generated message in `$EDITOR` before committing.
+- `--no-push`: Skip push prompts and behavior.
+- `--stage-all`, `-a`: Non-interactively stage all files and commit.
 
 ### Subcommands
 
 - `cmt check`
-  - Prints a console banner + version and runs an environment check (Git availability, config presence, basic config sanity).
+  - Prints a **gradient Commit-AI console banner** + version and runs an environment check (Git availability, config presence, basic config sanity).
+  - Includes a **Quick Start Guide** box showing common commands and usage patterns.
 - `cmt config get <KEY...>` / `cmt config set <KEY=VALUE...>`
   - Manages **global** config stored at `~/.commit-ai`.
+- `cmt config help`
+  - Displays comprehensive help for all configuration options with descriptions, examples, and defaults.
 - `cmt hook set` / `cmt hook unset`
   - Installs/uninstalls a Git `prepare-commit-msg` hook that runs CommitAI automatically.
 - `cmt commitlint get` / `cmt commitlint force`
-  - Reads or regenerates the local repo’s `@commitlint`-based LLM prompt configuration (see “Prompt modules” below).
+  - Reads or regenerates the local repo's `@commitlint`-based LLM prompt configuration (see "Prompt modules" below).
+- `cmt pr [base-branch]`
+  - Generates a comprehensive pull request description comparing the current branch with a base branch (defaults to main/master).
+  - Supports `--output` flag to save to a file.
+- `cmt changelog <version> [from-ref] [to-ref]`
+  - Generates a changelog entry following the Keep a Changelog format.
+  - Supports `--output` (default: CHANGELOG.md) and `--append` flags.
 
 ---
 
@@ -65,7 +83,8 @@ CommitAI supports two “prompt module” modes:
 ### Output shaping
 
 - **GitMoji support**: controlled by `CMT_EMOJI` (and `--fgm` for the full list).
-- **Optional description**: when `CMT_DESCRIPTION=true`, CommitAI asks the model to add a short “why” description after the title.
+- **Optional description**: when `CMT_DESCRIPTION=true`, CommitAI asks the model to add a short description after the title.
+  - **Description focus**: when `CMT_WHY=true` (requires `CMT_DESCRIPTION=true`), the description focuses on WHY changes were made (reasoning, motivation, context) rather than WHAT the changes do.
 - **One-line mode**: when `CMT_ONE_LINE_COMMIT=true`, CommitAI asks the model for a single unified message rather than multi-part output.
 - **Message templates**:
   - If you pass a commit arg containing the placeholder (default `$msg`), CommitAI will replace the placeholder with the generated message and then run `git commit ...`.
@@ -79,6 +98,14 @@ If the staged diff is too large for the configured input/output budget:
 - joins the results.
 
 If a provider call fails with a **timeout-like error**, CommitAI retries by chunking the diff into smaller pieces and combining the results.
+
+### Commit size guardrails
+
+CommitAI can enforce limits to prevent overly large commits:
+
+- **Maximum files**: When `CMT_MAX_FILES` is set, CommitAI rejects commits with more staged files than the limit.
+- **Maximum diff size**: When `CMT_MAX_DIFF_BYTES` is set, CommitAI rejects commits when the diff exceeds the byte limit.
+- Both guardrails provide clear error messages with actionable suggestions (split commits, unstage files, or adjust limits).
 
 ---
 
@@ -103,14 +130,17 @@ Common keys:
 - `CMT_API_URL`: base URL / endpoint override (useful for local servers, proxies, and some providers).
 - `CMT_MODEL`: model identifier (provider-specific).
 - `CMT_LANGUAGE`: commit message language (see “Internationalization” below).
-- `CMT_TOKENS_MAX_INPUT`, `CMT_TOKENS_MAX_OUTPUT`: token budgets used for prompt sizing and diff splitting.
+- `CMT_TOKENS_MAX_INPUT`, `CMT_TOKENS_MAX_OUTPUT`: token budgets used for prompt sizing and diff splitting (optional, provider/model specific).
 - `CMT_EMOJI`: GitMoji instructions on/off.
-- `CMT_DESCRIPTION`: append a short description (“why”) on/off.
+- `CMT_DESCRIPTION`: append a short description on/off.
+- `CMT_WHY`: when enabled with `CMT_DESCRIPTION=true`, focuses description on WHY changes were made rather than WHAT they do.
 - `CMT_ONE_LINE_COMMIT`: one-line commit output on/off.
 - `CMT_MESSAGE_TEMPLATE_PLACEHOLDER`: placeholder token used for message templates (default `$msg`).
 - `CMT_PROMPT_MODULE`: `conventional-commit` or `@commitlint`.
+- `CMT_MAX_FILES`: maximum number of files allowed in a single commit (optional guardrail).
+- `CMT_MAX_DIFF_BYTES`: maximum diff size in bytes (optional guardrail).
 - `CMT_DEBUG`: prints prompt payloads for debugging.
-- `CMT_GITPUSH`: controls whether CommitAI prompts for / runs `git push` after a successful commit (noted in code as “todo: deprecate”).
+- `CMT_GITPUSH`: controls whether CommitAI prompts for / runs `git push` after a successful commit (noted in code as "todo: deprecate").
 
 ---
 
@@ -159,6 +189,12 @@ The GitHub Action implementation:
 - processes push events,
 - fetches diffs for commits in the push payload,
 - generates improved messages in request chunks (with retries/sleeps), then
-- rebases/amends commits non-interactively and **force pushes** the rewritten history.
+- rebases/amends commits non-interactively and optionally **force pushes** the rewritten history.
+
+**Safety Rails:**
+- `enable_force_push`: Must be explicitly set to `true` to enable force pushing (default: `false`).
+- `allowed_branches`: Comma-separated list of branches to allow (default: all branches).
+- `require_confirmation`: Issues warnings when force pushing to protected branches (default: `true`).
+- Protected branches (main, master, production, prod) require explicit opt-in for force pushing.
 
 

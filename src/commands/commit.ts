@@ -388,6 +388,37 @@ export const commit = async (
     process.exit(1);
   }
 
+  // Guardrail checks
+  if (config.CMT_MAX_FILES && stagedFiles.length > config.CMT_MAX_FILES) {
+    outro(
+      chalk.red(
+        `✖ Too many files staged (${stagedFiles.length}/${config.CMT_MAX_FILES})\n\n` +
+        `Suggested actions:\n` +
+        `  • Split changes into smaller, focused commits\n` +
+        `  • Unstage some files: git reset HEAD <file>\n` +
+        `  • Adjust limit: cmt config set CMT_MAX_FILES <number>`
+      )
+    );
+    process.exit(1);
+  }
+
+  if (config.CMT_MAX_DIFF_BYTES && diff && Buffer.byteLength(diff, 'utf8') > config.CMT_MAX_DIFF_BYTES) {
+    const diffSize = Buffer.byteLength(diff, 'utf8');
+    const diffSizeKB = (diffSize / 1024).toFixed(1);
+    const limitKB = (config.CMT_MAX_DIFF_BYTES / 1024).toFixed(1);
+
+    outro(
+      chalk.red(
+        `✖ Diff too large (${diffSizeKB} KB / ${limitKB} KB limit)\n\n` +
+        `Suggested actions:\n` +
+        `  • Split changes into multiple smaller commits\n` +
+        `  • Commit fewer files at once\n` +
+        `  • Adjust limit: cmt config set CMT_MAX_DIFF_BYTES <bytes>`
+      )
+    );
+    process.exit(1);
+  }
+
   const [, generateCommitError] = await trytm(
     generateCommitMessageFromGitDiff({
       diff: diff ?? '',

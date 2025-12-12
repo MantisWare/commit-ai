@@ -13,10 +13,65 @@ import { sleep } from './utils/sleep';
 // GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 // https://help.github.com/en/actions/automating-your-workflow-with-github-actions/authenticating-with-the-github_token#about-the-github_token-secret
 const GITHUB_TOKEN = core.getInput('GITHUB_TOKEN');
+
+// Safety Rails Configuration
+const ENABLE_FORCE_PUSH = core.getInput('enable_force_push') === 'true';
+const ALLOWED_BRANCHES = core.getInput('allowed_branches') || '';
+const REQUIRE_CONFIRMATION = core.getInput('require_confirmation') !== 'false'; // default true
+const PROTECTED_BRANCHES = ['main', 'master', 'production', 'prod'];
+
 const octokit = github.getOctokit(GITHUB_TOKEN);
 const context = github.context;
 const owner = context.repo.owner;
 const repo = context.repo.repo;
+
+function isBranchAllowed(branchName: string): boolean {
+  // If no allowed branches specified, allow all
+  if (!ALLOWED_BRANCHES) return true;
+
+  const allowedList = ALLOWED_BRANCHES.split(',').map(b => b.trim());
+  return allowedList.includes(branchName);
+}
+
+function isProtectedBranch(branchName: string): boolean {
+  return PROTECTED_BRANCHES.some(protectedBranch =>
+    branchName === protectedBranch || branchName.endsWith(`/${protectedBranch}`)
+  );
+}
+
+function getBranchName(): string {
+  const ref = context.ref; // e.g., 'refs/heads/main'
+  return ref.replace('refs/heads/', '');
+}
+
+function performSafetyChecks(): { proceed: boolean; message: string } {
+  const branchName = getBranchName();
+
+  // Check if branch is in allowlist
+  if (!isBranchAllowed(branchName)) {
+    return {
+      proceed: false,
+      message: `Branch '${branchName}' is not in the allowed branches list: ${ALLOWED_BRANCHES}`
+    };
+  }
+
+  // Check if force push is disabled but branch is protected
+  if (!ENABLE_FORCE_PUSH && isProtectedBranch(branchName)) {
+    return {
+      proceed: false,
+      message: `Force push to protected branch '${branchName}' is not allowed. Set enable_force_push: true to override.`
+    };
+  }
+
+  // Check if confirmation is required but force push is enabled on protected branch
+  if (REQUIRE_CONFIRMATION && ENABLE_FORCE_PUSH && isProtectedBranch(branchName)) {
+    core.warning(
+      `⚠️  Force pushing to protected branch '${branchName}'. Ensure this is intentional.`
+    );
+  }
+
+  return { proceed: true, message: 'Safety checks passed' };
+}
 
 async function getCommitDiff(commitSha: string) {
   const diffResponse = await octokit.request<string>(
@@ -177,11 +232,26 @@ async function improveCommitMessages(
   unlinkSync('./count.txt');
   unlinkSync('./rebase-exec.sh');
 
-  outro('Force pushing non-interactively rebased commits into remote.');
+  outro('Preparing to push rebased commits to remote.');
 
   await exec.exec('git', ['status']);
 
+  // Safety check before force push
+  if (!ENABLE_FORCE_PUSH) {
+    outro('⚠️  Force push is disabled. Rebased commits will NOT be pushed.');
+    outro('Set enable_force_push: true in your workflow to enable force push.');
+    return;
+  }
+
+  const branchName = getBranchName();
+  if (isProtectedBranch(branchName)) {
+    core.warning(
+      `⚠️  Force pushing to protected branch '${branchName}'`
+    );
+  }
+
   // Force push the rebased commits
+  outro('Force pushing rebased commits to remote.');
   await exec.exec('git', ['push', `--force`]);
 
   outro('Done 🧙');
@@ -191,6 +261,15 @@ async function run() {
   intro('CommitAI — improving lame commit messages');
 
   try {
+    // Perform safety checks first
+    const safetyCheck = performSafetyChecks();
+    if (!safetyCheck.proceed) {
+      outro(`❌ Safety check failed: ${safetyCheck.message}`);
+      core.setFailed(safetyCheck.message);
+      return;
+    }
+    outro(`✓ ${safetyCheck.message}`);
+
     if (github.context.eventName === 'push') {
       outro(`Processing commits in a Push event`);
 

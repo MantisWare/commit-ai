@@ -1,5 +1,5 @@
 import { OpenAI } from 'openai';
-import { DEFAULT_TOKEN_LIMITS, getConfig } from './commands/config';
+import { getConfig } from './commands/config';
 import { getMainCommitPrompt } from './prompts';
 import { debug } from './utils/debug';
 import { getEngine } from './utils/engine';
@@ -8,8 +8,9 @@ import { sanitizeSpecialTokens } from './utils/sanitizeSpecialTokens';
 import { tokenCount } from './utils/tokenCount';
 
 const config = getConfig();
-const MAX_TOKENS_INPUT = config.CMT_TOKENS_MAX_INPUT;
-const MAX_TOKENS_OUTPUT = config.CMT_TOKENS_MAX_OUTPUT;
+// Fallback to reasonable defaults if not configured (users should configure for their provider)
+const MAX_TOKENS_INPUT = config.CMT_TOKENS_MAX_INPUT || 8192;
+const MAX_TOKENS_OUTPUT = config.CMT_TOKENS_MAX_OUTPUT || 2048;
 
 const generateCommitMessageChatCompletionPrompt = async (
   diff: string,
@@ -39,7 +40,7 @@ export enum GenerateCommitMessageErrorEnum {
 }
 
 export const getOutputTokensErrorMessage = () =>
-  `Token limit exceeded, CMT_TOKENS_MAX_OUTPUT must not be much higher than the default ${DEFAULT_TOKEN_LIMITS.DEFAULT_MAX_TOKENS_OUTPUT} tokens.`;
+  `Token limit exceeded. Please adjust CMT_TOKENS_MAX_OUTPUT to match your provider's limits.`;
 
 const ADJUSTMENT_FACTOR = 20;
 

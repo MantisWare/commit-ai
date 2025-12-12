@@ -26,6 +26,8 @@ export enum CONFIG_KEYS {
   CMT_TEST_MOCK_TYPE = 'CMT_TEST_MOCK_TYPE',
   CMT_API_URL = 'CMT_API_URL',
   CMT_DEBUG = 'CMT_DEBUG',
+  CMT_MAX_FILES = 'CMT_MAX_FILES',
+  CMT_MAX_DIFF_BYTES = 'CMT_MAX_DIFF_BYTES',
   CMT_GITPUSH = 'CMT_GITPUSH' // todo: deprecate
 }
 
@@ -158,11 +160,6 @@ const getDefaultModel = (provider: string | undefined): string => {
       return MODEL_LIST.openai[0];
   }
 };
-
-export enum DEFAULT_TOKEN_LIMITS {
-  DEFAULT_MAX_TOKENS_INPUT = 40960,
-  DEFAULT_MAX_TOKENS_OUTPUT = 4096
-}
 
 const validateConfig = (
   key: string,
@@ -301,6 +298,26 @@ export const configValidators = {
     );
   },
 
+  [CONFIG_KEYS.CMT_MAX_FILES](value: any) {
+    value = parseInt(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_MAX_FILES,
+      !isNaN(value) && value > 0,
+      'Must be a positive number'
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_MAX_DIFF_BYTES](value: any) {
+    value = parseInt(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_MAX_DIFF_BYTES,
+      !isNaN(value) && value > 0,
+      'Must be a positive number (size in bytes)'
+    );
+    return value;
+  },
+
   // todo: deprecate
   [CONFIG_KEYS.CMT_GITPUSH](value: any) {
     validateConfig(
@@ -314,20 +331,13 @@ export const configValidators = {
   [CONFIG_KEYS.CMT_AI_PROVIDER](value: any) {
     if (!value) value = 'openai';
 
+    const validProviders = Object.values(CMT_AI_PROVIDER_ENUM);
+    const isValid = validProviders.includes(value as CMT_AI_PROVIDER_ENUM) || value.startsWith('ollama');
+
     validateConfig(
       CONFIG_KEYS.CMT_AI_PROVIDER,
-      [
-        'openai',
-        'deepseek',
-        'mistral',
-        'anthropic',
-        'gemini',
-        'azure',
-        'test',
-        'flowise',
-        'groq'
-      ].includes(value) || value.startsWith('ollama'),
-      `${value} is not supported yet, use 'ollama', 'mlx', 'anthropic', 'azure', 'gemini', 'flowise', 'mistral', 'deepseek' or 'openai' (default)`
+      isValid,
+      `${value} is not supported. Valid providers: ${validProviders.join(', ')}`
     );
 
     return value;
@@ -380,8 +390,8 @@ export enum CMT_AI_PROVIDER_ENUM {
 
 export type ConfigType = {
   [CONFIG_KEYS.CMT_API_KEY]?: string;
-  [CONFIG_KEYS.CMT_TOKENS_MAX_INPUT]: number;
-  [CONFIG_KEYS.CMT_TOKENS_MAX_OUTPUT]: number;
+  [CONFIG_KEYS.CMT_TOKENS_MAX_INPUT]?: number;
+  [CONFIG_KEYS.CMT_TOKENS_MAX_OUTPUT]?: number;
   [CONFIG_KEYS.CMT_API_URL]?: string;
   [CONFIG_KEYS.CMT_DESCRIPTION]: boolean;
   [CONFIG_KEYS.CMT_EMOJI]: boolean;
@@ -394,6 +404,8 @@ export type ConfigType = {
   [CONFIG_KEYS.CMT_GITPUSH]: boolean;
   [CONFIG_KEYS.CMT_ONE_LINE_COMMIT]: boolean;
   [CONFIG_KEYS.CMT_DEBUG]: boolean;
+  [CONFIG_KEYS.CMT_MAX_FILES]?: number;
+  [CONFIG_KEYS.CMT_MAX_DIFF_BYTES]?: number;
   [CONFIG_KEYS.CMT_TEST_MOCK_TYPE]: string;
 };
 
@@ -429,8 +441,6 @@ enum CMT_PROMPT_MODULE_ENUM {
 }
 
 export const DEFAULT_CONFIG = {
-  CMT_TOKENS_MAX_INPUT: DEFAULT_TOKEN_LIMITS.DEFAULT_MAX_TOKENS_INPUT,
-  CMT_TOKENS_MAX_OUTPUT: DEFAULT_TOKEN_LIMITS.DEFAULT_MAX_TOKENS_OUTPUT,
   CMT_DESCRIPTION: false,
   CMT_EMOJI: false,
   CMT_MODEL: getDefaultModel('openai'),
@@ -473,6 +483,7 @@ const getEnvConfig = (envPath: string) => {
     ),
 
     CMT_DESCRIPTION: parseConfigVarValue(process.env.CMT_DESCRIPTION),
+    CMT_WHY: parseConfigVarValue(process.env.CMT_WHY),
     CMT_EMOJI: parseConfigVarValue(process.env.CMT_EMOJI),
     CMT_LANGUAGE: process.env.CMT_LANGUAGE,
     CMT_MESSAGE_TEMPLATE_PLACEHOLDER:
@@ -482,6 +493,8 @@ const getEnvConfig = (envPath: string) => {
     CMT_TEST_MOCK_TYPE: process.env.CMT_TEST_MOCK_TYPE,
 
     CMT_DEBUG: parseConfigVarValue(process.env.CMT_DEBUG),
+    CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
+    CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH) // todo: deprecate
   };
 };
@@ -606,14 +619,132 @@ export const setConfig = (
   outro(`${chalk.green('✔')} config successfully set`);
 };
 
+const CONFIG_HELP: Record<string, { description: string; example: string; default?: string }> = {
+  CMT_API_KEY: {
+    description: 'API key for the AI provider',
+    example: 'sk-...',
+    default: 'none (required)'
+  },
+  CMT_AI_PROVIDER: {
+    description: 'AI provider to use',
+    example: 'openai',
+    default: 'openai'
+  },
+  CMT_MODEL: {
+    description: 'AI model to use',
+    example: 'gpt-4o-mini',
+    default: 'gpt-4o-mini (openai)'
+  },
+  CMT_API_URL: {
+    description: 'Custom API endpoint URL',
+    example: 'http://localhost:11434/api/chat',
+    default: 'provider default'
+  },
+  CMT_TOKENS_MAX_INPUT: {
+    description: 'Maximum input tokens for AI requests',
+    example: '40960',
+    default: 'not set (provider/model specific)'
+  },
+  CMT_TOKENS_MAX_OUTPUT: {
+    description: 'Maximum output tokens for AI responses',
+    example: '4096',
+    default: 'not set (provider/model specific)'
+  },
+  CMT_DESCRIPTION: {
+    description: 'Add description to commit messages',
+    example: 'true',
+    default: 'false'
+  },
+  CMT_WHY: {
+    description: 'Focus description on WHY (vs WHAT) changes were made',
+    example: 'true',
+    default: 'false'
+  },
+  CMT_EMOJI: {
+    description: 'Enable GitMoji in commit messages',
+    example: 'true',
+    default: 'false'
+  },
+  CMT_LANGUAGE: {
+    description: 'Language for commit messages',
+    example: 'en',
+    default: 'en'
+  },
+  CMT_ONE_LINE_COMMIT: {
+    description: 'Generate single-line commit messages',
+    example: 'true',
+    default: 'false'
+  },
+  CMT_MESSAGE_TEMPLATE_PLACEHOLDER: {
+    description: 'Template placeholder for commit messages',
+    example: '$msg',
+    default: '$msg'
+  },
+  CMT_PROMPT_MODULE: {
+    description: 'Prompt module to use',
+    example: 'conventional-commit',
+    default: 'conventional-commit'
+  },
+  CMT_DEBUG: {
+    description: 'Enable debug logging',
+    example: 'true',
+    default: 'false'
+  },
+  CMT_MAX_FILES: {
+    description: 'Maximum files allowed in a commit',
+    example: '50',
+    default: 'unlimited'
+  },
+  CMT_MAX_DIFF_BYTES: {
+    description: 'Maximum diff size in bytes',
+    example: '102400',
+    default: 'unlimited'
+  }
+};
+
+const printConfigHelp = () => {
+  console.log(chalk.bold.cyan('\nAvailable Configuration Options:\n'));
+
+  Object.entries(CONFIG_HELP).forEach(([key, info]) => {
+    console.log(chalk.bold(key));
+    console.log(`  ${chalk.gray('Description:')} ${info.description}`);
+    console.log(`  ${chalk.gray('Example:')}     ${chalk.yellow(info.example)}`);
+    console.log(`  ${chalk.gray('Default:')}     ${info.default}`);
+    console.log('');
+  });
+
+  console.log(chalk.bold.cyan('Usage Examples:\n'));
+  console.log(`  ${chalk.gray('Get a config value:')}`);
+  console.log(`    ${chalk.yellow('cmt config get CMT_MODEL')}\n`);
+  console.log(`  ${chalk.gray('Set a config value:')}`);
+  console.log(`    ${chalk.yellow('cmt config set CMT_MODEL=gpt-4o-mini')}\n`);
+  console.log(`  ${chalk.gray('Set multiple values:')}`);
+  console.log(`    ${chalk.yellow('cmt config set CMT_EMOJI=true CMT_DESCRIPTION=true')}\n`);
+};
+
 export const configCommand = command(
   {
     name: COMMANDS.config,
-    parameters: ['<mode>', '<key=values...>']
+    parameters: ['<mode>', '[key=values...]'],
+    help: {
+      description: 'Manage global CommitAI configuration stored in ~/.commit-ai (get/set/help)'
+    }
   },
   async (argv) => {
     try {
       const { mode, keyValues } = argv._;
+
+      if (mode === 'help') {
+        printConfigHelp();
+        return;
+      }
+
+      if (!keyValues || keyValues.length === 0) {
+        throw new Error(
+          `Missing key=value pairs. Usage:\n  cmt config ${mode} KEY=VALUE\n  cmt config help`
+        );
+      }
+
       intro(`COMMAND: config ${mode} ${keyValues}`);
 
       if (mode === CONFIG_MODES.get) {
@@ -627,7 +758,7 @@ export const configCommand = command(
         );
       } else {
         throw new Error(
-          `Unsupported mode: ${mode}. Valid modes are: "set" and "get"`
+          `Unsupported mode: ${mode}. Valid modes are: "set", "get", and "help"`
         );
       }
     } catch (error) {

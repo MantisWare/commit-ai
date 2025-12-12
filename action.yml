@@ -31,6 +31,18 @@ inputs:
   GITHUB_TOKEN:
     description: 'GitHub token'
     required: true
+  enable_force_push:
+    description: 'Enable force push to remote (default: false for safety)'
+    required: false
+    default: 'false'
+  allowed_branches:
+    description: 'Comma-separated list of branches to allow (e.g., "develop,feature/*")'
+    required: false
+    default: ''
+  require_confirmation:
+    description: 'Require explicit confirmation for protected branches (default: true)'
+    required: false
+    default: 'true'
 
 runs:
   using: 'node16'
