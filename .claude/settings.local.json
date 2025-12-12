@@ -9,7 +9,8 @@
       "Bash(pnpm why:*)",
       "Bash(pnpm install:*)",
       "Bash(pnpm start -- --help)",
-      "Bash(node ./out/cli.cjs:*)"
+      "Bash(node ./out/cli.cjs:*)",
+      "Bash(npm whoami:*)"
     ],
     "deny": [],
     "ask": []
