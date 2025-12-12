@@ -54,6 +54,30 @@ CommitAI is a CLI tool named `commit-ai` with alias **`cmt`**.
 - `cmt changelog <version> [from-ref] [to-ref]`
   - Generates a changelog entry following the Keep a Changelog format.
   - Supports `--output` (default: CHANGELOG.md) and `--append` flags.
+- `cmt review`
+  - AI-powered code review of staged changes analyzing security, performance, best practices, code quality, bugs, and style.
+  - Provides overall quality score (0-100) and recommendation (approve/review/block).
+  - Outputs detailed findings with severity levels, categories, and actionable suggestions.
+  - Supports `--json` flag for CI/CD integration.
+  - Files can be excluded from review using `.commit-ai-review-ignore` file.
+- `cmt --review` (or `cmt -r`)
+  - Runs automatic code review before committing.
+  - Interactive prompts based on review results (approve/review/block).
+  - Can enforce minimum quality score via `CMT_REVIEW_MIN_SCORE` configuration.
+- `cmt standards import`
+  - Import code standards from 10 popular style guides (React, Angular, Vue, Node.js, Python, Java, Go, Rust, TypeScript, C#).
+  - Standards stored in `.commit-ai-standards` file.
+- `cmt standards set`
+  - Create custom code standards interactively.
+  - Standards used by AI for targeted code review.
+- `cmt standards view`
+  - Display current configured code standards.
+- `cmt review cache-stats`
+  - View review cache statistics (total entries, valid entries, cache size).
+- `cmt review clear-cache`
+  - Clear all cached review results.
+- `cmt review --no-cache`
+  - Skip cache and perform fresh review (even if cached result exists).
 
 ---
 
@@ -69,7 +93,8 @@ CommitAI is a CLI tool named `commit-ai` with alias **`cmt`**.
 
 ### Ignore file support
 
-- If a `.commit-aiignore` file exists in the repo root, its patterns are used to ignore staged files before prompting.
+- **`.commit-aiignore`**: If this file exists in the repo root, its patterns are used to exclude staged files from commit message generation (they won't be included in the diff sent to the AI).
+- **`.commit-ai-review-ignore`**: If this file exists, its patterns are used to exclude files from code review analysis (via `cmt review` or `cmt --review`). Files excluded from review are still included in commits and commit messages.
 
 ### Prompt modules
 
@@ -142,6 +167,9 @@ Common keys:
 - `CMT_PROMPT_MODULE`: `conventional-commit` or `@commitlint`.
 - `CMT_MAX_FILES`: maximum number of files allowed in a single commit (optional guardrail).
 - `CMT_MAX_DIFF_BYTES`: maximum diff size in bytes (optional guardrail).
+- `CMT_REVIEW_MIN_SCORE`: minimum code quality score (0-100) required when using `--review` flag (optional guardrail).
+- `CMT_REVIEW_CACHE_TTL`: time to live for cached review results in hours (default: 24, max: 168).
+- `CMT_REVIEW_CACHE_DISABLED`: disable review result caching completely (default: false).
 - `CMT_DEBUG`: prints prompt payloads for debugging.
 - `CMT_GITPUSH`: controls whether CommitAI prompts for / runs `git push` after a successful commit (noted in code as "todo: deprecate").
 

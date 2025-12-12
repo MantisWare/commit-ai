@@ -1230,7 +1230,7 @@ var require_main = __commonJS({
         return { parsed: parsedAll };
       }
     }
-    function config8(options) {
+    function config9(options) {
       if (_dotenvKey(options).length === 0) {
         return DotenvModule.configDotenv(options);
       }
@@ -1297,7 +1297,7 @@ var require_main = __commonJS({
       configDotenv,
       _configVault,
       _parseVault,
-      config: config8,
+      config: config9,
       decrypt,
       parse,
       populate
@@ -1458,20 +1458,20 @@ var require_ini = __commonJS({
         let esc = false;
         let unesc = "";
         for (let i3 = 0, l3 = val.length; i3 < l3; i3++) {
-          const c3 = val.charAt(i3);
+          const c4 = val.charAt(i3);
           if (esc) {
-            if ("\\;#".indexOf(c3) !== -1) {
-              unesc += c3;
+            if ("\\;#".indexOf(c4) !== -1) {
+              unesc += c4;
             } else {
-              unesc += "\\" + c3;
+              unesc += "\\" + c4;
             }
             esc = false;
-          } else if (";#".indexOf(c3) !== -1) {
+          } else if (";#".indexOf(c4) !== -1) {
             break;
-          } else if (c3 === "\\") {
+          } else if (c4 === "\\") {
             esc = true;
           } else {
-            unesc += c3;
+            unesc += c4;
           }
         }
         if (esc) {
@@ -1595,9 +1595,9 @@ var require_lib = __commonJS({
     };
     conversions["ByteString"] = function(V6, opts) {
       const x5 = String(V6);
-      let c3 = void 0;
-      for (let i3 = 0; (c3 = x5.codePointAt(i3)) !== void 0; ++i3) {
-        if (c3 > 255) {
+      let c4 = void 0;
+      for (let i3 = 0; (c4 = x5.codePointAt(i3)) !== void 0; ++i3) {
+        if (c4 > 255) {
           throw new TypeError("Argument is not a valid bytestring");
         }
       }
@@ -1608,10 +1608,10 @@ var require_lib = __commonJS({
       const n2 = S6.length;
       const U7 = [];
       for (let i3 = 0; i3 < n2; ++i3) {
-        const c3 = S6.charCodeAt(i3);
-        if (c3 < 55296 || c3 > 57343) {
-          U7.push(String.fromCodePoint(c3));
-        } else if (56320 <= c3 && c3 <= 57343) {
+        const c4 = S6.charCodeAt(i3);
+        if (c4 < 55296 || c4 > 57343) {
+          U7.push(String.fromCodePoint(c4));
+        } else if (56320 <= c4 && c4 <= 57343) {
           U7.push(String.fromCodePoint(65533));
         } else {
           if (i3 === n2 - 1) {
@@ -1619,7 +1619,7 @@ var require_lib = __commonJS({
           } else {
             const d7 = S6.charCodeAt(i3 + 1);
             if (56320 <= d7 && d7 <= 57343) {
-              const a4 = c3 & 1023;
+              const a4 = c4 & 1023;
               const b7 = d7 & 1023;
               U7.push(String.fromCodePoint((2 << 15) + (2 << 9) * a4 + b7));
               ++i3;
@@ -1859,20 +1859,20 @@ var require_url_state_machine = __commonJS({
       return punycode.ucs2.decode(str2).length;
     }
     function at2(input, idx) {
-      const c3 = input[idx];
-      return isNaN(c3) ? void 0 : String.fromCodePoint(c3);
+      const c4 = input[idx];
+      return isNaN(c4) ? void 0 : String.fromCodePoint(c4);
     }
-    function isASCIIDigit(c3) {
-      return c3 >= 48 && c3 <= 57;
+    function isASCIIDigit(c4) {
+      return c4 >= 48 && c4 <= 57;
     }
-    function isASCIIAlpha(c3) {
-      return c3 >= 65 && c3 <= 90 || c3 >= 97 && c3 <= 122;
+    function isASCIIAlpha(c4) {
+      return c4 >= 65 && c4 <= 90 || c4 >= 97 && c4 <= 122;
     }
-    function isASCIIAlphanumeric(c3) {
-      return isASCIIAlpha(c3) || isASCIIDigit(c3);
+    function isASCIIAlphanumeric(c4) {
+      return isASCIIAlpha(c4) || isASCIIDigit(c4);
     }
-    function isASCIIHex(c3) {
-      return isASCIIDigit(c3) || c3 >= 65 && c3 <= 70 || c3 >= 97 && c3 <= 102;
+    function isASCIIHex(c4) {
+      return isASCIIDigit(c4) || c4 >= 65 && c4 <= 70 || c4 >= 97 && c4 <= 102;
     }
     function isSingleDot(buffer) {
       return buffer === "." || buffer.toLowerCase() === "%2e";
@@ -1905,15 +1905,15 @@ var require_url_state_machine = __commonJS({
     function defaultPort(scheme) {
       return specialSchemes[scheme];
     }
-    function percentEncode(c3) {
-      let hex = c3.toString(16).toUpperCase();
+    function percentEncode(c4) {
+      let hex = c4.toString(16).toUpperCase();
       if (hex.length === 1) {
         hex = "0" + hex;
       }
       return "%" + hex;
     }
-    function utf8PercentEncode(c3) {
-      const buf = new Buffer(c3);
+    function utf8PercentEncode(c4) {
+      const buf = new Buffer(c4);
       let str2 = "";
       for (let i3 = 0; i3 < buf.length; ++i3) {
         str2 += percentEncode(buf[i3]);
@@ -1935,20 +1935,20 @@ var require_url_state_machine = __commonJS({
       }
       return new Buffer(output).toString();
     }
-    function isC0ControlPercentEncode(c3) {
-      return c3 <= 31 || c3 > 126;
+    function isC0ControlPercentEncode(c4) {
+      return c4 <= 31 || c4 > 126;
     }
     var extraPathPercentEncodeSet = /* @__PURE__ */ new Set([32, 34, 35, 60, 62, 63, 96, 123, 125]);
-    function isPathPercentEncode(c3) {
-      return isC0ControlPercentEncode(c3) || extraPathPercentEncodeSet.has(c3);
+    function isPathPercentEncode(c4) {
+      return isC0ControlPercentEncode(c4) || extraPathPercentEncodeSet.has(c4);
     }
     var extraUserinfoPercentEncodeSet = /* @__PURE__ */ new Set([47, 58, 59, 61, 64, 91, 92, 93, 94, 124]);
-    function isUserinfoPercentEncode(c3) {
-      return isPathPercentEncode(c3) || extraUserinfoPercentEncodeSet.has(c3);
+    function isUserinfoPercentEncode(c4) {
+      return isPathPercentEncode(c4) || extraUserinfoPercentEncodeSet.has(c4);
     }
-    function percentEncodeChar(c3, encodeSetPredicate) {
-      const cStr = String.fromCodePoint(c3);
-      if (encodeSetPredicate(c3)) {
+    function percentEncodeChar(c4, encodeSetPredicate) {
+      const cStr = String.fromCodePoint(c4);
+      if (encodeSetPredicate(c4)) {
         return utf8PercentEncode(cStr);
       }
       return cStr;
@@ -2286,9 +2286,9 @@ var require_url_state_machine = __commonJS({
       this.passwordTokenSeenFlag = false;
       this.input = punycode.ucs2.decode(this.input);
       for (; this.pointer <= this.input.length; ++this.pointer) {
-        const c3 = this.input[this.pointer];
-        const cStr = isNaN(c3) ? void 0 : String.fromCodePoint(c3);
-        const ret = this["parse " + this.state](c3, cStr);
+        const c4 = this.input[this.pointer];
+        const cStr = isNaN(c4) ? void 0 : String.fromCodePoint(c4);
+        const ret = this["parse " + this.state](c4, cStr);
         if (!ret) {
           break;
         } else if (ret === failure) {
@@ -2297,8 +2297,8 @@ var require_url_state_machine = __commonJS({
         }
       }
     }
-    URLStateMachine.prototype["parse scheme start"] = function parseSchemeStart(c3, cStr) {
-      if (isASCIIAlpha(c3)) {
+    URLStateMachine.prototype["parse scheme start"] = function parseSchemeStart(c4, cStr) {
+      if (isASCIIAlpha(c4)) {
         this.buffer += cStr.toLowerCase();
         this.state = "scheme";
       } else if (!this.stateOverride) {
@@ -2310,10 +2310,10 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse scheme"] = function parseScheme(c3, cStr) {
-      if (isASCIIAlphanumeric(c3) || c3 === 43 || c3 === 45 || c3 === 46) {
+    URLStateMachine.prototype["parse scheme"] = function parseScheme(c4, cStr) {
+      if (isASCIIAlphanumeric(c4) || c4 === 43 || c4 === 45 || c4 === 46) {
         this.buffer += cStr.toLowerCase();
-      } else if (c3 === 58) {
+      } else if (c4 === 58) {
         if (this.stateOverride) {
           if (isSpecial(this.url) && !isSpecialScheme(this.buffer)) {
             return false;
@@ -2360,10 +2360,10 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse no scheme"] = function parseNoScheme(c3) {
-      if (this.base === null || this.base.cannotBeABaseURL && c3 !== 35) {
+    URLStateMachine.prototype["parse no scheme"] = function parseNoScheme(c4) {
+      if (this.base === null || this.base.cannotBeABaseURL && c4 !== 35) {
         return failure;
-      } else if (this.base.cannotBeABaseURL && c3 === 35) {
+      } else if (this.base.cannotBeABaseURL && c4 === 35) {
         this.url.scheme = this.base.scheme;
         this.url.path = this.base.path.slice();
         this.url.query = this.base.query;
@@ -2379,8 +2379,8 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse special relative or authority"] = function parseSpecialRelativeOrAuthority(c3) {
-      if (c3 === 47 && this.input[this.pointer + 1] === 47) {
+    URLStateMachine.prototype["parse special relative or authority"] = function parseSpecialRelativeOrAuthority(c4) {
+      if (c4 === 47 && this.input[this.pointer + 1] === 47) {
         this.state = "special authority ignore slashes";
         ++this.pointer;
       } else {
@@ -2390,8 +2390,8 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse path or authority"] = function parsePathOrAuthority(c3) {
-      if (c3 === 47) {
+    URLStateMachine.prototype["parse path or authority"] = function parsePathOrAuthority(c4) {
+      if (c4 === 47) {
         this.state = "authority";
       } else {
         this.state = "path";
@@ -2399,18 +2399,18 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse relative"] = function parseRelative(c3) {
+    URLStateMachine.prototype["parse relative"] = function parseRelative(c4) {
       this.url.scheme = this.base.scheme;
-      if (isNaN(c3)) {
+      if (isNaN(c4)) {
         this.url.username = this.base.username;
         this.url.password = this.base.password;
         this.url.host = this.base.host;
         this.url.port = this.base.port;
         this.url.path = this.base.path.slice();
         this.url.query = this.base.query;
-      } else if (c3 === 47) {
+      } else if (c4 === 47) {
         this.state = "relative slash";
-      } else if (c3 === 63) {
+      } else if (c4 === 63) {
         this.url.username = this.base.username;
         this.url.password = this.base.password;
         this.url.host = this.base.host;
@@ -2418,7 +2418,7 @@ var require_url_state_machine = __commonJS({
         this.url.path = this.base.path.slice();
         this.url.query = "";
         this.state = "query";
-      } else if (c3 === 35) {
+      } else if (c4 === 35) {
         this.url.username = this.base.username;
         this.url.password = this.base.password;
         this.url.host = this.base.host;
@@ -2427,7 +2427,7 @@ var require_url_state_machine = __commonJS({
         this.url.query = this.base.query;
         this.url.fragment = "";
         this.state = "fragment";
-      } else if (isSpecial(this.url) && c3 === 92) {
+      } else if (isSpecial(this.url) && c4 === 92) {
         this.parseError = true;
         this.state = "relative slash";
       } else {
@@ -2441,13 +2441,13 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse relative slash"] = function parseRelativeSlash(c3) {
-      if (isSpecial(this.url) && (c3 === 47 || c3 === 92)) {
-        if (c3 === 92) {
+    URLStateMachine.prototype["parse relative slash"] = function parseRelativeSlash(c4) {
+      if (isSpecial(this.url) && (c4 === 47 || c4 === 92)) {
+        if (c4 === 92) {
           this.parseError = true;
         }
         this.state = "special authority ignore slashes";
-      } else if (c3 === 47) {
+      } else if (c4 === 47) {
         this.state = "authority";
       } else {
         this.url.username = this.base.username;
@@ -2459,8 +2459,8 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse special authority slashes"] = function parseSpecialAuthoritySlashes(c3) {
-      if (c3 === 47 && this.input[this.pointer + 1] === 47) {
+    URLStateMachine.prototype["parse special authority slashes"] = function parseSpecialAuthoritySlashes(c4) {
+      if (c4 === 47 && this.input[this.pointer + 1] === 47) {
         this.state = "special authority ignore slashes";
         ++this.pointer;
       } else {
@@ -2470,8 +2470,8 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse special authority ignore slashes"] = function parseSpecialAuthorityIgnoreSlashes(c3) {
-      if (c3 !== 47 && c3 !== 92) {
+    URLStateMachine.prototype["parse special authority ignore slashes"] = function parseSpecialAuthorityIgnoreSlashes(c4) {
+      if (c4 !== 47 && c4 !== 92) {
         this.state = "authority";
         --this.pointer;
       } else {
@@ -2479,8 +2479,8 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse authority"] = function parseAuthority(c3, cStr) {
-      if (c3 === 64) {
+    URLStateMachine.prototype["parse authority"] = function parseAuthority(c4, cStr) {
+      if (c4 === 64) {
         this.parseError = true;
         if (this.atFlag) {
           this.buffer = "%40" + this.buffer;
@@ -2501,7 +2501,7 @@ var require_url_state_machine = __commonJS({
           }
         }
         this.buffer = "";
-      } else if (isNaN(c3) || c3 === 47 || c3 === 63 || c3 === 35 || isSpecial(this.url) && c3 === 92) {
+      } else if (isNaN(c4) || c4 === 47 || c4 === 63 || c4 === 35 || isSpecial(this.url) && c4 === 92) {
         if (this.atFlag && this.buffer === "") {
           this.parseError = true;
           return failure;
@@ -2514,11 +2514,11 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse hostname"] = URLStateMachine.prototype["parse host"] = function parseHostName(c3, cStr) {
+    URLStateMachine.prototype["parse hostname"] = URLStateMachine.prototype["parse host"] = function parseHostName(c4, cStr) {
       if (this.stateOverride && this.url.scheme === "file") {
         --this.pointer;
         this.state = "file host";
-      } else if (c3 === 58 && !this.arrFlag) {
+      } else if (c4 === 58 && !this.arrFlag) {
         if (this.buffer === "") {
           this.parseError = true;
           return failure;
@@ -2533,7 +2533,7 @@ var require_url_state_machine = __commonJS({
         if (this.stateOverride === "hostname") {
           return false;
         }
-      } else if (isNaN(c3) || c3 === 47 || c3 === 63 || c3 === 35 || isSpecial(this.url) && c3 === 92) {
+      } else if (isNaN(c4) || c4 === 47 || c4 === 63 || c4 === 35 || isSpecial(this.url) && c4 === 92) {
         --this.pointer;
         if (isSpecial(this.url) && this.buffer === "") {
           this.parseError = true;
@@ -2553,19 +2553,19 @@ var require_url_state_machine = __commonJS({
           return false;
         }
       } else {
-        if (c3 === 91) {
+        if (c4 === 91) {
           this.arrFlag = true;
-        } else if (c3 === 93) {
+        } else if (c4 === 93) {
           this.arrFlag = false;
         }
         this.buffer += cStr;
       }
       return true;
     };
-    URLStateMachine.prototype["parse port"] = function parsePort(c3, cStr) {
-      if (isASCIIDigit(c3)) {
+    URLStateMachine.prototype["parse port"] = function parsePort(c4, cStr) {
+      if (isASCIIDigit(c4)) {
         this.buffer += cStr;
-      } else if (isNaN(c3) || c3 === 47 || c3 === 63 || c3 === 35 || isSpecial(this.url) && c3 === 92 || this.stateOverride) {
+      } else if (isNaN(c4) || c4 === 47 || c4 === 63 || c4 === 35 || isSpecial(this.url) && c4 === 92 || this.stateOverride) {
         if (this.buffer !== "") {
           const port = parseInt(this.buffer);
           if (port > Math.pow(2, 16) - 1) {
@@ -2587,31 +2587,31 @@ var require_url_state_machine = __commonJS({
       return true;
     };
     var fileOtherwiseCodePoints = /* @__PURE__ */ new Set([47, 92, 63, 35]);
-    URLStateMachine.prototype["parse file"] = function parseFile(c3) {
+    URLStateMachine.prototype["parse file"] = function parseFile(c4) {
       this.url.scheme = "file";
-      if (c3 === 47 || c3 === 92) {
-        if (c3 === 92) {
+      if (c4 === 47 || c4 === 92) {
+        if (c4 === 92) {
           this.parseError = true;
         }
         this.state = "file slash";
       } else if (this.base !== null && this.base.scheme === "file") {
-        if (isNaN(c3)) {
+        if (isNaN(c4)) {
           this.url.host = this.base.host;
           this.url.path = this.base.path.slice();
           this.url.query = this.base.query;
-        } else if (c3 === 63) {
+        } else if (c4 === 63) {
           this.url.host = this.base.host;
           this.url.path = this.base.path.slice();
           this.url.query = "";
           this.state = "query";
-        } else if (c3 === 35) {
+        } else if (c4 === 35) {
           this.url.host = this.base.host;
           this.url.path = this.base.path.slice();
           this.url.query = this.base.query;
           this.url.fragment = "";
           this.state = "fragment";
         } else {
-          if (this.input.length - this.pointer - 1 === 0 || !isWindowsDriveLetterCodePoints(c3, this.input[this.pointer + 1]) || this.input.length - this.pointer - 1 >= 2 && !fileOtherwiseCodePoints.has(this.input[this.pointer + 2])) {
+          if (this.input.length - this.pointer - 1 === 0 || !isWindowsDriveLetterCodePoints(c4, this.input[this.pointer + 1]) || this.input.length - this.pointer - 1 >= 2 && !fileOtherwiseCodePoints.has(this.input[this.pointer + 2])) {
             this.url.host = this.base.host;
             this.url.path = this.base.path.slice();
             shortenPath(this.url);
@@ -2627,9 +2627,9 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse file slash"] = function parseFileSlash(c3) {
-      if (c3 === 47 || c3 === 92) {
-        if (c3 === 92) {
+    URLStateMachine.prototype["parse file slash"] = function parseFileSlash(c4) {
+      if (c4 === 47 || c4 === 92) {
+        if (c4 === 92) {
           this.parseError = true;
         }
         this.state = "file host";
@@ -2646,8 +2646,8 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse file host"] = function parseFileHost(c3, cStr) {
-      if (isNaN(c3) || c3 === 47 || c3 === 92 || c3 === 63 || c3 === 35) {
+    URLStateMachine.prototype["parse file host"] = function parseFileHost(c4, cStr) {
+      if (isNaN(c4) || c4 === 47 || c4 === 92 || c4 === 63 || c4 === 35) {
         --this.pointer;
         if (!this.stateOverride && isWindowsDriveLetterString(this.buffer)) {
           this.parseError = true;
@@ -2678,40 +2678,40 @@ var require_url_state_machine = __commonJS({
       }
       return true;
     };
-    URLStateMachine.prototype["parse path start"] = function parsePathStart(c3) {
+    URLStateMachine.prototype["parse path start"] = function parsePathStart(c4) {
       if (isSpecial(this.url)) {
-        if (c3 === 92) {
+        if (c4 === 92) {
           this.parseError = true;
         }
         this.state = "path";
-        if (c3 !== 47 && c3 !== 92) {
+        if (c4 !== 47 && c4 !== 92) {
           --this.pointer;
         }
-      } else if (!this.stateOverride && c3 === 63) {
+      } else if (!this.stateOverride && c4 === 63) {
         this.url.query = "";
         this.state = "query";
-      } else if (!this.stateOverride && c3 === 35) {
+      } else if (!this.stateOverride && c4 === 35) {
         this.url.fragment = "";
         this.state = "fragment";
-      } else if (c3 !== void 0) {
+      } else if (c4 !== void 0) {
         this.state = "path";
-        if (c3 !== 47) {
+        if (c4 !== 47) {
           --this.pointer;
         }
       }
       return true;
     };
-    URLStateMachine.prototype["parse path"] = function parsePath(c3) {
-      if (isNaN(c3) || c3 === 47 || isSpecial(this.url) && c3 === 92 || !this.stateOverride && (c3 === 63 || c3 === 35)) {
-        if (isSpecial(this.url) && c3 === 92) {
+    URLStateMachine.prototype["parse path"] = function parsePath(c4) {
+      if (isNaN(c4) || c4 === 47 || isSpecial(this.url) && c4 === 92 || !this.stateOverride && (c4 === 63 || c4 === 35)) {
+        if (isSpecial(this.url) && c4 === 92) {
           this.parseError = true;
         }
         if (isDoubleDot(this.buffer)) {
           shortenPath(this.url);
-          if (c3 !== 47 && !(isSpecial(this.url) && c3 === 92)) {
+          if (c4 !== 47 && !(isSpecial(this.url) && c4 === 92)) {
             this.url.path.push("");
           }
-        } else if (isSingleDot(this.buffer) && c3 !== 47 && !(isSpecial(this.url) && c3 === 92)) {
+        } else if (isSingleDot(this.buffer) && c4 !== 47 && !(isSpecial(this.url) && c4 === 92)) {
           this.url.path.push("");
         } else if (!isSingleDot(this.buffer)) {
           if (this.url.scheme === "file" && this.url.path.length === 0 && isWindowsDriveLetterString(this.buffer)) {
@@ -2724,50 +2724,50 @@ var require_url_state_machine = __commonJS({
           this.url.path.push(this.buffer);
         }
         this.buffer = "";
-        if (this.url.scheme === "file" && (c3 === void 0 || c3 === 63 || c3 === 35)) {
+        if (this.url.scheme === "file" && (c4 === void 0 || c4 === 63 || c4 === 35)) {
           while (this.url.path.length > 1 && this.url.path[0] === "") {
             this.parseError = true;
             this.url.path.shift();
           }
         }
-        if (c3 === 63) {
+        if (c4 === 63) {
           this.url.query = "";
           this.state = "query";
         }
-        if (c3 === 35) {
+        if (c4 === 35) {
           this.url.fragment = "";
           this.state = "fragment";
         }
       } else {
-        if (c3 === 37 && (!isASCIIHex(this.input[this.pointer + 1]) || !isASCIIHex(this.input[this.pointer + 2]))) {
+        if (c4 === 37 && (!isASCIIHex(this.input[this.pointer + 1]) || !isASCIIHex(this.input[this.pointer + 2]))) {
           this.parseError = true;
         }
-        this.buffer += percentEncodeChar(c3, isPathPercentEncode);
+        this.buffer += percentEncodeChar(c4, isPathPercentEncode);
       }
       return true;
     };
-    URLStateMachine.prototype["parse cannot-be-a-base-URL path"] = function parseCannotBeABaseURLPath(c3) {
-      if (c3 === 63) {
+    URLStateMachine.prototype["parse cannot-be-a-base-URL path"] = function parseCannotBeABaseURLPath(c4) {
+      if (c4 === 63) {
         this.url.query = "";
         this.state = "query";
-      } else if (c3 === 35) {
+      } else if (c4 === 35) {
         this.url.fragment = "";
         this.state = "fragment";
       } else {
-        if (!isNaN(c3) && c3 !== 37) {
+        if (!isNaN(c4) && c4 !== 37) {
           this.parseError = true;
         }
-        if (c3 === 37 && (!isASCIIHex(this.input[this.pointer + 1]) || !isASCIIHex(this.input[this.pointer + 2]))) {
+        if (c4 === 37 && (!isASCIIHex(this.input[this.pointer + 1]) || !isASCIIHex(this.input[this.pointer + 2]))) {
           this.parseError = true;
         }
-        if (!isNaN(c3)) {
-          this.url.path[0] = this.url.path[0] + percentEncodeChar(c3, isC0ControlPercentEncode);
+        if (!isNaN(c4)) {
+          this.url.path[0] = this.url.path[0] + percentEncodeChar(c4, isC0ControlPercentEncode);
         }
       }
       return true;
     };
-    URLStateMachine.prototype["parse query"] = function parseQuery(c3, cStr) {
-      if (isNaN(c3) || !this.stateOverride && c3 === 35) {
+    URLStateMachine.prototype["parse query"] = function parseQuery(c4, cStr) {
+      if (isNaN(c4) || !this.stateOverride && c4 === 35) {
         if (!isSpecial(this.url) || this.url.scheme === "ws" || this.url.scheme === "wss") {
           this.encodingOverride = "utf-8";
         }
@@ -2780,27 +2780,27 @@ var require_url_state_machine = __commonJS({
           }
         }
         this.buffer = "";
-        if (c3 === 35) {
+        if (c4 === 35) {
           this.url.fragment = "";
           this.state = "fragment";
         }
       } else {
-        if (c3 === 37 && (!isASCIIHex(this.input[this.pointer + 1]) || !isASCIIHex(this.input[this.pointer + 2]))) {
+        if (c4 === 37 && (!isASCIIHex(this.input[this.pointer + 1]) || !isASCIIHex(this.input[this.pointer + 2]))) {
           this.parseError = true;
         }
         this.buffer += cStr;
       }
       return true;
     };
-    URLStateMachine.prototype["parse fragment"] = function parseFragment(c3) {
-      if (isNaN(c3)) {
-      } else if (c3 === 0) {
+    URLStateMachine.prototype["parse fragment"] = function parseFragment(c4) {
+      if (isNaN(c4)) {
+      } else if (c4 === 0) {
         this.parseError = true;
       } else {
-        if (c3 === 37 && (!isASCIIHex(this.input[this.pointer + 1]) || !isASCIIHex(this.input[this.pointer + 2]))) {
+        if (c4 === 37 && (!isASCIIHex(this.input[this.pointer + 1]) || !isASCIIHex(this.input[this.pointer + 2]))) {
           this.parseError = true;
         }
-        this.url.fragment += percentEncodeChar(c3, isC0ControlPercentEncode);
+        this.url.fragment += percentEncodeChar(c4, isC0ControlPercentEncode);
       }
       return true;
     };
@@ -4414,7 +4414,7 @@ function n(e3, t2) {
 function u2(e3) {
   return new a3(e3);
 }
-function c2(e3) {
+function c3(e3) {
   return l2(e3);
 }
 function d6(e3) {
@@ -4445,7 +4445,7 @@ function g3(e3, t2, r3) {
 }
 function w6(e3, t2, r3) {
   try {
-    return c2(g3(e3, t2, r3));
+    return c3(g3(e3, t2, r3));
   } catch (e4) {
     return d6(e4);
   }
@@ -4557,7 +4557,7 @@ function G5(e3, t2, r3) {
 function X4(e3) {
   return e3._reader._readRequests.length;
 }
-function J4(e3) {
+function J5(e3) {
   const t2 = e3._reader;
   return void 0 !== t2 && !!K5(t2);
 }
@@ -4627,7 +4627,7 @@ function be(e3) {
       return false;
     if (!e4._started)
       return false;
-    if (J4(t3) && X4(t3) > 0)
+    if (J5(t3) && X4(t3) > 0)
       return true;
     if (Le(t3) && ze(t3) > 0)
       return true;
@@ -4748,12 +4748,12 @@ function Oe(e3, t2, r3) {
   const o3 = Object.create(ReadableByteStreamController.prototype);
   let n2, a4, i3;
   n2 = void 0 !== t2.start ? () => t2.start(o3) : () => {
-  }, a4 = void 0 !== t2.pull ? () => t2.pull(o3) : () => c2(void 0), i3 = void 0 !== t2.cancel ? (e4) => t2.cancel(e4) : () => c2(void 0);
+  }, a4 = void 0 !== t2.pull ? () => t2.pull(o3) : () => c3(void 0), i3 = void 0 !== t2.cancel ? (e4) => t2.cancel(e4) : () => c3(void 0);
   const l3 = t2.autoAllocateChunkSize;
   if (0 === l3)
     throw new TypeError("autoAllocateChunkSize must be greater than 0");
   !function(e4, t3, r4, o4, n3, a5, i4) {
-    t3._controlledReadableByteStream = e4, t3._pullAgain = false, t3._pulling = false, t3._byobRequest = null, t3._queue = t3._queueTotalSize = void 0, ce2(t3), t3._closeRequested = false, t3._started = false, t3._strategyHWM = a5, t3._pullAlgorithm = o4, t3._cancelAlgorithm = n3, t3._autoAllocateChunkSize = i4, t3._pendingPullIntos = new S5(), e4._readableStreamController = t3, b6(c2(r4()), () => (t3._started = true, be(t3), null), (e5) => (Pe(t3, e5), null));
+    t3._controlledReadableByteStream = e4, t3._pullAgain = false, t3._pulling = false, t3._byobRequest = null, t3._queue = t3._queueTotalSize = void 0, ce2(t3), t3._closeRequested = false, t3._started = false, t3._strategyHWM = a5, t3._pullAlgorithm = o4, t3._cancelAlgorithm = n3, t3._autoAllocateChunkSize = i4, t3._pendingPullIntos = new S5(), e4._readableStreamController = t3, b6(c3(r4()), () => (t3._started = true, be(t3), null), (e5) => (Pe(t3, e5), null));
   }(e3, o3, n2, a4, i3, r3, l3);
 }
 function Be(e3) {
@@ -4825,11 +4825,11 @@ function Xe(e3) {
 function Je(e3, t2) {
   var r3;
   if ("closed" === e3._state || "errored" === e3._state)
-    return c2(void 0);
+    return c3(void 0);
   e3._writableStreamController._abortReason = t2, null === (r3 = e3._writableStreamController._abortController) || void 0 === r3 || r3.abort(t2);
   const o3 = e3._state;
   if ("closed" === o3 || "errored" === o3)
-    return c2(void 0);
+    return c3(void 0);
   if (void 0 !== e3._pendingAbortRequest)
     return e3._pendingAbortRequest._promise;
   let n2 = false;
@@ -5020,7 +5020,7 @@ function kt(e3, t2, r3, o3, n2, a4) {
         !function r4(o4) {
           o4 ? e5() : f3(function() {
             if (w7)
-              return c2(true);
+              return c3(true);
             return f3(l3.ready, () => f3(i3.read(), (e6) => !!e6.done || (E4 = l3.write(e6.value), m4(E4), false)));
           }(), r4, t3);
         }(false);
@@ -5028,7 +5028,7 @@ function kt(e3, t2, r3, o3, n2, a4) {
       m4(e4);
     }
     function B3() {
-      return v5 = "closed", r3 ? L7() : z6(() => (Ge(t2) && (T6 = rt(t2), R7 = t2._state), T6 || "closed" === R7 ? c2(void 0) : "erroring" === R7 || "errored" === R7 ? d6(_7) : (T6 = true, l3.close())), false, void 0), null;
+      return v5 = "closed", r3 ? L7() : z6(() => (Ge(t2) && (T6 = rt(t2), R7 = t2._state), T6 || "closed" === R7 ? c3(void 0) : "erroring" === R7 || "errored" === R7 ? d6(_7) : (T6 = true, l3.close())), false, void 0), null;
     }
     function A5(e4) {
       return w7 || (v5 = "errored", s2 = e4, o3 ? L7(true, e4) : z6(() => l3.abort(e4), true, e4)), null;
@@ -5038,7 +5038,7 @@ function kt(e3, t2, r3, o3, n2, a4) {
     }
     if (void 0 !== a4 && (k7 = () => {
       const e4 = void 0 !== a4.reason ? a4.reason : new Wt("Aborted", "AbortError"), t3 = [];
-      o3 || t3.push(() => "writable" === R7 ? l3.abort(e4) : c2(void 0)), n2 || t3.push(() => "readable" === v5 ? i3.cancel(e4) : c2(void 0)), z6(() => Promise.all(t3.map((e5) => e5())), true, e4);
+      o3 || t3.push(() => "writable" === R7 ? l3.abort(e4) : c3(void 0)), n2 || t3.push(() => "readable" === v5 ? i3.cancel(e4) : c3(void 0)), z6(() => Promise.all(t3.map((e5) => e5())), true, e4);
     }, a4.aborted ? k7() : a4.addEventListener("abort", k7)), Vt(e3) && (v5 = e3._state, s2 = e3._storedError), Ge(t2) && (R7 = t2._state, _7 = t2._storedError, T6 = rt(t2)), Vt(e3) && Ge(t2) && (q6 = true, g4()), "errored" === v5)
       A5(s2);
     else if ("erroring" === R7 || "errored" === R7)
@@ -5053,7 +5053,7 @@ function kt(e3, t2, r3, o3, n2, a4) {
       function o4() {
         return "writable" !== R7 || T6 ? n3() : h3(function() {
           let e5;
-          return c2(function t4() {
+          return c3(function t4() {
             if (e5 !== E4)
               return e5 = E4, p3(E4, t4, t4);
           }());
@@ -5098,27 +5098,27 @@ function Ot(e3, t2) {
         if (d7 = false, f4 = false, e5.done)
           return h4 || o3.close(), p4 || n2.close(), null === (t4 = o3.byobRequest) || void 0 === t4 || t4.respond(0), null === (r4 = n2.byobRequest) || void 0 === r4 || r4.respond(0), h4 && p4 || a4(void 0), null;
         const l4 = e5.value, u3 = l4;
-        let c3 = l4;
+        let c4 = l4;
         if (!h4 && !p4)
           try {
-            c3 = le2(l4);
+            c4 = le2(l4);
           } catch (e6) {
             return o3.error(e6), n2.error(e6), a4(i3.cancel(e6)), null;
           }
-        return h4 || o3.enqueue(u3), p4 || n2.enqueue(c3), s2 = false, d7 ? S6() : f4 && v5(), null;
+        return h4 || o3.enqueue(u3), p4 || n2.enqueue(c4), s2 = false, d7 ? S6() : f4 && v5(), null;
       }, () => (s2 = false, null));
     }
     function w7(t4, r4) {
       l3 || (i3.releaseLock(), i3 = e4.getReader({ mode: "byob" }), y6(i3), l3 = true);
-      const u3 = r4 ? n2 : o3, c3 = r4 ? o3 : n2;
+      const u3 = r4 ? n2 : o3, c4 = r4 ? o3 : n2;
       b6(i3.read(t4), (e5) => {
         var t5;
         d7 = false, f4 = false;
         const o4 = r4 ? p4 : h4, n3 = r4 ? h4 : p4;
         if (e5.done) {
-          o4 || u3.close(), n3 || c3.close();
+          o4 || u3.close(), n3 || c4.close();
           const r5 = e5.value;
-          return void 0 !== r5 && (o4 || u3.byobRequest.respondWithNewView(r5), n3 || null === (t5 = c3.byobRequest) || void 0 === t5 || t5.respond(0)), o4 && n3 || a4(void 0), null;
+          return void 0 !== r5 && (o4 || u3.byobRequest.respondWithNewView(r5), n3 || null === (t5 = c4.byobRequest) || void 0 === t5 || t5.respond(0)), o4 && n3 || a4(void 0), null;
         }
         const l4 = e5.value;
         if (n3)
@@ -5128,26 +5128,26 @@ function Ot(e3, t2) {
           try {
             e6 = le2(l4);
           } catch (e7) {
-            return u3.error(e7), c3.error(e7), a4(i3.cancel(e7)), null;
+            return u3.error(e7), c4.error(e7), a4(i3.cancel(e7)), null;
           }
-          o4 || u3.byobRequest.respondWithNewView(l4), c3.enqueue(e6);
+          o4 || u3.byobRequest.respondWithNewView(l4), c4.enqueue(e6);
         }
         return s2 = false, d7 ? S6() : f4 && v5(), null;
       }, () => (s2 = false, null));
     }
     function S6() {
       if (s2)
-        return d7 = true, c2(void 0);
+        return d7 = true, c3(void 0);
       s2 = true;
       const e5 = o3.byobRequest;
-      return null === e5 ? g4() : w7(e5.view, false), c2(void 0);
+      return null === e5 ? g4() : w7(e5.view, false), c3(void 0);
     }
     function v5() {
       if (s2)
-        return f4 = true, c2(void 0);
+        return f4 = true, c3(void 0);
       s2 = true;
       const e5 = n2.byobRequest;
-      return null === e5 ? g4() : w7(e5.view, true), c2(void 0);
+      return null === e5 ? g4() : w7(e5.view, true), c3(void 0);
     }
     function R7(e5) {
       if (h4 = true, t3 = e5, p4) {
@@ -5176,12 +5176,12 @@ function Ot(e3, t2) {
       l3 = e5;
     });
     function m5() {
-      return s2 ? (d7 = true, c2(void 0)) : (s2 = true, b6(r3.read(), (e5) => {
+      return s2 ? (d7 = true, c3(void 0)) : (s2 = true, b6(r3.read(), (e5) => {
         if (d7 = false, e5.done)
           return f4 || a4.close(), h4 || i3.close(), f4 && h4 || l3(void 0), null;
         const t4 = e5.value, r4 = t4, o4 = t4;
         return f4 || a4.enqueue(r4), h4 || i3.enqueue(o4), s2 = false, d7 && m5(), null;
-      }, () => (s2 = false, null)), c2(void 0));
+      }, () => (s2 = false, null)), c3(void 0));
     }
     function y6(e5) {
       if (f4 = true, o3 = e5, h4) {
@@ -5246,8 +5246,8 @@ function It(e3, t2, r3, o3) {
   const n2 = Object.create(ReadableStreamDefaultController.prototype);
   let a4, i3, l3;
   a4 = void 0 !== t2.start ? () => t2.start(n2) : () => {
-  }, i3 = void 0 !== t2.pull ? () => t2.pull(n2) : () => c2(void 0), l3 = void 0 !== t2.cancel ? (e4) => t2.cancel(e4) : () => c2(void 0), function(e4, t3, r4, o4, n3, a5, i4) {
-    t3._controlledReadableStream = e4, t3._queue = void 0, t3._queueTotalSize = void 0, ce2(t3), t3._started = false, t3._closeRequested = false, t3._pullAgain = false, t3._pulling = false, t3._strategySizeAlgorithm = i4, t3._strategyHWM = a5, t3._pullAlgorithm = o4, t3._cancelAlgorithm = n3, e4._readableStreamController = t3, b6(c2(r4()), () => (t3._started = true, At(t3), null), (e5) => (zt(t3, e5), null));
+  }, i3 = void 0 !== t2.pull ? () => t2.pull(n2) : () => c3(void 0), l3 = void 0 !== t2.cancel ? (e4) => t2.cancel(e4) : () => c3(void 0), function(e4, t3, r4, o4, n3, a5, i4) {
+    t3._controlledReadableStream = e4, t3._queue = void 0, t3._queueTotalSize = void 0, ce2(t3), t3._started = false, t3._closeRequested = false, t3._pullAgain = false, t3._pulling = false, t3._strategySizeAlgorithm = i4, t3._strategyHWM = a5, t3._pullAlgorithm = o4, t3._cancelAlgorithm = n3, e4._readableStreamController = t3, b6(c3(r4()), () => (t3._started = true, At(t3), null), (e5) => (zt(t3, e5), null));
   }(e3, n2, a4, i3, l3, r3, o3);
 }
 function Dt(e3) {
@@ -5309,7 +5309,7 @@ function Ut(e3) {
 }
 function Gt(e3, r3) {
   if (e3._disturbed = true, "closed" === e3._state)
-    return c2(void 0);
+    return c3(void 0);
   if ("errored" === e3._state)
     return d6(e3._storedError);
   Xt(e3);
@@ -5468,7 +5468,7 @@ var init_ponyfill = __esm({
       if ("function" == typeof queueMicrotask)
         y5 = queueMicrotask;
       else {
-        const e4 = c2(void 0);
+        const e4 = c3(void 0);
         y5 = (t2) => f3(e4, t2);
       }
       return y5(e3);
@@ -5586,7 +5586,7 @@ var init_ponyfill = __esm({
           const r3 = t2.cancel(e3);
           return t2.releaseLock(), p3(r3, () => ({ value: e3, done: true }));
         }
-        return t2.releaseLock(), c2({ value: e3, done: true });
+        return t2.releaseLock(), c3({ value: e3, done: true });
       }
     };
     re2 = { next() {
@@ -5722,7 +5722,7 @@ var init_ponyfill = __esm({
             const t4 = e4._pendingPullIntos.peek();
             t4.buffer, 0, Re(e4), t4.buffer = t4.buffer, "none" === t4.readerType && ge(e4, t4);
           }
-          if (J4(r3))
+          if (J5(r3))
             if (function(e5) {
               const t4 = e5._controlledReadableByteStream._reader;
               for (; t4._readRequests.length > 0; ) {
@@ -5863,9 +5863,9 @@ var init_ponyfill = __esm({
           let a5, i3, l3, s2;
           a5 = void 0 !== t3.start ? () => t3.start(n3) : () => {
           };
-          i3 = void 0 !== t3.write ? (e5) => t3.write(e5, n3) : () => c2(void 0);
-          l3 = void 0 !== t3.close ? () => t3.close() : () => c2(void 0);
-          s2 = void 0 !== t3.abort ? (e5) => t3.abort(e5) : () => c2(void 0);
+          i3 = void 0 !== t3.write ? (e5) => t3.write(e5, n3) : () => c3(void 0);
+          l3 = void 0 !== t3.close ? () => t3.close() : () => c3(void 0);
+          s2 = void 0 !== t3.abort ? (e5) => t3.abort(e5) : () => c3(void 0);
           !function(e5, t4, r5, o5, n4, a6, i4, l4) {
             t4._controlledWritableStream = e5, e5._writableStreamController = t4, t4._queue = void 0, t4._queueTotalSize = void 0, ce2(t4), t4._abortReason = void 0, t4._abortController = function() {
               if (Ue)
@@ -5874,7 +5874,7 @@ var init_ponyfill = __esm({
             const s3 = bt(t4);
             nt(e5, s3);
             const u3 = r5();
-            b6(c2(u3), () => (t4._started = true, dt(t4), null), (r6) => (t4._started = true, Ze(e5, r6), null));
+            b6(c3(u3), () => (t4._started = true, dt(t4), null), (r6) => (t4._started = true, Ze(e5, r6), null));
           }(e4, n3, a5, i3, l3, s2, r4, o4);
         }(this, o3, $e(r3, 1), a4);
       }
@@ -6269,7 +6269,7 @@ var init_ponyfill = __esm({
           }
           function s3(t4) {
             return function(e5, t5) {
-              return cr(e5, t5), c2(void 0);
+              return cr(e5, t5), c3(void 0);
             }(e4, t4);
           }
           function u3() {
@@ -6290,7 +6290,7 @@ var init_ponyfill = __esm({
             }(e4);
           }
           function f5(t4) {
-            return dr(e4, t4), c2(void 0);
+            return dr(e4, t4), c3(void 0);
           }
           e4._writableState = "writable", e4._writableStoredError = void 0, e4._writableHasInFlightOperation = false, e4._writableStarted = false, e4._writable = function(e5, t4, r5, o5, n4, a6, i5) {
             return new WritableStream({ start(r6) {
@@ -6338,12 +6338,12 @@ var init_ponyfill = __esm({
           let o4, n3;
           o4 = void 0 !== t3.transform ? (e5) => t3.transform(e5, r4) : (e5) => {
             try {
-              return _r(r4, e5), c2(void 0);
+              return _r(r4, e5), c3(void 0);
             } catch (e6) {
               return d6(e6);
             }
           };
-          n3 = void 0 !== t3.flush ? () => t3.flush(r4) : () => c2(void 0);
+          n3 = void 0 !== t3.flush ? () => t3.flush(r4) : () => c3(void 0);
           !function(e5, t4, r5, o5) {
             t4._controlledTransformStream = e5, e5._transformStreamController = t4, t4._transformAlgorithm = r5, t4._flushAlgorithm = o5;
           }(e4, r4, o4, n3);
@@ -21679,8 +21679,8 @@ var require_browser = __commonJS({
       if (!this.useColors) {
         return;
       }
-      const c3 = "color: " + this.color;
-      args.splice(1, 0, c3, "color: inherit");
+      const c4 = "color: " + this.color;
+      args.splice(1, 0, c4, "color: inherit");
       let index = 0;
       let lastC = 0;
       args[0].replace(/%[a-zA-Z%]/g, (match) => {
@@ -21692,7 +21692,7 @@ var require_browser = __commonJS({
           lastC = index;
         }
       });
-      args.splice(lastC, 0, c3);
+      args.splice(lastC, 0, c4);
     }
     exports.log = console.debug || console.log || (() => {
     });
@@ -21976,8 +21976,8 @@ var require_node = __commonJS({
     function formatArgs(args) {
       const { namespace: name, useColors: useColors2 } = this;
       if (useColors2) {
-        const c3 = this.color;
-        const colorCode = "\x1B[3" + (c3 < 8 ? c3 : "8;5;" + c3);
+        const c4 = this.color;
+        const colorCode = "\x1B[3" + (c4 < 8 ? c4 : "8;5;" + c4);
         const prefix = `  ${colorCode};1m${name} \x1B[0m`;
         args[0] = prefix + args[0].split("\n").join("\n" + prefix);
         args.push(colorCode + "m+" + module2.exports.humanize(this.diff) + "\x1B[0m");
@@ -22988,14 +22988,14 @@ var require_tslib = __commonJS({
         return t2;
       };
       __decorate2 = function(decorators, target, key, desc) {
-        var c3 = arguments.length, r3 = c3 < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d7;
+        var c4 = arguments.length, r3 = c4 < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d7;
         if (typeof Reflect === "object" && typeof Reflect.decorate === "function")
           r3 = Reflect.decorate(decorators, target, key, desc);
         else
           for (var i3 = decorators.length - 1; i3 >= 0; i3--)
             if (d7 = decorators[i3])
-              r3 = (c3 < 3 ? d7(r3) : c3 > 3 ? d7(target, key, r3) : d7(target, key)) || r3;
-        return c3 > 3 && r3 && Object.defineProperty(target, key, r3), r3;
+              r3 = (c4 < 3 ? d7(r3) : c4 > 3 ? d7(target, key, r3) : d7(target, key)) || r3;
+        return c4 > 3 && r3 && Object.defineProperty(target, key, r3), r3;
       };
       __param2 = function(paramIndex, decorator) {
         return function(target, key) {
@@ -25245,8 +25245,8 @@ var require_object_inspect = __commonJS({
       var s2 = $replace.call($replace.call(str2, /(['\\])/g, "\\$1"), /[\x00-\x1f]/g, lowbyte);
       return wrapQuotes(s2, "single", opts);
     }
-    function lowbyte(c3) {
-      var n2 = c3.charCodeAt(0);
+    function lowbyte(c4) {
+      var n2 = c4.charCodeAt(0);
       var x5 = {
         8: "b",
         9: "t",
@@ -25604,26 +25604,26 @@ var require_utils2 = __commonJS({
         var segment = string.length >= limit ? string.slice(j4, j4 + limit) : string;
         var arr = [];
         for (var i3 = 0; i3 < segment.length; ++i3) {
-          var c3 = segment.charCodeAt(i3);
-          if (c3 === 45 || c3 === 46 || c3 === 95 || c3 === 126 || c3 >= 48 && c3 <= 57 || c3 >= 65 && c3 <= 90 || c3 >= 97 && c3 <= 122 || format === formats.RFC1738 && (c3 === 40 || c3 === 41)) {
+          var c4 = segment.charCodeAt(i3);
+          if (c4 === 45 || c4 === 46 || c4 === 95 || c4 === 126 || c4 >= 48 && c4 <= 57 || c4 >= 65 && c4 <= 90 || c4 >= 97 && c4 <= 122 || format === formats.RFC1738 && (c4 === 40 || c4 === 41)) {
             arr[arr.length] = segment.charAt(i3);
             continue;
           }
-          if (c3 < 128) {
-            arr[arr.length] = hexTable[c3];
+          if (c4 < 128) {
+            arr[arr.length] = hexTable[c4];
             continue;
           }
-          if (c3 < 2048) {
-            arr[arr.length] = hexTable[192 | c3 >> 6] + hexTable[128 | c3 & 63];
+          if (c4 < 2048) {
+            arr[arr.length] = hexTable[192 | c4 >> 6] + hexTable[128 | c4 & 63];
             continue;
           }
-          if (c3 < 55296 || c3 >= 57344) {
-            arr[arr.length] = hexTable[224 | c3 >> 12] + hexTable[128 | c3 >> 6 & 63] + hexTable[128 | c3 & 63];
+          if (c4 < 55296 || c4 >= 57344) {
+            arr[arr.length] = hexTable[224 | c4 >> 12] + hexTable[128 | c4 >> 6 & 63] + hexTable[128 | c4 & 63];
             continue;
           }
           i3 += 1;
-          c3 = 65536 + ((c3 & 1023) << 10 | segment.charCodeAt(i3) & 1023);
-          arr[arr.length] = hexTable[240 | c3 >> 18] + hexTable[128 | c3 >> 12 & 63] + hexTable[128 | c3 >> 6 & 63] + hexTable[128 | c3 & 63];
+          c4 = 65536 + ((c4 & 1023) << 10 | segment.charCodeAt(i3) & 1023);
+          arr[arr.length] = hexTable[240 | c4 >> 18] + hexTable[128 | c4 >> 12 & 63] + hexTable[128 | c4 >> 6 & 63] + hexTable[128 | c4 & 63];
         }
         out += arr.join("");
       }
@@ -30529,7 +30529,7 @@ var require_base64 = __commonJS({
       return btoa(String.fromCodePoint(...u8arr));
     }
     function bytesFromBase64(encoded) {
-      return Uint8Array.from(atob(encoded), (c3) => c3.charCodeAt(0));
+      return Uint8Array.from(atob(encoded), (c4) => c4.charCodeAt(0));
     }
     function stringToBytes(str2) {
       return new TextEncoder().encode(str2);
@@ -45881,10 +45881,10 @@ var $ = (t2, { onFlag: n2, onArgument: r3 }) => {
         continue;
       const [l3, f4, g4] = a4;
       if (g4)
-        for (let c3 = 0; c3 < l3.length; c3 += 1) {
+        for (let c4 = 0; c4 < l3.length; c4 += 1) {
           o3();
-          const u3 = c3 === l3.length - 1;
-          e3 = n2(l3[c3], u3 ? f4 : void 0, [s2, c3 + 1, u3]);
+          const u3 = c4 === l3.length - 1;
+          e3 = n2(l3[c4], u3 ? f4 : void 0, [s2, c4 + 1, u3]);
         }
       else
         e3 = n2(l3, f4, [s2]);
@@ -45912,8 +45912,8 @@ var U = (t2, n2 = process.argv.slice(2), { ignore: r3 } = {}) => {
     const g4 = w(o3, a4);
     if (!r3?.(g4 ? V : k, a4, l3)) {
       if (g4) {
-        const [c3, u3] = o3[a4], y6 = d(u3, l3), p4 = (P4, A5) => {
-          e3.push(f4), A5 && e3.push(A5), c3.push(m(u3, P4 || ""));
+        const [c4, u3] = o3[a4], y6 = d(u3, l3), p4 = (P4, A5) => {
+          e3.push(f4), A5 && e3.push(A5), c4.push(m(u3, P4 || ""));
         };
         return y6 === void 0 ? p4 : p4(y6);
       }
@@ -46461,21 +46461,21 @@ function x2(t2, e3, r3, n2) {
   };
   if (i3 && l3.flags.version === true)
     return f4(), process.exit(0);
-  const p4 = new M2(), O5 = o3 && s2?.render ? s2.render : (c3) => p4.render(c3), u3 = (c3) => {
-    const m5 = U3({ ...e3, ...c3 ? { help: c3 } : {}, flags: a4 });
+  const p4 = new M2(), O5 = o3 && s2?.render ? s2.render : (c4) => p4.render(c4), u3 = (c4) => {
+    const m5 = U3({ ...e3, ...c4 ? { help: c4 } : {}, flags: a4 });
     console.log(O5(m5, p4));
   };
   if (o3 && l3.flags.help === true)
     return u3(), process.exit(0);
   if (e3.parameters) {
-    let { parameters: c3 } = e3, m5 = l3._;
-    const g4 = c3.indexOf("--"), v5 = c3.slice(g4 + 1), h4 = /* @__PURE__ */ Object.create(null);
+    let { parameters: c4 } = e3, m5 = l3._;
+    const g4 = c4.indexOf("--"), v5 = c4.slice(g4 + 1), h4 = /* @__PURE__ */ Object.create(null);
     if (g4 > -1 && v5.length > 0) {
-      c3 = c3.slice(0, g4);
+      c4 = c4.slice(0, g4);
       const E4 = l3._["--"];
-      m5 = m5.slice(0, -E4.length || void 0), b3(h4, w3(c3), m5, u3), b3(h4, w3(v5), E4, u3);
+      m5 = m5.slice(0, -E4.length || void 0), b3(h4, w3(c4), m5, u3), b3(h4, w3(v5), E4, u3);
     } else
-      b3(h4, w3(c3), m5, u3);
+      b3(h4, w3(c4), m5, u3);
     Object.assign(l3._, h4);
   }
   const $6 = { ...l3, showVersion: f4, showHelp: u3 };
@@ -46635,6 +46635,7 @@ var import_node_process = require("node:process");
 var f = __toESM(require("node:readline"), 1);
 var import_node_readline = __toESM(require("node:readline"), 1);
 var import_node_tty = require("node:tty");
+var import_picocolors = __toESM(require_picocolors(), 1);
 function q3({ onlyFirst: t2 = false } = {}) {
   const u3 = ["[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)", "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))"].join("|");
   return new RegExp(u3, t2 ? void 0 : "g");
@@ -47017,6 +47018,26 @@ var yD = class extends x3 {
     this.value = this._value.value;
   }
 };
+var SD = Object.defineProperty;
+var jD = (t2, u3, F5) => u3 in t2 ? SD(t2, u3, { enumerable: true, configurable: true, writable: true, value: F5 }) : t2[u3] = F5;
+var MD = (t2, u3, F5) => (jD(t2, typeof u3 != "symbol" ? u3 + "" : u3, F5), F5);
+var TD = class extends x3 {
+  constructor(u3) {
+    super(u3), MD(this, "valueWithCursor", ""), this.on("finalize", () => {
+      this.value || (this.value = u3.defaultValue), this.valueWithCursor = this.value;
+    }), this.on("value", () => {
+      if (this.cursor >= this.value.length)
+        this.valueWithCursor = `${this.value}${import_picocolors.default.inverse(import_picocolors.default.hidden("_"))}`;
+      else {
+        const F5 = this.value.slice(0, this.cursor), e3 = this.value.slice(this.cursor);
+        this.valueWithCursor = `${F5}${import_picocolors.default.inverse(e3[0])}${e3.slice(1)}`;
+      }
+    });
+  }
+  get cursor() {
+    return this._cursor;
+  }
+};
 var PD = globalThis.process.platform.startsWith("win");
 function WD({ input: t2 = import_node_process.stdin, output: u3 = import_node_process.stdout, overwrite: F5 = true, hideCursor: e3 = true } = {}) {
   const s2 = f.createInterface({ input: t2, output: u3, prompt: "", tabSize: 1 });
@@ -47038,7 +47059,7 @@ function WD({ input: t2 = import_node_process.stdin, output: u3 = import_node_pr
 
 // node_modules/.pnpm/@clack+prompts@0.6.3/node_modules/@clack/prompts/dist/index.mjs
 var import_node_process2 = __toESM(require("node:process"), 1);
-var import_picocolors = __toESM(require_picocolors(), 1);
+var import_picocolors2 = __toESM(require_picocolors(), 1);
 var import_sisteransi2 = __toESM(require_src(), 1);
 function N4() {
   return import_node_process2.default.platform !== "win32" ? import_node_process2.default.env.TERM !== "linux" : Boolean(import_node_process2.default.env.CI) || Boolean(import_node_process2.default.env.WT_SESSION) || Boolean(import_node_process2.default.env.TERMINUS_SUBLIME) || import_node_process2.default.env.ConEmuTask === "{cmd::Cmder}" || import_node_process2.default.env.TERM_PROGRAM === "Terminus-Sublime" || import_node_process2.default.env.TERM_PROGRAM === "vscode" || import_node_process2.default.env.TERM === "xterm-256color" || import_node_process2.default.env.TERM === "alacritty" || import_node_process2.default.env.TERMINAL_EMULATOR === "JetBrains-JediTerm";
@@ -47070,30 +47091,51 @@ var h2 = (r3) => {
   switch (r3) {
     case "initial":
     case "active":
-      return import_picocolors.default.cyan(W4);
+      return import_picocolors2.default.cyan(W4);
     case "cancel":
-      return import_picocolors.default.red(D3);
+      return import_picocolors2.default.red(D3);
     case "error":
-      return import_picocolors.default.yellow(F3);
+      return import_picocolors2.default.yellow(F3);
     case "submit":
-      return import_picocolors.default.green(f2);
+      return import_picocolors2.default.green(f2);
   }
 };
+var J4 = (r3) => new TD({ validate: r3.validate, placeholder: r3.placeholder, defaultValue: r3.defaultValue, initialValue: r3.initialValue, render() {
+  const n2 = `${import_picocolors2.default.gray(a2)}
+${h2(this.state)}  ${r3.message}
+`, s2 = r3.placeholder ? import_picocolors2.default.inverse(r3.placeholder[0]) + import_picocolors2.default.dim(r3.placeholder.slice(1)) : import_picocolors2.default.inverse(import_picocolors2.default.hidden("_")), t2 = this.value ? this.valueWithCursor : s2;
+  switch (this.state) {
+    case "error":
+      return `${n2.trim()}
+${import_picocolors2.default.yellow(a2)}  ${t2}
+${import_picocolors2.default.yellow(o)}  ${import_picocolors2.default.yellow(this.error)}
+`;
+    case "submit":
+      return `${n2}${import_picocolors2.default.gray(a2)}  ${import_picocolors2.default.dim(this.value || r3.placeholder)}`;
+    case "cancel":
+      return `${n2}${import_picocolors2.default.gray(a2)}  ${import_picocolors2.default.strikethrough(import_picocolors2.default.dim(this.value ?? ""))}${this.value?.trim() ? `
+` + import_picocolors2.default.gray(a2) : ""}`;
+    default:
+      return `${n2}${import_picocolors2.default.cyan(a2)}  ${t2}
+${import_picocolors2.default.cyan(o)}
+`;
+  }
+} }).prompt();
 var Q3 = (r3) => {
   const n2 = r3.active ?? "Yes", s2 = r3.inactive ?? "No";
   return new xD2({ active: n2, inactive: s2, initialValue: r3.initialValue ?? true, render() {
-    const t2 = `${import_picocolors.default.gray(a2)}
+    const t2 = `${import_picocolors2.default.gray(a2)}
 ${h2(this.state)}  ${r3.message}
 `, i3 = this.value ? n2 : s2;
     switch (this.state) {
       case "submit":
-        return `${t2}${import_picocolors.default.gray(a2)}  ${import_picocolors.default.dim(i3)}`;
+        return `${t2}${import_picocolors2.default.gray(a2)}  ${import_picocolors2.default.dim(i3)}`;
       case "cancel":
-        return `${t2}${import_picocolors.default.gray(a2)}  ${import_picocolors.default.strikethrough(import_picocolors.default.dim(i3))}
-${import_picocolors.default.gray(a2)}`;
+        return `${t2}${import_picocolors2.default.gray(a2)}  ${import_picocolors2.default.strikethrough(import_picocolors2.default.dim(i3))}
+${import_picocolors2.default.gray(a2)}`;
       default:
-        return `${t2}${import_picocolors.default.cyan(a2)}  ${this.value ? `${import_picocolors.default.green(w5)} ${n2}` : `${import_picocolors.default.dim(S4)} ${import_picocolors.default.dim(n2)}`} ${import_picocolors.default.dim("/")} ${this.value ? `${import_picocolors.default.dim(S4)} ${import_picocolors.default.dim(s2)}` : `${import_picocolors.default.green(w5)} ${s2}`}
-${import_picocolors.default.cyan(o)}
+        return `${t2}${import_picocolors2.default.cyan(a2)}  ${this.value ? `${import_picocolors2.default.green(w5)} ${n2}` : `${import_picocolors2.default.dim(S4)} ${import_picocolors2.default.dim(n2)}`} ${import_picocolors2.default.dim("/")} ${this.value ? `${import_picocolors2.default.dim(S4)} ${import_picocolors2.default.dim(s2)}` : `${import_picocolors2.default.green(w5)} ${s2}`}
+${import_picocolors2.default.cyan(o)}
 `;
     }
   } }).prompt();
@@ -47101,22 +47143,22 @@ ${import_picocolors.default.cyan(o)}
 var ee = (r3) => {
   const n2 = (s2, t2) => {
     const i3 = s2.label ?? String(s2.value);
-    return t2 === "active" ? `${import_picocolors.default.green(w5)} ${i3} ${s2.hint ? import_picocolors.default.dim(`(${s2.hint})`) : ""}` : t2 === "selected" ? `${import_picocolors.default.dim(i3)}` : t2 === "cancelled" ? `${import_picocolors.default.strikethrough(import_picocolors.default.dim(i3))}` : `${import_picocolors.default.dim(S4)} ${import_picocolors.default.dim(i3)}`;
+    return t2 === "active" ? `${import_picocolors2.default.green(w5)} ${i3} ${s2.hint ? import_picocolors2.default.dim(`(${s2.hint})`) : ""}` : t2 === "selected" ? `${import_picocolors2.default.dim(i3)}` : t2 === "cancelled" ? `${import_picocolors2.default.strikethrough(import_picocolors2.default.dim(i3))}` : `${import_picocolors2.default.dim(S4)} ${import_picocolors2.default.dim(i3)}`;
   };
   return new yD({ options: r3.options, initialValue: r3.initialValue, render() {
-    const s2 = `${import_picocolors.default.gray(a2)}
+    const s2 = `${import_picocolors2.default.gray(a2)}
 ${h2(this.state)}  ${r3.message}
 `;
     switch (this.state) {
       case "submit":
-        return `${s2}${import_picocolors.default.gray(a2)}  ${n2(this.options[this.cursor], "selected")}`;
+        return `${s2}${import_picocolors2.default.gray(a2)}  ${n2(this.options[this.cursor], "selected")}`;
       case "cancel":
-        return `${s2}${import_picocolors.default.gray(a2)}  ${n2(this.options[this.cursor], "cancelled")}
-${import_picocolors.default.gray(a2)}`;
+        return `${s2}${import_picocolors2.default.gray(a2)}  ${n2(this.options[this.cursor], "cancelled")}
+${import_picocolors2.default.gray(a2)}`;
       default:
-        return `${s2}${import_picocolors.default.cyan(a2)}  ${this.options.map((t2, i3) => n2(t2, i3 === this.cursor ? "active" : "inactive")).join(`
-${import_picocolors.default.cyan(a2)}  `)}
-${import_picocolors.default.cyan(o)}
+        return `${s2}${import_picocolors2.default.cyan(a2)}  ${this.options.map((t2, i3) => n2(t2, i3 === this.cursor ? "active" : "inactive")).join(`
+${import_picocolors2.default.cyan(a2)}  `)}
+${import_picocolors2.default.cyan(o)}
 `;
     }
   } }).prompt();
@@ -47124,43 +47166,43 @@ ${import_picocolors.default.cyan(o)}
 var re = (r3) => {
   const n2 = (s2, t2) => {
     const i3 = s2.label ?? String(s2.value);
-    return t2 === "active" ? `${import_picocolors.default.cyan(_5)} ${i3} ${s2.hint ? import_picocolors.default.dim(`(${s2.hint})`) : ""}` : t2 === "selected" ? `${import_picocolors.default.green(y4)} ${import_picocolors.default.dim(i3)}` : t2 === "cancelled" ? `${import_picocolors.default.strikethrough(import_picocolors.default.dim(i3))}` : t2 === "active-selected" ? `${import_picocolors.default.green(y4)} ${i3} ${s2.hint ? import_picocolors.default.dim(`(${s2.hint})`) : ""}` : t2 === "submitted" ? `${import_picocolors.default.dim(i3)}` : `${import_picocolors.default.dim(A3)} ${import_picocolors.default.dim(i3)}`;
+    return t2 === "active" ? `${import_picocolors2.default.cyan(_5)} ${i3} ${s2.hint ? import_picocolors2.default.dim(`(${s2.hint})`) : ""}` : t2 === "selected" ? `${import_picocolors2.default.green(y4)} ${import_picocolors2.default.dim(i3)}` : t2 === "cancelled" ? `${import_picocolors2.default.strikethrough(import_picocolors2.default.dim(i3))}` : t2 === "active-selected" ? `${import_picocolors2.default.green(y4)} ${i3} ${s2.hint ? import_picocolors2.default.dim(`(${s2.hint})`) : ""}` : t2 === "submitted" ? `${import_picocolors2.default.dim(i3)}` : `${import_picocolors2.default.dim(A3)} ${import_picocolors2.default.dim(i3)}`;
   };
   return new gD2({ options: r3.options, initialValues: r3.initialValues, required: r3.required ?? true, cursorAt: r3.cursorAt, validate(s2) {
     if (this.required && s2.length === 0)
       return `Please select at least one option.
-${import_picocolors.default.reset(import_picocolors.default.dim(`Press ${import_picocolors.default.gray(import_picocolors.default.bgWhite(import_picocolors.default.inverse(" space ")))} to select, ${import_picocolors.default.gray(import_picocolors.default.bgWhite(import_picocolors.default.inverse(" enter ")))} to submit`))}`;
+${import_picocolors2.default.reset(import_picocolors2.default.dim(`Press ${import_picocolors2.default.gray(import_picocolors2.default.bgWhite(import_picocolors2.default.inverse(" space ")))} to select, ${import_picocolors2.default.gray(import_picocolors2.default.bgWhite(import_picocolors2.default.inverse(" enter ")))} to submit`))}`;
   }, render() {
-    let s2 = `${import_picocolors.default.gray(a2)}
+    let s2 = `${import_picocolors2.default.gray(a2)}
 ${h2(this.state)}  ${r3.message}
 `;
     switch (this.state) {
       case "submit":
-        return `${s2}${import_picocolors.default.gray(a2)}  ${this.options.filter(({ value: t2 }) => this.value.includes(t2)).map((t2) => n2(t2, "submitted")).join(import_picocolors.default.dim(", ")) || import_picocolors.default.dim("none")}`;
+        return `${s2}${import_picocolors2.default.gray(a2)}  ${this.options.filter(({ value: t2 }) => this.value.includes(t2)).map((t2) => n2(t2, "submitted")).join(import_picocolors2.default.dim(", ")) || import_picocolors2.default.dim("none")}`;
       case "cancel": {
-        const t2 = this.options.filter(({ value: i3 }) => this.value.includes(i3)).map((i3) => n2(i3, "cancelled")).join(import_picocolors.default.dim(", "));
-        return `${s2}${import_picocolors.default.gray(a2)}  ${t2.trim() ? `${t2}
-${import_picocolors.default.gray(a2)}` : ""}`;
+        const t2 = this.options.filter(({ value: i3 }) => this.value.includes(i3)).map((i3) => n2(i3, "cancelled")).join(import_picocolors2.default.dim(", "));
+        return `${s2}${import_picocolors2.default.gray(a2)}  ${t2.trim() ? `${t2}
+${import_picocolors2.default.gray(a2)}` : ""}`;
       }
       case "error": {
         const t2 = this.error.split(`
-`).map((i3, c3) => c3 === 0 ? `${import_picocolors.default.yellow(o)}  ${import_picocolors.default.yellow(i3)}` : `   ${i3}`).join(`
+`).map((i3, c4) => c4 === 0 ? `${import_picocolors2.default.yellow(o)}  ${import_picocolors2.default.yellow(i3)}` : `   ${i3}`).join(`
 `);
-        return s2 + import_picocolors.default.yellow(a2) + "  " + this.options.map((i3, c3) => {
-          const l3 = this.value.includes(i3.value), $6 = c3 === this.cursor;
+        return s2 + import_picocolors2.default.yellow(a2) + "  " + this.options.map((i3, c4) => {
+          const l3 = this.value.includes(i3.value), $6 = c4 === this.cursor;
           return $6 && l3 ? n2(i3, "active-selected") : l3 ? n2(i3, "selected") : n2(i3, $6 ? "active" : "inactive");
         }).join(`
-${import_picocolors.default.yellow(a2)}  `) + `
+${import_picocolors2.default.yellow(a2)}  `) + `
 ` + t2 + `
 `;
       }
       default:
-        return `${s2}${import_picocolors.default.cyan(a2)}  ${this.options.map((t2, i3) => {
-          const c3 = this.value.includes(t2.value), l3 = i3 === this.cursor;
-          return l3 && c3 ? n2(t2, "active-selected") : c3 ? n2(t2, "selected") : n2(t2, l3 ? "active" : "inactive");
+        return `${s2}${import_picocolors2.default.cyan(a2)}  ${this.options.map((t2, i3) => {
+          const c4 = this.value.includes(t2.value), l3 = i3 === this.cursor;
+          return l3 && c4 ? n2(t2, "active-selected") : c4 ? n2(t2, "selected") : n2(t2, l3 ? "active" : "inactive");
         }).join(`
-${import_picocolors.default.cyan(a2)}  `)}
-${import_picocolors.default.cyan(o)}
+${import_picocolors2.default.cyan(a2)}  `)}
+${import_picocolors2.default.cyan(o)}
 `;
     }
   } }).prompt();
@@ -47170,21 +47212,21 @@ var ie = (r3 = "", n2 = "") => {
   const s2 = `
 ${r3}
 `.split(`
-`), t2 = Math.max(s2.reduce((c3, l3) => (l3 = b5(l3), l3.length > c3 ? l3.length : c3), 0), b5(n2).length) + 2, i3 = s2.map((c3) => `${import_picocolors.default.gray(a2)}  ${import_picocolors.default.dim(c3)}${" ".repeat(t2 - b5(c3).length)}${import_picocolors.default.gray(a2)}`).join(`
+`), t2 = Math.max(s2.reduce((c4, l3) => (l3 = b5(l3), l3.length > c4 ? l3.length : c4), 0), b5(n2).length) + 2, i3 = s2.map((c4) => `${import_picocolors2.default.gray(a2)}  ${import_picocolors2.default.dim(c4)}${" ".repeat(t2 - b5(c4).length)}${import_picocolors2.default.gray(a2)}`).join(`
 `);
-  process.stdout.write(`${import_picocolors.default.gray(a2)}
-${import_picocolors.default.green(f2)}  ${import_picocolors.default.reset(n2)} ${import_picocolors.default.gray(R5.repeat(Math.max(t2 - n2.length - 1, 1)) + G4)}
+  process.stdout.write(`${import_picocolors2.default.gray(a2)}
+${import_picocolors2.default.green(f2)}  ${import_picocolors2.default.reset(n2)} ${import_picocolors2.default.gray(R5.repeat(Math.max(t2 - n2.length - 1, 1)) + G4)}
 ${i3}
-${import_picocolors.default.gray(H3 + R5.repeat(t2 + 2) + K4)}
+${import_picocolors2.default.gray(H3 + R5.repeat(t2 + 2) + K4)}
 `);
 };
 var ae = (r3 = "") => {
-  process.stdout.write(`${import_picocolors.default.gray(L5)}  ${r3}
+  process.stdout.write(`${import_picocolors2.default.gray(L5)}  ${r3}
 `);
 };
 var ce = (r3 = "") => {
-  process.stdout.write(`${import_picocolors.default.gray(a2)}
-${import_picocolors.default.gray(o)}  ${r3}
+  process.stdout.write(`${import_picocolors2.default.gray(a2)}
+${import_picocolors2.default.gray(o)}  ${r3}
 
 `);
 };
@@ -47193,18 +47235,18 @@ var le = () => {
   let r3, n2;
   const s2 = p2 ? 80 : 120;
   return { start(t2 = "") {
-    t2 = t2.replace(/\.?\.?\.$/, ""), r3 = WD(), process.stdout.write(`${import_picocolors.default.gray(a2)}
-${import_picocolors.default.magenta("\u25CB")}  ${t2}
+    t2 = t2.replace(/\.?\.?\.$/, ""), r3 = WD(), process.stdout.write(`${import_picocolors2.default.gray(a2)}
+${import_picocolors2.default.magenta("\u25CB")}  ${t2}
 `);
-    let i3 = 0, c3 = 0;
+    let i3 = 0, c4 = 0;
     n2 = setInterval(() => {
       let l3 = C3[i3];
-      process.stdout.write(import_sisteransi2.cursor.move(-999, -1)), process.stdout.write(`${import_picocolors.default.magenta(l3)}  ${t2}${Math.floor(c3) >= 1 ? ".".repeat(Math.floor(c3)).slice(0, 3) : ""}   
-`), i3 = i3 === C3.length - 1 ? 0 : i3 + 1, c3 = c3 === C3.length ? 0 : c3 + 0.125;
+      process.stdout.write(import_sisteransi2.cursor.move(-999, -1)), process.stdout.write(`${import_picocolors2.default.magenta(l3)}  ${t2}${Math.floor(c4) >= 1 ? ".".repeat(Math.floor(c4)).slice(0, 3) : ""}   
+`), i3 = i3 === C3.length - 1 ? 0 : i3 + 1, c4 = c4 === C3.length ? 0 : c4 + 0.125;
     }, s2);
   }, stop(t2 = "") {
-    process.stdout.write(import_sisteransi2.cursor.move(-999, -2)), process.stdout.write(import_sisteransi2.erase.down(2)), clearInterval(n2), process.stdout.write(`${import_picocolors.default.gray(a2)}
-${import_picocolors.default.green(f2)}  ${t2}
+    process.stdout.write(import_sisteransi2.cursor.move(-999, -2)), process.stdout.write(import_sisteransi2.erase.down(2)), clearInterval(n2), process.stdout.write(`${import_picocolors2.default.gray(a2)}
+${import_picocolors2.default.green(f2)}  ${t2}
 `), r3();
   } };
 };
@@ -48836,9 +48878,9 @@ function create$(options) {
 var $4 = create$();
 
 // src/commands/commit.ts
-var import_fs4 = require("fs");
-var import_os2 = require("os");
-var import_path4 = require("path");
+var import_fs6 = require("fs");
+var import_os3 = require("os");
+var import_path6 = require("path");
 
 // src/commands/config.ts
 var dotenv = __toESM(require_main());
@@ -49079,6 +49121,29 @@ function getI18nLocal(value) {
 }
 
 // src/commands/config.ts
+var CONFIG_KEYS = /* @__PURE__ */ ((CONFIG_KEYS2) => {
+  CONFIG_KEYS2["CMT_API_KEY"] = "CMT_API_KEY";
+  CONFIG_KEYS2["CMT_TOKENS_MAX_INPUT"] = "CMT_TOKENS_MAX_INPUT";
+  CONFIG_KEYS2["CMT_TOKENS_MAX_OUTPUT"] = "CMT_TOKENS_MAX_OUTPUT";
+  CONFIG_KEYS2["CMT_DESCRIPTION"] = "CMT_DESCRIPTION";
+  CONFIG_KEYS2["CMT_EMOJI"] = "CMT_EMOJI";
+  CONFIG_KEYS2["CMT_MODEL"] = "CMT_MODEL";
+  CONFIG_KEYS2["CMT_LANGUAGE"] = "CMT_LANGUAGE";
+  CONFIG_KEYS2["CMT_WHY"] = "CMT_WHY";
+  CONFIG_KEYS2["CMT_MESSAGE_TEMPLATE_PLACEHOLDER"] = "CMT_MESSAGE_TEMPLATE_PLACEHOLDER";
+  CONFIG_KEYS2["CMT_PROMPT_MODULE"] = "CMT_PROMPT_MODULE";
+  CONFIG_KEYS2["CMT_AI_PROVIDER"] = "CMT_AI_PROVIDER";
+  CONFIG_KEYS2["CMT_ONE_LINE_COMMIT"] = "CMT_ONE_LINE_COMMIT";
+  CONFIG_KEYS2["CMT_TEST_MOCK_TYPE"] = "CMT_TEST_MOCK_TYPE";
+  CONFIG_KEYS2["CMT_API_URL"] = "CMT_API_URL";
+  CONFIG_KEYS2["CMT_DEBUG"] = "CMT_DEBUG";
+  CONFIG_KEYS2["CMT_MAX_FILES"] = "CMT_MAX_FILES";
+  CONFIG_KEYS2["CMT_MAX_DIFF_BYTES"] = "CMT_MAX_DIFF_BYTES";
+  CONFIG_KEYS2["CMT_SML"] = "CMT_SML";
+  CONFIG_KEYS2["CMT_REVIEW_MIN_SCORE"] = "CMT_REVIEW_MIN_SCORE";
+  CONFIG_KEYS2["CMT_GITPUSH"] = "CMT_GITPUSH";
+  return CONFIG_KEYS2;
+})(CONFIG_KEYS || {});
 var MODEL_LIST = {
   openai: [
     "gpt-4o-mini",
@@ -49208,8 +49273,8 @@ var validateConfig = (key, condition, validationMessage) => {
   }
 };
 var configValidators = {
-  ["CMT_API_KEY" /* CMT_API_KEY */](value, config8 = {}) {
-    if (config8.CMT_AI_PROVIDER !== "openai")
+  ["CMT_API_KEY" /* CMT_API_KEY */](value, config9 = {}) {
+    if (config9.CMT_AI_PROVIDER !== "openai")
       return value;
     validateConfig(
       "CMT_API_KEY",
@@ -49274,7 +49339,7 @@ var configValidators = {
     );
     return value;
   },
-  ["CMT_MODEL" /* CMT_MODEL */](value, config8 = {}) {
+  ["CMT_MODEL" /* CMT_MODEL */](value, config9 = {}) {
     validateConfig(
       "CMT_MODEL" /* CMT_MODEL */,
       typeof value === "string",
@@ -49382,6 +49447,38 @@ var configValidators = {
       "Must be true or false"
     );
     return value;
+  },
+  ["CMT_REVIEW_MIN_SCORE" /* CMT_REVIEW_MIN_SCORE */](value) {
+    if (value === void 0 || value === null || value === "")
+      return value;
+    const numValue = Number(value);
+    validateConfig(
+      "CMT_REVIEW_MIN_SCORE" /* CMT_REVIEW_MIN_SCORE */,
+      !isNaN(numValue) && numValue >= 0 && numValue <= 100,
+      "Must be a number between 0 and 100"
+    );
+    return numValue;
+  },
+  [CONFIG_KEYS.CMT_REVIEW_CACHE_TTL](value) {
+    if (value === void 0 || value === null || value === "")
+      return value;
+    const numValue = Number(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_REVIEW_CACHE_TTL,
+      !isNaN(numValue) && numValue > 0 && numValue <= 168,
+      "Must be a positive number (hours), maximum 168 (7 days)"
+    );
+    return numValue;
+  },
+  [CONFIG_KEYS.CMT_REVIEW_CACHE_DISABLED](value) {
+    if (value === void 0 || value === null || value === "")
+      return value;
+    validateConfig(
+      CONFIG_KEYS.CMT_REVIEW_CACHE_DISABLED,
+      value === true || value === false || value === "true" || value === "false",
+      "Must be true or false"
+    );
+    return value;
   }
 };
 var CMT_AI_PROVIDER_ENUM = /* @__PURE__ */ ((CMT_AI_PROVIDER_ENUM2) => {
@@ -49449,11 +49546,14 @@ var getEnvConfig = (envPath) => {
     CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
     CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
     CMT_SML: parseConfigVarValue(process.env.CMT_SML),
+    CMT_REVIEW_MIN_SCORE: parseConfigVarValue(process.env.CMT_REVIEW_MIN_SCORE),
+    CMT_REVIEW_CACHE_TTL: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_TTL),
+    CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH)
   };
 };
-var setGlobalConfig = (config8, configPath = defaultConfigPath) => {
-  (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(config8), "utf8");
+var setGlobalConfig = (config9, configPath = defaultConfigPath) => {
+  (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(config9), "utf8");
 };
 var getIsGlobalConfigFileExist = (configPath = defaultConfigPath) => {
   return (0, import_fs.existsSync)(configPath);
@@ -49476,9 +49576,9 @@ var mergeConfigs = (main, fallback) => {
     return acc;
   }, {});
 };
-var cleanUndefinedValues = (config8) => {
+var cleanUndefinedValues = (config9) => {
   return Object.fromEntries(
-    Object.entries(config8).map(([_7, v5]) => {
+    Object.entries(config9).map(([_7, v5]) => {
       try {
         if (typeof v5 === "string") {
           if (v5 === "undefined")
@@ -49501,12 +49601,12 @@ var getConfig = ({
 } = {}) => {
   const envConfig = getEnvConfig(envPath);
   const globalConfig = getGlobalConfig(globalPath);
-  const config8 = mergeConfigs(envConfig, globalConfig);
-  const cleanConfig = cleanUndefinedValues(config8);
+  const config9 = mergeConfigs(envConfig, globalConfig);
+  const cleanConfig = cleanUndefinedValues(config9);
   return cleanConfig;
 };
 var setConfig = (keyValues, globalConfigPath = defaultConfigPath) => {
-  const config8 = getConfig({
+  const config9 = getConfig({
     globalPath: globalConfigPath
   });
   const configToSet = {};
@@ -49532,11 +49632,11 @@ For more help refer to our docs: https://github.com/MantisWare/commit-ai`
     }
     const validValue = configValidators[key](
       parsedConfigValue,
-      config8
+      config9
     );
     configToSet[key] = validValue;
   }
-  setGlobalConfig(mergeConfigs(configToSet, config8), globalConfigPath);
+  setGlobalConfig(mergeConfigs(configToSet, config9), globalConfigPath);
   ce(`${source_default.green("\u2714")} config successfully set`);
 };
 var CONFIG_HELP = {
@@ -49624,6 +49724,21 @@ var CONFIG_HELP = {
     description: "Generate condensed single-line messages per file with filename, line numbers, and brief description",
     example: "true",
     default: "false"
+  },
+  CMT_REVIEW_MIN_SCORE: {
+    description: "Minimum code quality score (0-100) required to proceed with commit when using --review flag",
+    example: "70",
+    default: "not set (allows all scores)"
+  },
+  CMT_REVIEW_CACHE_TTL: {
+    description: "Time to live for cached review results in hours (max 168 hours / 7 days)",
+    example: "24",
+    default: "24 hours"
+  },
+  CMT_REVIEW_CACHE_DISABLED: {
+    description: "Disable review result caching (set to true to always perform fresh reviews)",
+    example: "false",
+    default: "false"
   }
 };
 var printConfigHelp = () => {
@@ -49670,9 +49785,9 @@ var configCommand = G3(
       }
       ae(`COMMAND: config ${mode} ${keyValues}`);
       if (mode === "get" /* get */) {
-        const config8 = getConfig() || {};
+        const config9 = getConfig() || {};
         for (const key of keyValues) {
-          ce(`${key}=${config8[key]}`);
+          ce(`${key}=${config9[key]}`);
         }
       } else if (mode === "set" /* set */) {
         await setConfig(
@@ -51236,9 +51351,9 @@ function debug(action, ...args) {
   }
 }
 var uuid4 = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c3) => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c4) => {
     const r3 = Math.random() * 16 | 0;
-    const v5 = c3 === "x" ? r3 : r3 & 3 | 8;
+    const v5 = c4 === "x" ? r3 : r3 & 3 | 8;
     return v5.toString(16);
   });
 };
@@ -52169,7 +52284,7 @@ var utils_default = {
 };
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/core/AxiosError.js
-function AxiosError(message, code, config8, request3, response) {
+function AxiosError(message, code, config9, request3, response) {
   Error.call(this);
   if (Error.captureStackTrace) {
     Error.captureStackTrace(this, this.constructor);
@@ -52179,7 +52294,7 @@ function AxiosError(message, code, config8, request3, response) {
   this.message = message;
   this.name = "AxiosError";
   code && (this.code = code);
-  config8 && (this.config = config8);
+  config9 && (this.config = config9);
   request3 && (this.request = request3);
   response && (this.response = response);
 }
@@ -52220,14 +52335,14 @@ var descriptors2 = {};
 });
 Object.defineProperties(AxiosError, descriptors2);
 Object.defineProperty(prototype, "isAxiosError", { value: true });
-AxiosError.from = (error, code, config8, request3, response, customProps) => {
+AxiosError.from = (error, code, config9, request3, response, customProps) => {
   const axiosError = Object.create(prototype);
   utils_default.toFlatObject(error, axiosError, function filter2(obj) {
     return obj !== Error.prototype;
   }, (prop) => {
     return prop !== "isAxiosError";
   });
-  AxiosError.call(axiosError, error.message, code, config8, request3, response);
+  AxiosError.call(axiosError, error.message, code, config9, request3, response);
   axiosError.cause = error;
   axiosError.name = error.name;
   customProps && Object.assign(axiosError, customProps);
@@ -52932,12 +53047,12 @@ var AxiosHeaders_default = AxiosHeaders;
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/core/transformData.js
 function transformData(fns, response) {
-  const config8 = this || defaults_default;
-  const context = response || config8;
+  const config9 = this || defaults_default;
+  const context = response || config9;
   const headers = AxiosHeaders_default.from(context.headers);
   let data = context.data;
   utils_default.forEach(fns, function transform(fn) {
-    data = fn.call(config8, data, headers.normalize(), response ? response.status : void 0);
+    data = fn.call(config9, data, headers.normalize(), response ? response.status : void 0);
   });
   headers.normalize();
   return data;
@@ -52949,8 +53064,8 @@ function isCancel(value) {
 }
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/cancel/CanceledError.js
-function CanceledError(message, config8, request3) {
-  AxiosError_default.call(this, message == null ? "canceled" : message, AxiosError_default.ERR_CANCELED, config8, request3);
+function CanceledError(message, config9, request3) {
+  AxiosError_default.call(this, message == null ? "canceled" : message, AxiosError_default.ERR_CANCELED, config9, request3);
   this.name = "CanceledError";
 }
 utils_default.inherits(CanceledError, AxiosError_default, {
@@ -53492,11 +53607,11 @@ var resolveFamily = ({ address, family }) => {
   };
 };
 var buildAddressEntry = (address, family) => resolveFamily(utils_default.isObject(address) ? address : { address, family });
-var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
+var http_default = isHttpAdapterSupported && function httpAdapter(config9) {
   return wrapAsync(async function dispatchHttpRequest(resolve, reject, onDone) {
-    let { data, lookup, family } = config8;
-    const { responseType, responseEncoding } = config8;
-    const method = config8.method.toUpperCase();
+    let { data, lookup, family } = config9;
+    const { responseType, responseEncoding } = config9;
+    const method = config9.method.toUpperCase();
     let isDone;
     let rejected = false;
     let req;
@@ -53514,11 +53629,11 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
     }
     const emitter = new import_events.EventEmitter();
     const onFinished = () => {
-      if (config8.cancelToken) {
-        config8.cancelToken.unsubscribe(abort);
+      if (config9.cancelToken) {
+        config9.cancelToken.unsubscribe(abort);
       }
-      if (config8.signal) {
-        config8.signal.removeEventListener("abort", abort);
+      if (config9.signal) {
+        config9.signal.removeEventListener("abort", abort);
       }
       emitter.removeAllListeners();
     };
@@ -53530,16 +53645,16 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
       }
     });
     function abort(reason) {
-      emitter.emit("abort", !reason || reason.type ? new CanceledError_default(null, config8, req) : reason);
+      emitter.emit("abort", !reason || reason.type ? new CanceledError_default(null, config9, req) : reason);
     }
     emitter.once("abort", reject);
-    if (config8.cancelToken || config8.signal) {
-      config8.cancelToken && config8.cancelToken.subscribe(abort);
-      if (config8.signal) {
-        config8.signal.aborted ? abort() : config8.signal.addEventListener("abort", abort);
+    if (config9.cancelToken || config9.signal) {
+      config9.cancelToken && config9.cancelToken.subscribe(abort);
+      if (config9.signal) {
+        config9.signal.aborted ? abort() : config9.signal.addEventListener("abort", abort);
       }
     }
-    const fullPath = buildFullPath(config8.baseURL, config8.url);
+    const fullPath = buildFullPath(config9.baseURL, config9.url);
     const parsed = new URL(fullPath, utils_default.hasBrowserEnv ? platform_default.origin : void 0);
     const protocol = parsed.protocol || supportedProtocols[0];
     if (protocol === "data:") {
@@ -53549,15 +53664,15 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
           status: 405,
           statusText: "method not allowed",
           headers: {},
-          config: config8
+          config: config9
         });
       }
       try {
-        convertedData = fromDataURI(config8.url, responseType === "blob", {
-          Blob: config8.env && config8.env.Blob
+        convertedData = fromDataURI(config9.url, responseType === "blob", {
+          Blob: config9.env && config9.env.Blob
         });
       } catch (err) {
-        throw AxiosError_default.from(err, AxiosError_default.ERR_BAD_REQUEST, config8);
+        throw AxiosError_default.from(err, AxiosError_default.ERR_BAD_REQUEST, config9);
       }
       if (responseType === "text") {
         convertedData = convertedData.toString(responseEncoding);
@@ -53572,20 +53687,20 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
         status: 200,
         statusText: "OK",
         headers: new AxiosHeaders_default(),
-        config: config8
+        config: config9
       });
     }
     if (supportedProtocols.indexOf(protocol) === -1) {
       return reject(new AxiosError_default(
         "Unsupported protocol " + protocol,
         AxiosError_default.ERR_BAD_REQUEST,
-        config8
+        config9
       ));
     }
-    const headers = AxiosHeaders_default.from(config8.headers).normalize();
+    const headers = AxiosHeaders_default.from(config9.headers).normalize();
     headers.set("User-Agent", "axios/" + VERSION2, false);
-    const { onUploadProgress, onDownloadProgress } = config8;
-    const maxRate = config8.maxRate;
+    const { onUploadProgress, onDownloadProgress } = config9;
+    const maxRate = config9.maxRate;
     let maxUploadRate = void 0;
     let maxDownloadRate = void 0;
     if (utils_default.isSpecCompliantForm(data)) {
@@ -53619,15 +53734,15 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
         return reject(new AxiosError_default(
           "Data after transformation must be a string, an ArrayBuffer, a Buffer, or a Stream",
           AxiosError_default.ERR_BAD_REQUEST,
-          config8
+          config9
         ));
       }
       headers.setContentLength(data.length, false);
-      if (config8.maxBodyLength > -1 && data.length > config8.maxBodyLength) {
+      if (config9.maxBodyLength > -1 && data.length > config9.maxBodyLength) {
         return reject(new AxiosError_default(
           "Request body larger than maxBodyLength limit",
           AxiosError_default.ERR_BAD_REQUEST,
-          config8
+          config9
         ));
       }
     }
@@ -53654,9 +53769,9 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
       ));
     }
     let auth = void 0;
-    if (config8.auth) {
-      const username = config8.auth.username || "";
-      const password = config8.auth.password || "";
+    if (config9.auth) {
+      const username = config9.auth.username || "";
+      const password = config9.auth.password || "";
       auth = username + ":" + password;
     }
     if (!auth && parsed.username) {
@@ -53669,13 +53784,13 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
     try {
       path5 = buildURL(
         parsed.pathname + parsed.search,
-        config8.params,
-        config8.paramsSerializer
+        config9.params,
+        config9.paramsSerializer
       ).replace(/^\?/, "");
     } catch (err) {
       const customErr = new Error(err.message);
-      customErr.config = config8;
-      customErr.url = config8.url;
+      customErr.config = config9;
+      customErr.url = config9.url;
       customErr.exists = true;
       return reject(customErr);
     }
@@ -53688,7 +53803,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
       path: path5,
       method,
       headers: headers.toJSON(),
-      agents: { http: config8.httpAgent, https: config8.httpsAgent },
+      agents: { http: config9.httpAgent, https: config9.httpsAgent },
       auth,
       protocol,
       family,
@@ -53696,36 +53811,36 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
       beforeRedirects: {}
     };
     !utils_default.isUndefined(lookup) && (options.lookup = lookup);
-    if (config8.socketPath) {
-      options.socketPath = config8.socketPath;
+    if (config9.socketPath) {
+      options.socketPath = config9.socketPath;
     } else {
       options.hostname = parsed.hostname;
       options.port = parsed.port;
-      setProxy(options, config8.proxy, protocol + "//" + parsed.hostname + (parsed.port ? ":" + parsed.port : "") + options.path);
+      setProxy(options, config9.proxy, protocol + "//" + parsed.hostname + (parsed.port ? ":" + parsed.port : "") + options.path);
     }
     let transport;
     const isHttpsRequest = isHttps.test(options.protocol);
-    options.agent = isHttpsRequest ? config8.httpsAgent : config8.httpAgent;
-    if (config8.transport) {
-      transport = config8.transport;
-    } else if (config8.maxRedirects === 0) {
+    options.agent = isHttpsRequest ? config9.httpsAgent : config9.httpAgent;
+    if (config9.transport) {
+      transport = config9.transport;
+    } else if (config9.maxRedirects === 0) {
       transport = isHttpsRequest ? import_https.default : import_http.default;
     } else {
-      if (config8.maxRedirects) {
-        options.maxRedirects = config8.maxRedirects;
+      if (config9.maxRedirects) {
+        options.maxRedirects = config9.maxRedirects;
       }
-      if (config8.beforeRedirect) {
-        options.beforeRedirects.config = config8.beforeRedirect;
+      if (config9.beforeRedirect) {
+        options.beforeRedirects.config = config9.beforeRedirect;
       }
       transport = isHttpsRequest ? httpsFollow : httpFollow;
     }
-    if (config8.maxBodyLength > -1) {
-      options.maxBodyLength = config8.maxBodyLength;
+    if (config9.maxBodyLength > -1) {
+      options.maxBodyLength = config9.maxBodyLength;
     } else {
       options.maxBodyLength = Infinity;
     }
-    if (config8.insecureHTTPParser) {
-      options.insecureHTTPParser = config8.insecureHTTPParser;
+    if (config9.insecureHTTPParser) {
+      options.insecureHTTPParser = config9.insecureHTTPParser;
     }
     req = transport.request(options, function handleResponse(res) {
       if (req.destroyed)
@@ -53747,7 +53862,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
       }
       let responseStream = res;
       const lastRequest = res.req || req;
-      if (config8.decompress !== false && res.headers["content-encoding"]) {
+      if (config9.decompress !== false && res.headers["content-encoding"]) {
         if (method === "HEAD" || res.statusCode === 204) {
           delete res.headers["content-encoding"];
         }
@@ -53780,7 +53895,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
         status: res.statusCode,
         statusText: res.statusMessage,
         headers: new AxiosHeaders_default(res.headers),
-        config: config8,
+        config: config9,
         request: lastRequest
       };
       if (responseType === "stream") {
@@ -53792,13 +53907,13 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
         responseStream.on("data", function handleStreamData(chunk) {
           responseBuffer.push(chunk);
           totalResponseBytes += chunk.length;
-          if (config8.maxContentLength > -1 && totalResponseBytes > config8.maxContentLength) {
+          if (config9.maxContentLength > -1 && totalResponseBytes > config9.maxContentLength) {
             rejected = true;
             responseStream.destroy();
             reject(new AxiosError_default(
-              "maxContentLength size of " + config8.maxContentLength + " exceeded",
+              "maxContentLength size of " + config9.maxContentLength + " exceeded",
               AxiosError_default.ERR_BAD_RESPONSE,
-              config8,
+              config9,
               lastRequest
             ));
           }
@@ -53808,9 +53923,9 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
             return;
           }
           const err = new AxiosError_default(
-            "maxContentLength size of " + config8.maxContentLength + " exceeded",
+            "maxContentLength size of " + config9.maxContentLength + " exceeded",
             AxiosError_default.ERR_BAD_RESPONSE,
-            config8,
+            config9,
             lastRequest
           );
           responseStream.destroy(err);
@@ -53819,7 +53934,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
         responseStream.on("error", function handleStreamError(err) {
           if (req.destroyed)
             return;
-          reject(AxiosError_default.from(err, null, config8, lastRequest));
+          reject(AxiosError_default.from(err, null, config9, lastRequest));
         });
         responseStream.on("end", function handleStreamEnd() {
           try {
@@ -53832,7 +53947,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
             }
             response.data = responseData;
           } catch (err) {
-            return reject(AxiosError_default.from(err, null, config8, response.request, response));
+            return reject(AxiosError_default.from(err, null, config9, response.request, response));
           }
           settle(resolve, reject, response);
         });
@@ -53849,18 +53964,18 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
       req.destroy(err);
     });
     req.on("error", function handleRequestError(err) {
-      reject(AxiosError_default.from(err, null, config8, req));
+      reject(AxiosError_default.from(err, null, config9, req));
     });
     req.on("socket", function handleRequestSocket(socket) {
       socket.setKeepAlive(true, 1e3 * 60);
     });
-    if (config8.timeout) {
-      const timeout = parseInt(config8.timeout, 10);
+    if (config9.timeout) {
+      const timeout = parseInt(config9.timeout, 10);
       if (Number.isNaN(timeout)) {
         reject(new AxiosError_default(
           "error trying to parse `config.timeout` to int",
           AxiosError_default.ERR_BAD_OPTION_VALUE,
-          config8,
+          config9,
           req
         ));
         return;
@@ -53868,15 +53983,15 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
       req.setTimeout(timeout, function handleRequestTimeout() {
         if (isDone)
           return;
-        let timeoutErrorMessage = config8.timeout ? "timeout of " + config8.timeout + "ms exceeded" : "timeout exceeded";
-        const transitional2 = config8.transitional || transitional_default;
-        if (config8.timeoutErrorMessage) {
-          timeoutErrorMessage = config8.timeoutErrorMessage;
+        let timeoutErrorMessage = config9.timeout ? "timeout of " + config9.timeout + "ms exceeded" : "timeout exceeded";
+        const transitional2 = config9.transitional || transitional_default;
+        if (config9.timeoutErrorMessage) {
+          timeoutErrorMessage = config9.timeoutErrorMessage;
         }
         reject(new AxiosError_default(
           timeoutErrorMessage,
           transitional2.clarifyTimeoutError ? AxiosError_default.ETIMEDOUT : AxiosError_default.ECONNABORTED,
-          config8,
+          config9,
           req
         ));
         abort();
@@ -53894,7 +54009,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config8) {
       });
       data.on("close", () => {
         if (!ended && !errored) {
-          abort(new CanceledError_default("Request stream has been aborted", config8, req));
+          abort(new CanceledError_default("Request stream has been aborted", config9, req));
         }
       });
       data.pipe(req);
@@ -53969,7 +54084,7 @@ var cookies_default = platform_default.hasStandardBrowserEnv ? {
 var headersToObject = (thing) => thing instanceof AxiosHeaders_default ? { ...thing } : thing;
 function mergeConfig(config1, config22) {
   config22 = config22 || {};
-  const config8 = {};
+  const config9 = {};
   function getMergedValue(target, source, caseless) {
     if (utils_default.isPlainObject(target) && utils_default.isPlainObject(source)) {
       return utils_default.merge.call({ caseless }, target, source);
@@ -54040,17 +54155,17 @@ function mergeConfig(config1, config22) {
   utils_default.forEach(Object.keys(Object.assign({}, config1, config22)), function computeConfigValue(prop) {
     const merge2 = mergeMap[prop] || mergeDeepProperties;
     const configValue = merge2(config1[prop], config22[prop], prop);
-    utils_default.isUndefined(configValue) && merge2 !== mergeDirectKeys || (config8[prop] = configValue);
+    utils_default.isUndefined(configValue) && merge2 !== mergeDirectKeys || (config9[prop] = configValue);
   });
-  return config8;
+  return config9;
 }
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/helpers/resolveConfig.js
-var resolveConfig_default = (config8) => {
-  const newConfig = mergeConfig({}, config8);
+var resolveConfig_default = (config9) => {
+  const newConfig = mergeConfig({}, config9);
   let { data, withXSRFToken, xsrfHeaderName, xsrfCookieName, headers, auth } = newConfig;
   newConfig.headers = headers = AxiosHeaders_default.from(headers);
-  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url), config8.params, config8.paramsSerializer);
+  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url), config9.params, config9.paramsSerializer);
   if (auth) {
     headers.set(
       "Authorization",
@@ -54080,9 +54195,9 @@ var resolveConfig_default = (config8) => {
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/adapters/xhr.js
 var isXHRAdapterSupported = typeof XMLHttpRequest !== "undefined";
-var xhr_default = isXHRAdapterSupported && function(config8) {
+var xhr_default = isXHRAdapterSupported && function(config9) {
   return new Promise(function dispatchXhrRequest(resolve, reject) {
-    const _config = resolveConfig_default(config8);
+    const _config = resolveConfig_default(config9);
     let requestData = _config.data;
     const requestHeaders = AxiosHeaders_default.from(_config.headers).normalize();
     let { responseType, onUploadProgress, onDownloadProgress } = _config;
@@ -54111,7 +54226,7 @@ var xhr_default = isXHRAdapterSupported && function(config8) {
         status: request3.status,
         statusText: request3.statusText,
         headers: responseHeaders,
-        config: config8,
+        config: config9,
         request: request3
       };
       settle(function _resolve(value) {
@@ -54140,11 +54255,11 @@ var xhr_default = isXHRAdapterSupported && function(config8) {
       if (!request3) {
         return;
       }
-      reject(new AxiosError_default("Request aborted", AxiosError_default.ECONNABORTED, config8, request3));
+      reject(new AxiosError_default("Request aborted", AxiosError_default.ECONNABORTED, config9, request3));
       request3 = null;
     };
     request3.onerror = function handleError() {
-      reject(new AxiosError_default("Network Error", AxiosError_default.ERR_NETWORK, config8, request3));
+      reject(new AxiosError_default("Network Error", AxiosError_default.ERR_NETWORK, config9, request3));
       request3 = null;
     };
     request3.ontimeout = function handleTimeout() {
@@ -54156,7 +54271,7 @@ var xhr_default = isXHRAdapterSupported && function(config8) {
       reject(new AxiosError_default(
         timeoutErrorMessage,
         transitional2.clarifyTimeoutError ? AxiosError_default.ETIMEDOUT : AxiosError_default.ECONNABORTED,
-        config8,
+        config9,
         request3
       ));
       request3 = null;
@@ -54187,7 +54302,7 @@ var xhr_default = isXHRAdapterSupported && function(config8) {
         if (!request3) {
           return;
         }
-        reject(!cancel || cancel.type ? new CanceledError_default(null, config8, request3) : cancel);
+        reject(!cancel || cancel.type ? new CanceledError_default(null, config9, request3) : cancel);
         request3.abort();
         request3 = null;
       };
@@ -54198,7 +54313,7 @@ var xhr_default = isXHRAdapterSupported && function(config8) {
     }
     const protocol = parseProtocol(_config.url);
     if (protocol && platform_default.protocols.indexOf(protocol) === -1) {
-      reject(new AxiosError_default("Unsupported protocol " + protocol + ":", AxiosError_default.ERR_BAD_REQUEST, config8));
+      reject(new AxiosError_default("Unsupported protocol " + protocol + ":", AxiosError_default.ERR_BAD_REQUEST, config9));
       return;
     }
     request3.send(requestData || null);
@@ -54329,8 +54444,8 @@ var resolvers = {
 };
 isFetchSupported && ((res) => {
   ["text", "arrayBuffer", "blob", "formData", "stream"].forEach((type2) => {
-    !resolvers[type2] && (resolvers[type2] = utils_default.isFunction(res[type2]) ? (res2) => res2[type2]() : (_7, config8) => {
-      throw new AxiosError_default(`Response type '${type2}' is not supported`, AxiosError_default.ERR_NOT_SUPPORT, config8);
+    !resolvers[type2] && (resolvers[type2] = utils_default.isFunction(res[type2]) ? (res2) => res2[type2]() : (_7, config9) => {
+      throw new AxiosError_default(`Response type '${type2}' is not supported`, AxiosError_default.ERR_NOT_SUPPORT, config9);
     });
   });
 })(new Response());
@@ -54358,7 +54473,7 @@ var resolveBodyLength = async (headers, body) => {
   const length = utils_default.toFiniteNumber(headers.getContentLength());
   return length == null ? getBodyLength(body) : length;
 };
-var fetch_default = isFetchSupported && (async (config8) => {
+var fetch_default = isFetchSupported && (async (config9) => {
   let {
     url: url2,
     method,
@@ -54372,7 +54487,7 @@ var fetch_default = isFetchSupported && (async (config8) => {
     headers,
     withCredentials = "same-origin",
     fetchOptions
-  } = resolveConfig_default(config8);
+  } = resolveConfig_default(config9);
   responseType = responseType ? (responseType + "").toLowerCase() : "text";
   let [composedSignal, stopTimeout] = signal || cancelToken || timeout ? composeSignals_default([signal, cancelToken], timeout) : [];
   let finished, request3;
@@ -54435,7 +54550,7 @@ var fetch_default = isFetchSupported && (async (config8) => {
       );
     }
     responseType = responseType || "text";
-    let responseData = await resolvers[utils_default.findKey(resolvers, responseType) || "text"](response, config8);
+    let responseData = await resolvers[utils_default.findKey(resolvers, responseType) || "text"](response, config9);
     !isStreamResponse && onFinish();
     stopTimeout && stopTimeout();
     return await new Promise((resolve, reject) => {
@@ -54444,7 +54559,7 @@ var fetch_default = isFetchSupported && (async (config8) => {
         headers: AxiosHeaders_default.from(response.headers),
         status: response.status,
         statusText: response.statusText,
-        config: config8,
+        config: config9,
         request: request3
       });
     });
@@ -54452,13 +54567,13 @@ var fetch_default = isFetchSupported && (async (config8) => {
     onFinish();
     if (err && err.name === "TypeError" && /fetch/i.test(err.message)) {
       throw Object.assign(
-        new AxiosError_default("Network Error", AxiosError_default.ERR_NETWORK, config8, request3),
+        new AxiosError_default("Network Error", AxiosError_default.ERR_NETWORK, config9, request3),
         {
           cause: err.cause || err
         }
       );
     }
-    throw AxiosError_default.from(err, err && err.code, config8, request3);
+    throw AxiosError_default.from(err, err && err.code, config9, request3);
   }
 });
 
@@ -54517,41 +54632,41 @@ var adapters_default = {
 };
 
 // node_modules/.pnpm/axios@1.7.4/node_modules/axios/lib/core/dispatchRequest.js
-function throwIfCancellationRequested(config8) {
-  if (config8.cancelToken) {
-    config8.cancelToken.throwIfRequested();
+function throwIfCancellationRequested(config9) {
+  if (config9.cancelToken) {
+    config9.cancelToken.throwIfRequested();
   }
-  if (config8.signal && config8.signal.aborted) {
-    throw new CanceledError_default(null, config8);
+  if (config9.signal && config9.signal.aborted) {
+    throw new CanceledError_default(null, config9);
   }
 }
-function dispatchRequest(config8) {
-  throwIfCancellationRequested(config8);
-  config8.headers = AxiosHeaders_default.from(config8.headers);
-  config8.data = transformData.call(
-    config8,
-    config8.transformRequest
+function dispatchRequest(config9) {
+  throwIfCancellationRequested(config9);
+  config9.headers = AxiosHeaders_default.from(config9.headers);
+  config9.data = transformData.call(
+    config9,
+    config9.transformRequest
   );
-  if (["post", "put", "patch"].indexOf(config8.method) !== -1) {
-    config8.headers.setContentType("application/x-www-form-urlencoded", false);
+  if (["post", "put", "patch"].indexOf(config9.method) !== -1) {
+    config9.headers.setContentType("application/x-www-form-urlencoded", false);
   }
-  const adapter = adapters_default.getAdapter(config8.adapter || defaults_default.adapter);
-  return adapter(config8).then(function onAdapterResolution(response) {
-    throwIfCancellationRequested(config8);
+  const adapter = adapters_default.getAdapter(config9.adapter || defaults_default.adapter);
+  return adapter(config9).then(function onAdapterResolution(response) {
+    throwIfCancellationRequested(config9);
     response.data = transformData.call(
-      config8,
-      config8.transformResponse,
+      config9,
+      config9.transformResponse,
       response
     );
     response.headers = AxiosHeaders_default.from(response.headers);
     return response;
   }, function onAdapterRejection(reason) {
     if (!isCancel(reason)) {
-      throwIfCancellationRequested(config8);
+      throwIfCancellationRequested(config9);
       if (reason && reason.response) {
         reason.response.data = transformData.call(
-          config8,
-          config8.transformResponse,
+          config9,
+          config9.transformResponse,
           reason.response
         );
         reason.response.headers = AxiosHeaders_default.from(reason.response.headers);
@@ -54629,9 +54744,9 @@ var Axios = class {
       response: new InterceptorManager_default()
     };
   }
-  async request(configOrUrl, config8) {
+  async request(configOrUrl, config9) {
     try {
-      return await this._request(configOrUrl, config8);
+      return await this._request(configOrUrl, config9);
     } catch (err) {
       if (err instanceof Error) {
         let dummy;
@@ -54649,15 +54764,15 @@ var Axios = class {
       throw err;
     }
   }
-  _request(configOrUrl, config8) {
+  _request(configOrUrl, config9) {
     if (typeof configOrUrl === "string") {
-      config8 = config8 || {};
-      config8.url = configOrUrl;
+      config9 = config9 || {};
+      config9.url = configOrUrl;
     } else {
-      config8 = configOrUrl || {};
+      config9 = configOrUrl || {};
     }
-    config8 = mergeConfig(this.defaults, config8);
-    const { transitional: transitional2, paramsSerializer, headers } = config8;
+    config9 = mergeConfig(this.defaults, config9);
+    const { transitional: transitional2, paramsSerializer, headers } = config9;
     if (transitional2 !== void 0) {
       validator_default.assertOptions(transitional2, {
         silentJSONParsing: validators2.transitional(validators2.boolean),
@@ -54667,7 +54782,7 @@ var Axios = class {
     }
     if (paramsSerializer != null) {
       if (utils_default.isFunction(paramsSerializer)) {
-        config8.paramsSerializer = {
+        config9.paramsSerializer = {
           serialize: paramsSerializer
         };
       } else {
@@ -54677,10 +54792,10 @@ var Axios = class {
         }, true);
       }
     }
-    config8.method = (config8.method || this.defaults.method || "get").toLowerCase();
+    config9.method = (config9.method || this.defaults.method || "get").toLowerCase();
     let contextHeaders = headers && utils_default.merge(
       headers.common,
-      headers[config8.method]
+      headers[config9.method]
     );
     headers && utils_default.forEach(
       ["delete", "get", "head", "post", "put", "patch", "common"],
@@ -54688,11 +54803,11 @@ var Axios = class {
         delete headers[method];
       }
     );
-    config8.headers = AxiosHeaders_default.concat(contextHeaders, headers);
+    config9.headers = AxiosHeaders_default.concat(contextHeaders, headers);
     const requestInterceptorChain = [];
     let synchronousRequestInterceptors = true;
     this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
-      if (typeof interceptor.runWhen === "function" && interceptor.runWhen(config8) === false) {
+      if (typeof interceptor.runWhen === "function" && interceptor.runWhen(config9) === false) {
         return;
       }
       synchronousRequestInterceptors = synchronousRequestInterceptors && interceptor.synchronous;
@@ -54710,14 +54825,14 @@ var Axios = class {
       chain.unshift.apply(chain, requestInterceptorChain);
       chain.push.apply(chain, responseInterceptorChain);
       len = chain.length;
-      promise = Promise.resolve(config8);
+      promise = Promise.resolve(config9);
       while (i3 < len) {
         promise = promise.then(chain[i3++], chain[i3++]);
       }
       return promise;
     }
     len = requestInterceptorChain.length;
-    let newConfig = config8;
+    let newConfig = config9;
     i3 = 0;
     while (i3 < len) {
       const onFulfilled = requestInterceptorChain[i3++];
@@ -54741,25 +54856,25 @@ var Axios = class {
     }
     return promise;
   }
-  getUri(config8) {
-    config8 = mergeConfig(this.defaults, config8);
-    const fullPath = buildFullPath(config8.baseURL, config8.url);
-    return buildURL(fullPath, config8.params, config8.paramsSerializer);
+  getUri(config9) {
+    config9 = mergeConfig(this.defaults, config9);
+    const fullPath = buildFullPath(config9.baseURL, config9.url);
+    return buildURL(fullPath, config9.params, config9.paramsSerializer);
   }
 };
 utils_default.forEach(["delete", "get", "head", "options"], function forEachMethodNoData(method) {
-  Axios.prototype[method] = function(url2, config8) {
-    return this.request(mergeConfig(config8 || {}, {
+  Axios.prototype[method] = function(url2, config9) {
+    return this.request(mergeConfig(config9 || {}, {
       method,
       url: url2,
-      data: (config8 || {}).data
+      data: (config9 || {}).data
     }));
   };
 });
 utils_default.forEach(["post", "put", "patch"], function forEachMethodWithData(method) {
   function generateHTTPMethod(isForm) {
-    return function httpMethod(url2, data, config8) {
-      return this.request(mergeConfig(config8 || {}, {
+    return function httpMethod(url2, data, config9) {
+      return this.request(mergeConfig(config9 || {}, {
         method,
         headers: isForm ? {
           "Content-Type": "multipart/form-data"
@@ -54805,11 +54920,11 @@ var CancelToken = class {
       };
       return promise;
     };
-    executor(function cancel(message, config8, request3) {
+    executor(function cancel(message, config9, request3) {
       if (token.reason) {
         return;
       }
-      token.reason = new CanceledError_default(message, config8, request3);
+      token.reason = new CanceledError_default(message, config9, request3);
       resolvePromise(token.reason);
     });
   }
@@ -54840,8 +54955,8 @@ var CancelToken = class {
   }
   static source() {
     let cancel;
-    const token = new CancelToken(function executor(c3) {
-      cancel = c3;
+    const token = new CancelToken(function executor(c4) {
+      cancel = c4;
     });
     return {
       token,
@@ -55024,7 +55139,7 @@ function tokenCount(content) {
 
 // src/engine/anthropic.ts
 var AnthropicEngine = class {
-  constructor(config8) {
+  constructor(config9) {
     this.generateCommitMessage = async (messages) => {
       const systemMessage = messages.find((msg) => msg.role === "system")?.content;
       const restMessages = messages.filter(
@@ -55060,7 +55175,7 @@ var AnthropicEngine = class {
         throw err;
       }
     };
-    this.config = config8;
+    this.config = config9;
     this.client = new sdk_default({
       apiKey: this.config.apiKey,
       timeout: 12e4,
@@ -58726,7 +58841,7 @@ var OpenAIClient = class {
 
 // src/engine/azure.ts
 var AzureEngine = class {
-  constructor(config8) {
+  constructor(config9) {
     this.generateCommitMessage = async (messages) => {
       try {
         const REQUEST_TOKENS = messages.map((msg) => tokenCount(msg.content) + 4).reduce((a4, b7) => a4 + b7, 0);
@@ -58757,7 +58872,7 @@ var AzureEngine = class {
         throw err;
       }
     };
-    this.config = config8;
+    this.config = config9;
     this.client = new OpenAIClient(
       this.config.baseURL,
       new AzureKeyCredential(this.config.apiKey)
@@ -58767,10 +58882,10 @@ var AzureEngine = class {
 
 // src/engine/flowise.ts
 var FlowiseEngine = class {
-  constructor(config8) {
-    this.config = config8;
+  constructor(config9) {
+    this.config = config9;
     this.client = axios_default.create({
-      url: `${config8.baseURL}/${config8.apiKey}`,
+      url: `${config9.baseURL}/${config9.apiKey}`,
       headers: { "Content-Type": "application/json" }
     });
   }
@@ -59572,9 +59687,9 @@ function withTimeout(promise, timeoutMs, errorMessage = "Operation timed out") {
 
 // src/engine/gemini.ts
 var GeminiEngine = class {
-  constructor(config8) {
-    this.client = new GoogleGenerativeAI(config8.apiKey);
-    this.config = config8;
+  constructor(config9) {
+    this.client = new GoogleGenerativeAI(config9.apiKey);
+    this.config = config9;
   }
   async generateCommitMessage(messages) {
     const systemInstruction = messages.filter((m5) => m5.role === "system").map((m5) => m5.content).join("\n");
@@ -59634,10 +59749,10 @@ var GeminiEngine = class {
 
 // src/engine/ollama.ts
 var OllamaEngine = class {
-  constructor(config8) {
-    this.config = config8;
+  constructor(config9) {
+    this.config = config9;
     this.client = axios_default.create({
-      url: config8.baseURL ? `${config8.baseURL}/${config8.apiKey}` : "http://localhost:11434/api/chat",
+      url: config9.baseURL ? `${config9.baseURL}/${config9.apiKey}` : "http://localhost:11434/api/chat",
       headers: { "Content-Type": "application/json" }
     });
   }
@@ -60833,9 +60948,9 @@ function debug2(action, ...args) {
   }
 }
 var uuid42 = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c3) => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c4) => {
     const r3 = Math.random() * 16 | 0;
-    const v5 = c3 === "x" ? r3 : r3 & 3 | 8;
+    const v5 = c4 === "x" ? r3 : r3 & 3 | 8;
     return v5.toString(16);
   });
 };
@@ -61543,7 +61658,7 @@ var AbstractChatCompletionRunner = class extends EventStream {
     const finalFunctionCallResult = __classPrivateFieldGet11(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalFunctionCallResult).call(this);
     if (finalFunctionCallResult != null)
       this._emit("finalFunctionCallResult", finalFunctionCallResult);
-    if (this._chatCompletions.some((c3) => c3.usage)) {
+    if (this._chatCompletions.some((c4) => c4.usage)) {
       this._emit("totalUsage", __classPrivateFieldGet11(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_calculateTotalUsage).call(this));
     }
   }
@@ -63933,7 +64048,7 @@ var { OpenAIError: OpenAIError2, APIError: APIError4, APIConnectionError: APICon
 
 // src/engine/openAi.ts
 var OpenAiEngine = class {
-  constructor(config8) {
+  constructor(config9) {
     this.generateCommitMessage = async (messages) => {
       const params = {
         model: this.config.model,
@@ -63959,16 +64074,16 @@ var OpenAiEngine = class {
         throw err;
       }
     };
-    this.config = config8;
+    this.config = config9;
     const clientConfig = {
-      apiKey: config8.apiKey,
+      apiKey: config9.apiKey,
       timeout: 12e4,
       maxRetries: 2
     };
-    if (!config8.baseURL) {
+    if (!config9.baseURL) {
       this.client = new OpenAI(clientConfig);
     } else {
-      this.client = new OpenAI({ ...clientConfig, baseURL: config8.baseURL });
+      this.client = new OpenAI({ ...clientConfig, baseURL: config9.baseURL });
     }
   }
 };
@@ -63976,7 +64091,7 @@ var OpenAiEngine = class {
 // src/engine/mistral.ts
 var import_mistralai = __toESM(require_mistralai());
 var MistralAiEngine = class {
-  constructor(config8) {
+  constructor(config9) {
     this.generateCommitMessage = async (messages) => {
       const params = {
         model: this.config.model,
@@ -64005,29 +64120,29 @@ var MistralAiEngine = class {
         throw err;
       }
     };
-    this.config = config8;
-    if (!config8.baseURL) {
-      this.client = new import_mistralai.Mistral({ apiKey: config8.apiKey });
+    this.config = config9;
+    if (!config9.baseURL) {
+      this.client = new import_mistralai.Mistral({ apiKey: config9.apiKey });
     } else {
-      this.client = new import_mistralai.Mistral({ apiKey: config8.apiKey, serverURL: config8.baseURL });
+      this.client = new import_mistralai.Mistral({ apiKey: config9.apiKey, serverURL: config9.baseURL });
     }
   }
 };
 
 // src/engine/groq.ts
 var GroqEngine = class extends OpenAiEngine {
-  constructor(config8) {
-    config8.baseURL = "https://api.groq.com/openai/v1";
-    super(config8);
+  constructor(config9) {
+    config9.baseURL = "https://api.groq.com/openai/v1";
+    super(config9);
   }
 };
 
 // src/engine/mlx.ts
 var MLXEngine = class {
-  constructor(config8) {
-    this.config = config8;
+  constructor(config9) {
+    this.config = config9;
     this.client = axios_default.create({
-      url: config8.baseURL ? `${config8.baseURL}/${config8.apiKey}` : "http://localhost:8080/v1/chat/completions",
+      url: config9.baseURL ? `${config9.baseURL}/${config9.apiKey}` : "http://localhost:8080/v1/chat/completions",
       headers: { "Content-Type": "application/json" }
     });
   }
@@ -64056,7 +64171,7 @@ var MLXEngine = class {
 
 // src/engine/deepseek.ts
 var DeepseekEngine = class {
-  constructor(config8) {
+  constructor(config9) {
     this.generateCommitMessage = async (messages) => {
       const params = {
         model: this.config.model,
@@ -64086,21 +64201,21 @@ var DeepseekEngine = class {
         throw err;
       }
     };
-    this.config = config8;
+    this.config = config9;
     this.client = new OpenAI({ apiKey: "" });
   }
 };
 
 // src/utils/engine.ts
 function getEngine() {
-  const config8 = getConfig();
-  const provider = config8.CMT_AI_PROVIDER;
+  const config9 = getConfig();
+  const provider = config9.CMT_AI_PROVIDER;
   const DEFAULT_CONFIG2 = {
-    model: config8.CMT_MODEL,
-    maxTokensOutput: config8.CMT_TOKENS_MAX_OUTPUT,
-    maxTokensInput: config8.CMT_TOKENS_MAX_INPUT,
-    baseURL: config8.CMT_API_URL,
-    apiKey: config8.CMT_API_KEY
+    model: config9.CMT_MODEL,
+    maxTokensOutput: config9.CMT_TOKENS_MAX_OUTPUT,
+    maxTokensInput: config9.CMT_TOKENS_MAX_INPUT,
+    baseURL: config9.CMT_API_URL,
+    apiKey: config9.CMT_API_KEY
   };
   switch (provider) {
     case "ollama" /* OLLAMA */:
@@ -64108,7 +64223,7 @@ function getEngine() {
     case "anthropic" /* ANTHROPIC */:
       return new AnthropicEngine(DEFAULT_CONFIG2);
     case "test" /* TEST */:
-      return new TestAi(config8.CMT_TEST_MOCK_TYPE);
+      return new TestAi(config9.CMT_TEST_MOCK_TYPE);
     case "gemini" /* GEMINI */:
       return new GeminiEngine(DEFAULT_CONFIG2);
     case "azure" /* AZURE */:
@@ -64215,8 +64330,8 @@ var getPrompt = (ruleName, ruleConfig, prompt) => {
   ce(`${source_default.red("\u2716")} No prompt handler for rule "${ruleName}".`);
   return `Please manualy set the prompt for rule "${ruleName}".`;
 };
-var inferPromptsFromCommitlintConfig = (config8) => {
-  const { rules, prompt } = config8;
+var inferPromptsFromCommitlintConfig = (config9) => {
+  const { rules, prompt } = config9;
   if (!rules)
     return [];
   return Object.keys(rules).map(
@@ -64621,8 +64736,8 @@ var getMainCommitPrompt = async (fullGitMojiSpec, context) => {
 
 // src/utils/debug.ts
 function debug3(...args) {
-  const config8 = getConfig();
-  if (config8.CMT_DEBUG) {
+  const config9 = getConfig();
+  if (config9.CMT_DEBUG) {
     console.error("[DEBUG]", ...args);
   }
 }
@@ -64903,6 +65018,14 @@ var getCommitAIIgnore = () => {
   }
   return ig;
 };
+var getCommitAIReviewIgnore = () => {
+  const ig = (0, import_ignore.default)();
+  try {
+    ig.add((0, import_fs3.readFileSync)(".commit-ai-review-ignore").toString().split("\n"));
+  } catch (e3) {
+  }
+  return ig;
+};
 var getCoreHooksPath = async () => {
   const { stdout } = await execa("git", ["config", "core.hooksPath"]);
   return stdout;
@@ -64968,6 +65091,26 @@ ${excludedFiles.join(
   ]);
   return diff;
 };
+var filterDiffForReview = (diff) => {
+  if (!diff || diff.trim() === "") {
+    return diff;
+  }
+  const ig = getCommitAIReviewIgnore();
+  if (ig._rules.length === 0) {
+    return diff;
+  }
+  const diffSections = diff.split(/(?=diff --git)/);
+  const filteredSections = diffSections.filter((section) => {
+    if (!section.trim())
+      return false;
+    const fileMatch = section.match(/diff --git a\/(.*?) b\//);
+    if (!fileMatch)
+      return true;
+    const filePath = fileMatch[1];
+    return !ig.ignores(filePath);
+  });
+  return filteredSections.join("");
+};
 var printErrorAndExit = (msg) => {
   ce(
     `\u{1F4A5} Oops!
@@ -65001,8 +65144,1472 @@ var trytm = async (promise) => {
   }
 };
 
-// src/commands/commit.ts
+// src/commands/standards.ts
+var import_fs4 = require("fs");
+var import_path4 = require("path");
+var STANDARDS_FILE = ".commit-ai-standards";
+var POPULAR_STANDARDS = {
+  "react": {
+    name: "React + TypeScript (Airbnb)",
+    description: "Airbnb React/JSX Style Guide with TypeScript best practices",
+    standards: `# React + TypeScript Code Standards (Airbnb Style Guide)
+
+## Component Structure
+- Use functional components with hooks (avoid class components)
+- One component per file
+- Use PascalCase for component names
+- Place interfaces/types above component definition
+
+## TypeScript
+- Explicitly type all props, state, and function returns
+- Avoid 'any' type - use 'unknown' if type is truly unknown
+- Use interfaces for object shapes, types for unions/intersections
+- Prefer type inference for simple variables
+
+## Hooks
+- Follow Rules of Hooks (only call at top level, only in React functions)
+- Custom hooks must start with 'use' prefix
+- Use useMemo/useCallback only when necessary (avoid premature optimization)
+- Dependency arrays must be complete and accurate
+
+## Props & State
+- Destructure props in function parameters
+- Use default parameters for optional props
+- Keep state as local as possible
+- Lift state up only when needed by multiple components
+
+## Naming Conventions
+- Boolean props/variables: is*, has*, should* prefix
+- Event handlers: handle* prefix (e.g., handleClick)
+- Event handler props: on* prefix (e.g., onClick)
+- Avoid single letter names except for iterators
+
+## Code Quality
+- Components should be under 250 lines (extract smaller components)
+- Functions should do one thing (Single Responsibility)
+- Avoid nested ternaries (max 1 level)
+- Use early returns to reduce nesting
+- Extract complex conditions into named variables
+
+## Performance
+- Avoid creating objects/arrays in render (causes re-renders)
+- Use keys properly in lists (stable, unique IDs - not index)
+- Lazy load routes and heavy components
+- Debounce/throttle expensive operations
+
+## Security
+- Sanitize user input before rendering (XSS prevention)
+- Never use dangerouslySetInnerHTML without sanitization
+- Validate and sanitize form inputs
+- Use Content Security Policy headers
+`
+  },
+  "angular": {
+    name: "Angular + TypeScript",
+    description: "Official Angular Style Guide best practices",
+    standards: `# Angular + TypeScript Code Standards
+
+## Project Structure
+- Follow Angular CLI structure
+- One component/service/module per file
+- Use feature modules to organize related functionality
+- Keep shared code in a shared/core module
+
+## Naming Conventions
+- Components: feature.component.ts (kebab-case)
+- Services: feature.service.ts
+- Modules: feature.module.ts
+- Use suffixes: .component, .service, .directive, .pipe, .module
+
+## Components
+- Use OnPush change detection when possible
+- Unsubscribe from observables in ngOnDestroy
+- Implement lifecycle hooks as interfaces (implements OnInit)
+- Keep logic out of templates (move to component methods)
+- Components should be under 400 lines
+
+## Services
+- Mark services as @Injectable({ providedIn: 'root' }) when possible
+- Use dependency injection (constructor injection)
+- Services should be stateless when possible
+- One responsibility per service
+
+## RxJS & Observables
+- Always unsubscribe (use takeUntil, async pipe, or takeWhile)
+- Prefer async pipe in templates over manual subscription
+- Use Subject/BehaviorSubject appropriately
+- Chain operators efficiently (map, filter, switchMap, etc.)
+
+## TypeScript
+- Enable strict mode in tsconfig
+- Explicitly type public APIs
+- Use readonly for immutable properties
+- Avoid any type - use unknown or proper types
+
+## Templates
+- Use safe navigation operator (?.) for nullable properties
+- Keep template logic simple (move complex logic to component)
+- Use trackBy with *ngFor for performance
+- Prefer structural directives over ngIf with else blocks
+
+## Performance
+- Use OnPush change detection strategy
+- Lazy load feature modules
+- Use pure pipes when possible
+- Avoid function calls in templates
+
+## Security
+- Trust Angular's built-in XSS protection
+- Sanitize data when using bypassSecurityTrust methods
+- Validate all user inputs
+- Use HttpInterceptor for authentication tokens
+`
+  },
+  "vue": {
+    name: "Vue 3 + TypeScript",
+    description: "Vue 3 Composition API with TypeScript best practices",
+    standards: `# Vue 3 + TypeScript Code Standards
+
+## Component Structure
+- Use Composition API with <script setup>
+- One component per file (Single File Components)
+- Use PascalCase for component names
+- Order: template, script, style
+
+## Script Setup
+- Use <script setup lang="ts"> for all components
+- Define props with defineProps<PropsInterface>()
+- Define emits with defineEmits<EmitsInterface>()
+- Use ref() for primitives, reactive() for objects
+
+## TypeScript
+- Explicitly type props, emits, and refs
+- Use interfaces for complex types
+- Avoid any type
+- Use Ref<T> type for ref values
+
+## Reactivity
+- Use ref() for primitives, reactive() for objects
+- Always .value when accessing refs in script
+- Use computed() for derived state
+- Use watch/watchEffect appropriately
+
+## Props & Emits
+- Validate props with runtime validators
+- Use TypeScript interfaces for prop types
+- Emit events for parent communication
+- Use v-model for two-way binding
+
+## Composables
+- Extract reusable logic into composables
+- Composables should start with 'use' prefix
+- Return reactive values and methods
+- One responsibility per composable
+
+## Templates
+- Use v-if for conditional rendering (not v-show for initial render)
+- Use v-show for frequent toggling
+- Always use :key with v-for (unique, stable IDs)
+- Keep template expressions simple
+
+## Performance
+- Use v-once for static content
+- Use v-memo for expensive subtrees
+- Lazy load routes with dynamic imports
+- Debounce/throttle event handlers
+
+## Code Quality
+- Components under 300 lines
+- Extract complex logic to composables
+- Use early returns to reduce nesting
+- Descriptive variable and function names
+
+## Security
+- Sanitize user input before v-html
+- Avoid v-html when possible (use text interpolation)
+- Validate form inputs
+- Use environment variables for sensitive data
+`
+  },
+  "nodejs": {
+    name: "Node.js + Express",
+    description: "Node.js and Express.js backend best practices",
+    standards: `# Node.js + Express Code Standards
+
+## Project Structure
+- Separate routes, controllers, services, and models
+- Use environment variables for configuration
+- Keep business logic in services (not controllers)
+- One responsibility per module
+
+## Error Handling
+- Always use try-catch for async operations
+- Create custom error classes
+- Use centralized error handling middleware
+- Never swallow errors (always log or rethrow)
+- Return appropriate HTTP status codes
+
+## Async/Await
+- Always use async/await (avoid callback hell)
+- Handle promise rejections
+- Use Promise.all for parallel operations
+- Avoid blocking the event loop
+
+## Security
+- Validate and sanitize all inputs
+- Use parameterized queries (prevent SQL injection)
+- Implement rate limiting
+- Use helmet.js for security headers
+- Never expose stack traces in production
+- Store secrets in environment variables (never commit)
+- Use HTTPS in production
+- Implement CSRF protection
+- Use bcrypt/argon2 for password hashing
+
+## Express Middleware
+- Keep middleware focused (single responsibility)
+- Always call next() or send response
+- Use error handling middleware (4 parameters)
+- Order middleware correctly
+- Use express.json() and express.urlencoded()
+
+## Database
+- Use connection pooling
+- Always close connections
+- Use transactions for multi-step operations
+- Index frequently queried fields
+- Avoid N+1 queries
+
+## API Design
+- Use RESTful conventions
+- Version your APIs (/v1/resource)
+- Return consistent error responses
+- Use proper HTTP methods (GET, POST, PUT, DELETE)
+- Implement pagination for lists
+
+## Performance
+- Use caching (Redis) for frequently accessed data
+- Implement database query optimization
+- Use compression middleware
+- Stream large files (don't load in memory)
+- Use worker threads for CPU-intensive tasks
+
+## Code Quality
+- Use ESLint and Prettier
+- Functions under 50 lines
+- Descriptive naming (no single letters except iterators)
+- Use async/await consistently
+- Log appropriately (use logging library like Winston)
+`
+  },
+  "python": {
+    name: "Python (PEP 8)",
+    description: "Python PEP 8 style guide with best practices",
+    standards: `# Python Code Standards (PEP 8)
+
+## Naming Conventions
+- snake_case for functions, variables, and methods
+- PascalCase for classes
+- UPPER_CASE for constants
+- Prefix private members with single underscore
+- Avoid single letter names (except i, j, k for loops)
+
+## Code Layout
+- 4 spaces for indentation (never tabs)
+- Max line length: 79 characters (120 acceptable)
+- 2 blank lines before top-level functions/classes
+- 1 blank line between methods
+- Imports at top, grouped: standard lib, third-party, local
+
+## Functions
+- Functions should do one thing
+- Use type hints for parameters and return values
+- Keep functions under 50 lines
+- Use docstrings for public functions
+- Return early to reduce nesting
+
+## Classes
+- Use dataclasses for data containers
+- Implement __repr__ for debugging
+- Use @property for computed attributes
+- Prefer composition over inheritance
+- Keep classes focused (Single Responsibility)
+
+## Error Handling
+- Use specific exceptions (not bare except)
+- Create custom exceptions when appropriate
+- Always clean up resources (use context managers)
+- Don't catch exceptions you can't handle
+- Log exceptions with traceback
+
+## Type Hints
+- Use type hints for function signatures
+- Use Optional for nullable values
+- Use Union for multiple types
+- Use List, Dict, Set from typing module
+- Run mypy for type checking
+
+## Data Structures
+- Use list comprehensions when readable
+- Use generator expressions for large sequences
+- Use dict.get() with default values
+- Use sets for membership testing
+- Use namedtuple or dataclass for structured data
+
+## Security
+- Never use eval() or exec() with user input
+- Validate and sanitize all inputs
+- Use parameterized queries (prevent SQL injection)
+- Don't store passwords in plain text (use bcrypt/argon2)
+- Use secrets module for tokens/passwords
+- Validate file paths to prevent traversal attacks
+
+## Performance
+- Use generators for large datasets
+- Cache expensive computations
+- Use set/dict for O(1) lookups
+- Avoid premature optimization
+- Profile before optimizing
+
+## Best Practices
+- Use f-strings for formatting
+- Use enumerate() instead of range(len())
+- Use with statements for file handling
+- Use any() and all() for boolean checks
+- Follow the Zen of Python (import this)
+`
+  },
+  "java": {
+    name: "Java (Google Style)",
+    description: "Google Java Style Guide with Spring Boot practices",
+    standards: `# Java Code Standards (Google Style Guide)
+
+## Naming Conventions
+- camelCase for methods and variables
+- PascalCase for classes and interfaces
+- UPPER_SNAKE_CASE for constants
+- Package names: lowercase, no underscores
+- Boolean variables: is*, has*, should* prefix
+
+## Code Organization
+- One top-level class per file
+- Class members order: static fields, instance fields, constructors, methods
+- Group overloaded methods together
+- Keep related code together
+
+## Classes & Interfaces
+- Classes should be under 500 lines
+- Use interfaces for abstraction
+- Prefer composition over inheritance
+- Make classes immutable when possible
+- Use final for variables that don't change
+
+## Methods
+- Methods should be under 50 lines
+- One responsibility per method
+- Descriptive names (no abbreviations)
+- Validate parameters at method entry
+- Use @Override annotation
+
+## Error Handling
+- Use specific exception types
+- Don't catch generic Exception
+- Always clean up resources (try-with-resources)
+- Don't ignore exceptions
+- Log exceptions with context
+
+## Null Safety
+- Avoid null when possible
+- Use Optional<T> for nullable returns
+- Validate parameters for null (Objects.requireNonNull)
+- Document when null is acceptable (@Nullable)
+- Use @NonNull annotation
+
+## Collections
+- Use interfaces for declarations (List, Set, Map)
+- Use diamond operator for generics (<>)
+- Use isEmpty() not size() == 0
+- Use Collections.emptyList() for empty collections
+- Prefer immutable collections when possible
+
+## Streams & Lambdas
+- Use streams for collection processing
+- Keep lambdas short (1-3 lines)
+- Extract complex lambdas to methods
+- Use method references when appropriate
+- Don't overuse streams (readability matters)
+
+## Spring Boot Specifics
+- Use constructor injection (not field injection)
+- Use @Service, @Repository, @Controller appropriately
+- Keep controllers thin (delegate to services)
+- Use @Transactional for database operations
+- Validate inputs with @Valid and Bean Validation
+
+## Security
+- Validate all user inputs
+- Use parameterized queries (PreparedStatement)
+- Don't log sensitive data
+- Use BCryptPasswordEncoder for passwords
+- Implement proper authentication/authorization
+- Sanitize data before rendering (XSS prevention)
+
+## Performance
+- Use StringBuilder for string concatenation
+- Lazy load collections when appropriate
+- Use caching for expensive operations
+- Close resources properly (try-with-resources)
+- Avoid premature optimization
+
+## Testing
+- Write unit tests for all public methods
+- Use descriptive test names
+- Follow AAA pattern (Arrange, Act, Assert)
+- Mock external dependencies
+- Aim for 80%+ code coverage
+`
+  },
+  "go": {
+    name: "Go (Golang)",
+    description: "Effective Go and common Go best practices",
+    standards: `# Go Code Standards
+
+## Naming Conventions
+- Use mixedCase or MixedCase (not snake_case)
+- Exported names start with capital letter
+- Unexported names start with lowercase letter
+- Short names for short scope (i, j for loops)
+- Longer names for wider scope
+- Acronyms should be all caps (HTTP, ID, URL)
+
+## Package Structure
+- One package per directory
+- Package name should be short, lowercase, single word
+- Avoid generic names (util, common, base)
+- Keep related code in same package
+- Use internal/ for private packages
+
+## Error Handling
+- Always check errors (if err != nil)
+- Return errors (don't panic except for unrecoverable)
+- Wrap errors with context (fmt.Errorf with %w)
+- Create custom errors when appropriate
+- Don't ignore errors
+
+## Interfaces
+- Keep interfaces small (1-2 methods ideal)
+- Accept interfaces, return concrete types
+- Define interfaces where they're used (not where implemented)
+- Name single-method interfaces with -er suffix (Reader, Writer)
+
+## Concurrency
+- Don't communicate by sharing memory; share memory by communicating
+- Always close channels when done writing
+- Use select for multiple channel operations
+- Use context for cancellation and timeouts
+- Avoid goroutine leaks (ensure goroutines exit)
+- Use sync.WaitGroup for waiting on goroutines
+- Protect shared state with sync.Mutex
+
+## Pointers & Values
+- Use pointers for large structs
+- Use pointers when you need to modify
+- Use values for immutable data
+- Don't use pointers for slices, maps, channels (already references)
+
+## Functions & Methods
+- Functions should be under 50 lines
+- One responsibility per function
+- Return error as last return value
+- Use named return values for documentation (not always)
+- Receiver name: 1-2 characters (not 'this' or 'self')
+
+## Code Organization
+- Use gofmt (automatic formatting)
+- Group imports: standard library, third-party, local
+- Declare variables close to usage
+- Use blank line to separate logical blocks
+- Keep functions short and focused
+
+## Common Patterns
+- Use defer for cleanup (close, unlock, etc.)
+- Prefer := for variable declaration
+- Use range for iterating slices and maps
+- Use _ to ignore unused values
+- Check for empty slice: len(s) == 0 (not s == nil)
+
+## Security
+- Validate all inputs
+- Use parameterized queries (SQL injection prevention)
+- Don't log sensitive data
+- Use crypto/rand for random numbers (not math/rand)
+- Hash passwords with bcrypt
+- Use HTTPS for production
+
+## Performance
+- Use make() with capacity for slices and maps
+- Use sync.Pool for frequently allocated objects
+- Use strings.Builder for string concatenation
+- Profile before optimizing (pprof)
+- Use buffered channels appropriately
+
+## Testing
+- Test files end with _test.go
+- Test functions start with Test
+- Use table-driven tests
+- Use t.Helper() for test helpers
+- Use testify for assertions (optional)
+`
+  },
+  "rust": {
+    name: "Rust",
+    description: "Rust official style guide and best practices",
+    standards: `# Rust Code Standards
+
+## Naming Conventions
+- snake_case for variables, functions, modules, macros
+- PascalCase for types, traits, enums
+- SCREAMING_SNAKE_CASE for constants and statics
+- Use 'r#' prefix for reserved keywords
+- Lifetime names: short, lowercase ('a, 'b)
+
+## Ownership & Borrowing
+- Prefer borrowing (&T) over ownership (T)
+- Use &mut only when necessary
+- Keep borrows short-lived
+- Avoid multiple mutable borrows
+- Use Clone strategically (not everywhere)
+- Prefer references in function parameters
+
+## Error Handling
+- Use Result<T, E> for recoverable errors
+- Use panic! only for unrecoverable errors
+- Propagate errors with ? operator
+- Create custom error types for libraries
+- Use thiserror or anyhow for error handling
+- Add context to errors
+
+## Option & Result
+- Use match for exhaustive handling
+- Use if let for single pattern matching
+- Use unwrap_or and unwrap_or_else appropriately
+- Avoid unwrap() in production code
+- Use ok_or and ok_or_else for conversions
+
+## Traits
+- Keep traits focused (Single Responsibility)
+- Use trait bounds for generic constraints
+- Implement standard traits (Debug, Clone, etc.)
+- Use associated types when appropriate
+- Prefer trait objects for runtime polymorphism
+
+## Structs & Enums
+- Use struct for data with named fields
+- Use tuple struct for simple wrappers
+- Use enums for variants
+- Implement builder pattern for complex construction
+- Derive common traits (#[derive(Debug, Clone)])
+
+## Functions & Methods
+- Keep functions under 50 lines
+- Use descriptive parameter names
+- Return Result for operations that can fail
+- Use impl Trait for return types when appropriate
+- Take &self for methods that don't modify
+
+## Pattern Matching
+- Use match for exhaustive matching
+- Use _ for catch-all patterns
+- Use if let for single pattern
+- Use while let for loops with pattern
+- Avoid nested matches (extract to functions)
+
+## Modules & Privacy
+- Use pub selectively (keep implementation private)
+- Organize code into modules
+- Re-export important types at crate root
+- Use pub(crate) for internal APIs
+- Use pub(super) for parent module access
+
+## Lifetimes
+- Let the compiler infer when possible
+- Use explicit lifetimes when needed
+- Keep lifetimes simple
+- Use 'static for constant data
+- Avoid overly complex lifetime bounds
+
+## Concurrency
+- Use Arc for shared ownership across threads
+- Use Mutex or RwLock for shared mutable state
+- Use channels for communication (mpsc)
+- Use async/await for I/O-bound tasks
+- Prefer message passing over shared state
+
+## Unsafe Code
+- Minimize unsafe blocks
+- Document safety requirements
+- Encapsulate unsafe in safe APIs
+- Use #[safety] comments
+- Prefer safe alternatives
+
+## Performance
+- Use Vec with capacity when size is known
+- Use &str instead of String when possible
+- Use Cow for clone-on-write scenarios
+- Use inline for small functions in hot paths
+- Profile before optimizing
+
+## Security
+- Validate all inputs at boundaries
+- Use constant-time comparisons for secrets
+- Zero sensitive data after use
+- Use type system for compile-time guarantees
+- Avoid buffer overflows (use safe APIs)
+
+## Testing
+- Unit tests in same file with #[cfg(test)]
+- Integration tests in tests/ directory
+- Use #[test] attribute
+- Use assert!, assert_eq!, assert_ne!
+- Test edge cases and error conditions
+`
+  },
+  "typescript": {
+    name: "TypeScript (Strict)",
+    description: "TypeScript with strict mode and best practices",
+    standards: `# TypeScript Code Standards (Strict Mode)
+
+## TypeScript Configuration
+- Enable strict mode in tsconfig.json
+- Enable noImplicitAny, strictNullChecks
+- Use exactOptionalPropertyTypes
+- Enable noUncheckedIndexedAccess
+- Use ESLint with TypeScript plugin
+
+## Type Annotations
+- Explicitly type function parameters and return values
+- Let TypeScript infer simple variable types
+- Use type inference for const declarations
+- Avoid any type (use unknown instead)
+- Use never for functions that never return
+
+## Types vs Interfaces
+- Use interfaces for object shapes and API contracts
+- Use types for unions, intersections, and mapped types
+- Use type for function types
+- Prefer interface for extending (better error messages)
+- Be consistent within a project
+
+## Generics
+- Use descriptive type parameter names (not just T)
+- Constrain generics with extends when appropriate
+- Use default type parameters when useful
+- Keep generic signatures readable
+
+## Null & Undefined
+- Use strict null checks
+- Use optional chaining (?.) for nullable properties
+- Use nullish coalescing (??) for defaults
+- Avoid explicit null (prefer undefined)
+- Type with | undefined for optional values
+
+## Utility Types
+- Use Partial<T> for partial object updates
+- Use Required<T> for required properties
+- Use Readonly<T> for immutable objects
+- Use Pick<T, K> and Omit<T, K> for subsets
+- Use Record<K, V> for key-value objects
+
+## Type Guards
+- Use type predicates (x is Type) for narrowing
+- Use typeof for primitive type guards
+- Use instanceof for class instance checks
+- Create custom type guards when needed
+- Use discriminated unions with literal types
+
+## Enums
+- Prefer const enums for better tree-shaking
+- Use string enums for clarity and debugging
+- Consider union of string literals instead
+- Don't mix string and number enum members
+
+## Functions
+- Type all parameters and return values
+- Use optional parameters (?) sparingly
+- Use rest parameters with proper types
+- Use function overloads when necessary
+- Prefer arrow functions for callbacks
+
+## Classes
+- Use access modifiers (private, protected, public)
+- Use readonly for immutable properties
+- Use abstract classes for base classes
+- Implement interfaces explicitly
+- Use parameter properties for constructor assignment
+
+## Modules
+- Use ES6 module syntax (import/export)
+- Export types and interfaces
+- Use default exports sparingly
+- Organize imports: types, values
+- Use index files for re-exports
+
+## Async/Await
+- Always type async function return as Promise<T>
+- Handle promise rejections
+- Use try-catch for error handling
+- Type error objects in catch blocks
+- Use Promise.all for parallel operations
+
+## Type Assertions
+- Avoid type assertions (as Type) when possible
+- Use type assertions only when you know better than TypeScript
+- Prefer type guards over assertions
+- Never use as any
+- Use non-null assertion (!) sparingly
+
+## Best Practices
+- Enable all strict compiler options
+- Use const for immutable values
+- Use let only when reassignment is needed
+- Avoid var completely
+- Use destructuring for objects and arrays
+- Use template literals for string concatenation
+
+## Security
+- Validate and sanitize all user inputs
+- Type external API responses properly
+- Don't trust any data without validation
+- Use branded types for sensitive values
+- Avoid eval and Function constructor
+
+## Performance
+- Use const enums for better tree-shaking
+- Avoid large unions (impacts compile time)
+- Use type aliases for complex types
+- Enable skipLibCheck for faster compilation
+- Use project references for large codebases
+`
+  },
+  "csharp": {
+    name: "C# (.NET)",
+    description: "C# and .NET best practices with modern features",
+    standards: `# C# (.NET) Code Standards
+
+## Naming Conventions
+- PascalCase for classes, methods, properties, events
+- camelCase for parameters and local variables
+- _camelCase for private fields (with underscore prefix)
+- PascalCase for constants
+- IPascalCase for interfaces (I prefix)
+
+## Code Organization
+- One type per file
+- File name matches type name
+- Namespace matches folder structure
+- Order: fields, constructors, properties, methods
+- Group by access modifier: public, protected, private
+
+## Classes & Objects
+- Keep classes under 500 lines
+- Use sealed when inheritance not intended
+- Prefer composition over inheritance
+- Make classes immutable when possible
+- Use primary constructors (C# 12+)
+
+## Properties
+- Use auto-properties when no logic needed
+- Use init for immutable properties (C# 9+)
+- Use required for mandatory initialization (C# 11+)
+- Keep property getters/setters simple
+- Use expression-bodied properties for simple cases
+
+## Methods
+- Methods should be under 50 lines
+- One responsibility per method
+- Use expression-bodied methods for simple cases
+- Use async suffix for async methods
+- Return Task<T> for async methods
+
+## Null Safety
+- Enable nullable reference types
+- Use ? for nullable value types
+- Use ?. for null-conditional operators
+- Use ?? for null-coalescing
+- Avoid null returns (use Option pattern or throw)
+
+## LINQ
+- Use LINQ for collection operations
+- Prefer method syntax over query syntax
+- Use meaningful variable names in queries
+- Don't nest complex queries (extract to methods)
+- Use async LINQ for async operations
+
+## Async/Await
+- Use async/await for I/O operations
+- Don't block on async code (no .Result or .Wait())
+- Use Task.WhenAll for parallel operations
+- Use ConfigureAwait(false) in libraries
+- Handle cancellation with CancellationToken
+
+## Error Handling
+- Use specific exception types
+- Don't catch Exception (use specific types)
+- Use using statements for IDisposable
+- Log exceptions with context
+- Don't swallow exceptions
+
+## Dependency Injection
+- Use constructor injection
+- Register services in Program.cs/Startup
+- Use IServiceProvider sparingly
+- Keep services focused (Single Responsibility)
+- Use scoped services for per-request state
+
+## Collections
+- Use interfaces for declarations (IList, IEnumerable)
+- Use List<T> over ArrayList
+- Use Dictionary<K,V> over Hashtable
+- Use collection initializers
+- Use ImmutableCollections when appropriate
+
+## Modern C# Features
+- Use records for immutable data (C# 9+)
+- Use pattern matching (switch expressions)
+- Use null-coalescing assignment (??=)
+- Use range operators (..)
+- Use target-typed new expressions
+
+## ASP.NET Core
+- Keep controllers thin (delegate to services)
+- Use model validation attributes
+- Use middleware for cross-cutting concerns
+- Return IActionResult from controller actions
+- Use routing attributes
+
+## Entity Framework Core
+- Use async operations
+- Use LINQ for queries
+- Avoid N+1 queries (use Include)
+- Use transactions for multi-step operations
+- Don't track entities unnecessarily (AsNoTracking)
+
+## Security
+- Validate all inputs
+- Use parameterized queries
+- Don't log sensitive data
+- Use Identity for authentication
+- Implement authorization policies
+- Hash passwords (never store plain text)
+
+## Performance
+- Use StringBuilder for string concatenation
+- Use async for I/O-bound operations
+- Cache expensive operations
+- Use value types appropriately (struct)
+- Dispose resources properly
+
+## Testing
+- Use xUnit, NUnit, or MSTest
+- Name tests descriptively (MethodName_Scenario_ExpectedResult)
+- Follow AAA pattern (Arrange, Act, Assert)
+- Use mocking frameworks (Moq, NSubstitute)
+- Test edge cases and error conditions
+`
+  }
+};
+function getStandardsFilePath() {
+  return (0, import_path4.join)(process.cwd(), STANDARDS_FILE);
+}
+function standardsFileExists() {
+  return (0, import_fs4.existsSync)(getStandardsFilePath());
+}
+function getStandards() {
+  const filePath = getStandardsFilePath();
+  if (!(0, import_fs4.existsSync)(filePath)) {
+    return null;
+  }
+  return (0, import_fs4.readFileSync)(filePath, "utf-8");
+}
+function writeStandards(content) {
+  const filePath = getStandardsFilePath();
+  (0, import_fs4.writeFileSync)(filePath, content, "utf-8");
+}
+var standardsSetCommand = G3(
+  {
+    name: "set",
+    help: {
+      description: "Interactively configure code standards for review"
+    }
+  },
+  async () => {
+    ae(source_default.bold.cyan("CommitAI Code Standards Setup"));
+    if (standardsFileExists()) {
+      const overwrite = await Q3({
+        message: source_default.yellow(`${STANDARDS_FILE} already exists. Do you want to overwrite it?`),
+        initialValue: false
+      });
+      if (hD2(overwrite)) {
+        ce(source_default.red("Standards setup cancelled"));
+        process.exit(1);
+      }
+      if (!overwrite) {
+        ce(source_default.yellow("Keeping existing standards file"));
+        process.exit(0);
+      }
+    }
+    const customOrImport = await ee({
+      message: "How would you like to set up code standards?",
+      options: [
+        { value: "import", label: "Import from popular style guide" },
+        { value: "custom", label: "Write custom standards" }
+      ]
+    });
+    if (hD2(customOrImport)) {
+      ce(source_default.red("Standards setup cancelled"));
+      process.exit(1);
+    }
+    if (customOrImport === "import") {
+      ce(source_default.cyan("Use: cmt standards import"));
+      process.exit(0);
+    }
+    ce(source_default.cyan("\nEnter your code standards (press Ctrl+D or Ctrl+Z when done):\n"));
+    ce(source_default.gray("Tip: Include language-specific conventions, security rules, and quality guidelines."));
+    const customStandards = await J4({
+      message: "Custom standards (markdown format):",
+      placeholder: "# My Code Standards\n\n## Security\n- ...\n\n## Code Quality\n- ...",
+      validate: (value) => {
+        if (!value || value.trim().length < 50) {
+          return "Standards must be at least 50 characters";
+        }
+      }
+    });
+    if (hD2(customStandards)) {
+      ce(source_default.red("Standards setup cancelled"));
+      process.exit(1);
+    }
+    writeStandards(customStandards);
+    ce(source_default.green(`\u2713 Standards saved to ${STANDARDS_FILE}`));
+  }
+);
+var standardsImportCommand = G3(
+  {
+    name: "import",
+    help: {
+      description: "Import code standards from popular style guides"
+    }
+  },
+  async () => {
+    ae(source_default.bold.cyan("Import Code Standards"));
+    if (standardsFileExists()) {
+      const overwrite = await Q3({
+        message: source_default.yellow(`${STANDARDS_FILE} already exists. Do you want to overwrite it?`),
+        initialValue: false
+      });
+      if (hD2(overwrite)) {
+        ce(source_default.red("Standards import cancelled"));
+        process.exit(1);
+      }
+      if (!overwrite) {
+        ce(source_default.yellow("Keeping existing standards file"));
+        process.exit(0);
+      }
+    }
+    const options = Object.keys(POPULAR_STANDARDS).map((key) => ({
+      value: key,
+      label: POPULAR_STANDARDS[key].name,
+      hint: POPULAR_STANDARDS[key].description
+    }));
+    const selectedStandard = await ee({
+      message: "Select a style guide to import:",
+      options
+    });
+    if (hD2(selectedStandard)) {
+      ce(source_default.red("Standards import cancelled"));
+      process.exit(1);
+    }
+    const template = POPULAR_STANDARDS[selectedStandard];
+    writeStandards(template.standards);
+    ce(source_default.green(`\u2713 Imported ${template.name} standards to ${STANDARDS_FILE}`));
+    ce(source_default.gray(`
+You can edit ${STANDARDS_FILE} to customize the standards for your project.`));
+  }
+);
+var standardsViewCommand = G3(
+  {
+    name: "view",
+    help: {
+      description: "View current code standards configuration"
+    }
+  },
+  async () => {
+    ae(source_default.bold.cyan("View Code Standards"));
+    if (!standardsFileExists()) {
+      ce(source_default.yellow(`No standards file found at ${STANDARDS_FILE}`));
+      ce(source_default.gray("\nRun: cmt standards import (to import a popular style guide)"));
+      ce(source_default.gray("  or: cmt standards set (to create custom standards)"));
+      process.exit(1);
+    }
+    const standards = getStandards();
+    if (standards) {
+      console.log("");
+      console.log(source_default.gray("\u2500".repeat(80)));
+      console.log(standards);
+      console.log(source_default.gray("\u2500".repeat(80)));
+      console.log("");
+      ce(source_default.green(`Standards loaded from ${STANDARDS_FILE}`));
+    }
+  }
+);
+var standardsCommand = G3(
+  {
+    name: "standards" /* standards */,
+    commands: [standardsSetCommand, standardsImportCommand, standardsViewCommand],
+    help: {
+      description: "Manage code review standards configuration"
+    }
+  },
+  () => {
+    console.log(source_default.bold.cyan("\nCommitAI Code Standards Management\n"));
+    console.log(source_default.white("Available commands:"));
+    console.log(source_default.gray("  cmt standards import") + "  - Import from popular style guides");
+    console.log(source_default.gray("  cmt standards set") + "     - Create custom standards interactively");
+    console.log(source_default.gray("  cmt standards view") + "    - View current standards");
+    console.log("");
+  }
+);
+
+// src/utils/reviewCache.ts
+var import_crypto4 = require("crypto");
+var import_fs5 = require("fs");
+var import_path5 = require("path");
+var import_os2 = require("os");
+var CACHE_DIR = (0, import_path5.join)((0, import_os2.homedir)(), ".commit-ai-cache");
+var CACHE_FILE = (0, import_path5.join)(CACHE_DIR, "review-cache.json");
+var CACHE_VERSION = 1;
+var DEFAULT_CACHE_TTL_HOURS = 24;
+function generateHash(content) {
+  return (0, import_crypto4.createHash)("sha256").update(content).digest("hex");
+}
+function getCacheTTL() {
+  const ttlHours = process.env.CMT_REVIEW_CACHE_TTL ? parseInt(process.env.CMT_REVIEW_CACHE_TTL, 10) : DEFAULT_CACHE_TTL_HOURS;
+  return ttlHours * 60 * 60 * 1e3;
+}
+function ensureCacheDirectory() {
+  if (!(0, import_fs5.existsSync)(CACHE_DIR)) {
+    (0, import_fs5.mkdirSync)(CACHE_DIR, { recursive: true });
+  }
+}
+function loadCache() {
+  ensureCacheDirectory();
+  if (!(0, import_fs5.existsSync)(CACHE_FILE)) {
+    return { version: CACHE_VERSION, entries: {} };
+  }
+  try {
+    const content = (0, import_fs5.readFileSync)(CACHE_FILE, "utf-8");
+    const cache = JSON.parse(content);
+    if (cache.version !== CACHE_VERSION) {
+      return { version: CACHE_VERSION, entries: {} };
+    }
+    return cache;
+  } catch (error) {
+    return { version: CACHE_VERSION, entries: {} };
+  }
+}
+function saveCache(cache) {
+  ensureCacheDirectory();
+  try {
+    (0, import_fs5.writeFileSync)(CACHE_FILE, JSON.stringify(cache, null, 2), "utf-8");
+  } catch (error) {
+    console.error("Warning: Failed to save review cache:", error);
+  }
+}
+function cleanExpiredEntries(cache) {
+  const now = Date.now();
+  const cleaned = {};
+  for (const [key, entry] of Object.entries(cache.entries)) {
+    const age = now - entry.timestamp;
+    if (age < entry.ttl) {
+      cleaned[key] = entry;
+    }
+  }
+  return { ...cache, entries: cleaned };
+}
+function getCachedReview(diff, standards = null) {
+  if (process.env.CMT_REVIEW_CACHE_DISABLED === "true") {
+    return null;
+  }
+  const cache = loadCache();
+  const diffHash = generateHash(diff);
+  const standardsHash = standards ? generateHash(standards) : null;
+  const cacheKey = standardsHash ? `${diffHash}:${standardsHash}` : diffHash;
+  const entry = cache.entries[cacheKey];
+  if (!entry) {
+    return null;
+  }
+  const now = Date.now();
+  const age = now - entry.timestamp;
+  if (age >= entry.ttl) {
+    return null;
+  }
+  return entry.result;
+}
+function cacheReview(diff, standards, result) {
+  if (process.env.CMT_REVIEW_CACHE_DISABLED === "true") {
+    return;
+  }
+  const cache = loadCache();
+  const cleanedCache = cleanExpiredEntries(cache);
+  const diffHash = generateHash(diff);
+  const standardsHash = standards ? generateHash(standards) : null;
+  const cacheKey = standardsHash ? `${diffHash}:${standardsHash}` : diffHash;
+  const entry = {
+    version: CACHE_VERSION,
+    diffHash,
+    standardsHash,
+    result,
+    timestamp: Date.now(),
+    ttl: getCacheTTL()
+  };
+  cleanedCache.entries[cacheKey] = entry;
+  saveCache(cleanedCache);
+}
+function clearReviewCache() {
+  ensureCacheDirectory();
+  const emptyCache = {
+    version: CACHE_VERSION,
+    entries: {}
+  };
+  saveCache(emptyCache);
+}
+function getCacheStats() {
+  const cache = loadCache();
+  const cleanedCache = cleanExpiredEntries(cache);
+  const totalEntries = Object.keys(cache.entries).length;
+  const validEntries = Object.keys(cleanedCache.entries).length;
+  let cacheSize = "0 KB";
+  if ((0, import_fs5.existsSync)(CACHE_FILE)) {
+    try {
+      const stats = require("fs").statSync(CACHE_FILE);
+      cacheSize = `${(stats.size / 1024).toFixed(2)} KB`;
+    } catch (error) {
+    }
+  }
+  return { totalEntries, validEntries, cacheSize };
+}
+
+// src/commands/review.ts
 var config6 = getConfig();
+function buildCodeReviewPrompt() {
+  const standards = getStandards();
+  const standardsSection = standards ? `
+
+**Project Code Standards:**
+The following code standards have been configured for this project. Review the code against these specific requirements:
+
+${standards}
+
+` : "";
+  return `You are an expert code reviewer with deep knowledge of software engineering best practices, security, performance optimization, and code quality.
+
+Your task is to analyze a git diff and provide a comprehensive code review.${standardsSection}
+**Review Criteria:**
+1. **Security**: Identify potential vulnerabilities (SQL injection, XSS, authentication issues, secrets exposure, etc.)
+2. **Performance**: Detect inefficient algorithms, unnecessary computations, memory leaks, or performance bottlenecks
+3. **Best Practices**: Check for adherence to language-specific conventions, design patterns, and industry standards
+4. **Code Quality**: Assess readability, maintainability, naming conventions, and code organization
+5. **Bugs & Edge Cases**: Identify potential bugs, race conditions, null pointer issues, and unhandled edge cases
+6. **Style**: Check for consistency in formatting, naming, and code structure
+
+**Output Format (JSON):**
+Respond with a valid JSON object in this exact format:
+{
+  "summary": "A brief 2-3 sentence summary of the overall code quality and key concerns",
+  "overallScore": <number 0-100, where 100 is perfect code>,
+  "recommendation": "approve" | "review" | "block",
+  "findings": [
+    {
+      "category": "security" | "performance" | "style" | "best-practices" | "bugs" | "maintainability",
+      "severity": "error" | "warning" | "info",
+      "title": "Brief title of the issue",
+      "description": "Detailed description of what the issue is and why it matters",
+      "file": "path/to/file.ext (if identifiable)",
+      "line": "L123 or L123-L145 (if identifiable)",
+      "suggestion": "Specific actionable suggestion to fix the issue"
+    }
+  ]
+}
+
+**Recommendation Guidelines:**
+- "approve": Score 80-100, no critical issues, minor improvements only
+- "review": Score 50-79, notable issues that should be addressed but not blocking
+- "block": Score 0-49, critical issues that must be fixed before committing
+
+**Important:**
+- Be constructive and specific
+- Provide actionable suggestions
+- Focus on actual issues, not nitpicking
+- If the code is high quality, say so
+- Respond ONLY with valid JSON, no additional text${standards ? "\n- Pay special attention to violations of the project-specific code standards listed above" : ""}`;
+}
+var CODE_REVIEW_PROMPT = buildCodeReviewPrompt();
+async function getStagedDiff() {
+  try {
+    const { stdout } = await execa("git", ["diff", "--staged"]);
+    if (!stdout || stdout.trim() === "") {
+      throw new Error("No staged changes found. Stage files with: git add <files>");
+    }
+    const filteredDiff = filterDiffForReview(stdout);
+    if (!filteredDiff || filteredDiff.trim() === "") {
+      throw new Error("All staged files are excluded from review. Check .commit-ai-review-ignore file.");
+    }
+    return filteredDiff;
+  } catch (error) {
+    throw new Error(`Failed to get staged diff: ${error.message}`);
+  }
+}
+async function performCodeReview(diff, useCache = true) {
+  const standards = getStandards();
+  if (useCache) {
+    const cachedResult = getCachedReview(diff, standards);
+    if (cachedResult) {
+      console.log(source_default.gray("  \u2139 Using cached review result (diff unchanged)\n"));
+      return cachedResult;
+    }
+  }
+  const stopHeartbeat = startElapsedHeartbeat({ label: "Analyzing code quality" });
+  try {
+    const reviewPrompt = buildCodeReviewPrompt();
+    const prompt = [
+      {
+        role: "system",
+        content: reviewPrompt
+      },
+      {
+        role: "user",
+        content: `Please review the following git diff:
+
+${diff}`
+      }
+    ];
+    const engine = getEngine();
+    const reviewText = await engine.generateCommitMessage(prompt);
+    let reviewResult;
+    try {
+      const jsonMatch = reviewText.match(/\{[\s\S]*\}/);
+      const jsonText = jsonMatch ? jsonMatch[0] : reviewText;
+      reviewResult = JSON.parse(jsonText);
+    } catch (parseError2) {
+      reviewResult = {
+        summary: reviewText,
+        overallScore: 70,
+        recommendation: "review",
+        findings: []
+      };
+    }
+    if (useCache) {
+      cacheReview(diff, standards, reviewResult);
+    }
+    return reviewResult;
+  } finally {
+    stopHeartbeat();
+  }
+}
+function formatSeverityIcon(severity) {
+  switch (severity) {
+    case "error":
+      return source_default.red("\u2716");
+    case "warning":
+      return source_default.yellow("\u26A0");
+    case "info":
+      return source_default.blue("\u2139");
+  }
+}
+function formatCategoryLabel(category) {
+  const labels = {
+    "security": source_default.red.bold("SECURITY"),
+    "performance": source_default.yellow.bold("PERFORMANCE"),
+    "style": source_default.blue.bold("STYLE"),
+    "best-practices": source_default.cyan.bold("BEST PRACTICES"),
+    "bugs": source_default.red.bold("BUGS"),
+    "maintainability": source_default.magenta.bold("MAINTAINABILITY")
+  };
+  return labels[category] || source_default.gray.bold(category.toUpperCase());
+}
+function formatScoreColor(score) {
+  if (score >= 80)
+    return source_default.green;
+  if (score >= 50)
+    return source_default.yellow;
+  return source_default.red;
+}
+function printReviewResult(result) {
+  const boxWidth = 100;
+  const border = "\u2500".repeat(boxWidth);
+  console.log("");
+  console.log(source_default.hex("#9333ea")("\u250C") + source_default.hex("#9333ea")(border) + source_default.hex("#9333ea")("\u2510"));
+  console.log(source_default.hex("#9333ea")("\u2502") + source_default.bold.white(" Code Review Results".padEnd(boxWidth)) + source_default.hex("#9333ea")("\u2502"));
+  console.log(source_default.hex("#7f42d6")("\u251C") + source_default.hex("#7f42d6")(border) + source_default.hex("#7f42d6")("\u2524"));
+  console.log(source_default.hex("#6366f1")("\u2502") + "".padEnd(boxWidth) + source_default.hex("#6366f1")("\u2502"));
+  const summaryLines = result.summary.match(/.{1,96}/g) || [result.summary];
+  summaryLines.forEach((line) => {
+    console.log(source_default.hex("#6366f1")("\u2502") + `  ${line}`.padEnd(boxWidth) + source_default.hex("#6366f1")("\u2502"));
+  });
+  console.log(source_default.hex("#6366f1")("\u2502") + "".padEnd(boxWidth) + source_default.hex("#6366f1")("\u2502"));
+  console.log(source_default.hex("#5e52c2")("\u251C") + source_default.hex("#5e52c2")(border) + source_default.hex("#5e52c2")("\u2524"));
+  const scoreColor = formatScoreColor(result.overallScore);
+  const scoreLine = `  Overall Quality Score: ${scoreColor.bold(result.overallScore.toString())}/100`;
+  const scoreStripped = scoreLine.replace(/\x1b\[[0-9;]*m/g, "");
+  const scorePadding = " ".repeat(Math.max(0, boxWidth - scoreStripped.length));
+  console.log(source_default.hex("#5e52c2")("\u2502") + scoreLine + scorePadding + source_default.hex("#5e52c2")("\u2502"));
+  const recIcon = result.recommendation === "approve" ? source_default.green("\u2713") : result.recommendation === "review" ? source_default.yellow("!") : source_default.red("\u2716");
+  const recText = result.recommendation === "approve" ? source_default.green("APPROVED - Ready to commit") : result.recommendation === "review" ? source_default.yellow("REVIEW SUGGESTED - Address findings") : source_default.red("BLOCKED - Fix critical issues");
+  const recLine = `  Recommendation: ${recIcon} ${recText}`;
+  const recStripped = recLine.replace(/\x1b\[[0-9;]*m/g, "");
+  const recPadding = " ".repeat(Math.max(0, boxWidth - recStripped.length));
+  console.log(source_default.hex("#5e52c2")("\u2502") + recLine + recPadding + source_default.hex("#5e52c2")("\u2502"));
+  if (result.findings.length > 0) {
+    console.log(source_default.hex("#3b62ae")("\u251C") + source_default.hex("#3b62ae")(border) + source_default.hex("#3b62ae")("\u2524"));
+    console.log(source_default.hex("#3b62ae")("\u2502") + source_default.bold.white(` Findings (${result.findings.length})`.padEnd(boxWidth)) + source_default.hex("#3b62ae")("\u2502"));
+    console.log(source_default.hex("#3b62ae")("\u251C") + source_default.hex("#3b62ae")(border) + source_default.hex("#3b62ae")("\u2524"));
+    result.findings.forEach((finding, index) => {
+      const icon = formatSeverityIcon(finding.severity);
+      const category = formatCategoryLabel(finding.category);
+      console.log(source_default.hex("#2563eb")("\u2502") + "".padEnd(boxWidth) + source_default.hex("#2563eb")("\u2502"));
+      const titleLine = `  ${icon} ${category} - ${finding.title}`;
+      const titleStripped = titleLine.replace(/\x1b\[[0-9;]*m/g, "");
+      const titlePadding = " ".repeat(Math.max(0, boxWidth - titleStripped.length));
+      console.log(source_default.hex("#2563eb")("\u2502") + titleLine + titlePadding + source_default.hex("#2563eb")("\u2502"));
+      if (finding.file || finding.line) {
+        const location = `    \u{1F4C1} ${finding.file || "unknown"}${finding.line ? ":" + finding.line : ""}`;
+        console.log(source_default.hex("#2563eb")("\u2502") + source_default.gray(location.padEnd(boxWidth)) + source_default.hex("#2563eb")("\u2502"));
+      }
+      const descLines = finding.description.match(/.{1,94}/g) || [finding.description];
+      descLines.forEach((line) => {
+        console.log(source_default.hex("#2563eb")("\u2502") + `    ${line}`.padEnd(boxWidth) + source_default.hex("#2563eb")("\u2502"));
+      });
+      if (finding.suggestion) {
+        console.log(source_default.hex("#2563eb")("\u2502") + source_default.green("    \u{1F4A1} Suggestion:".padEnd(boxWidth)) + source_default.hex("#2563eb")("\u2502"));
+        const suggLines = finding.suggestion.match(/.{1,94}/g) || [finding.suggestion];
+        suggLines.forEach((line) => {
+          console.log(source_default.hex("#2563eb")("\u2502") + source_default.gray(`    ${line}`.padEnd(boxWidth)) + source_default.hex("#2563eb")("\u2502"));
+        });
+      }
+    });
+  }
+  console.log(source_default.hex("#2563eb")("\u2502") + "".padEnd(boxWidth) + source_default.hex("#2563eb")("\u2502"));
+  console.log(source_default.hex("#2563eb")("\u2514") + source_default.hex("#2563eb")(border) + source_default.hex("#2563eb")("\u2518"));
+  console.log("");
+}
+var reviewClearCacheCommand = G3(
+  {
+    name: "clear-cache",
+    help: {
+      description: "Clear cached review results"
+    }
+  },
+  async () => {
+    ae(source_default.bold.cyan("Clear Review Cache"));
+    const confirmClear = await Q3({
+      message: "Are you sure you want to clear all cached review results?",
+      initialValue: false
+    });
+    if (hD2(confirmClear) || !confirmClear) {
+      ce(source_default.yellow("Cache clear cancelled"));
+      process.exit(0);
+    }
+    clearReviewCache();
+    ce(source_default.green("\u2713 Review cache cleared successfully"));
+  }
+);
+var reviewCacheStatsCommand = G3(
+  {
+    name: "cache-stats",
+    help: {
+      description: "Show review cache statistics"
+    }
+  },
+  async () => {
+    ae(source_default.bold.cyan("Review Cache Statistics"));
+    const stats = getCacheStats();
+    console.log("");
+    console.log(source_default.gray("  Total entries:     ") + source_default.white(stats.totalEntries));
+    console.log(source_default.gray("  Valid entries:     ") + source_default.white(stats.validEntries));
+    console.log(source_default.gray("  Expired entries:   ") + source_default.white(stats.totalEntries - stats.validEntries));
+    console.log(source_default.gray("  Cache size:        ") + source_default.white(stats.cacheSize));
+    console.log("");
+    if (stats.totalEntries > 0 && stats.validEntries === 0) {
+      ce(source_default.yellow('All cache entries have expired. Consider running "cmt review clear-cache" to clean up.'));
+    } else if (stats.validEntries > 0) {
+      ce(source_default.green(`\u2713 ${stats.validEntries} cached review(s) available`));
+    } else {
+      ce(source_default.gray("No cached reviews yet"));
+    }
+  }
+);
+var reviewCommand = G3(
+  {
+    name: "review" /* review */,
+    commands: [reviewClearCacheCommand, reviewCacheStatsCommand],
+    flags: {
+      json: {
+        type: Boolean,
+        description: "Output results as JSON",
+        default: false
+      },
+      noCache: {
+        type: Boolean,
+        description: "Skip cache and perform fresh review",
+        default: false
+      }
+    },
+    help: {
+      description: "AI-powered code review of staged changes with security, performance, and quality analysis"
+    }
+  },
+  async (argv) => {
+    ae(source_default.bold.cyan("CommitAI Code Review"));
+    try {
+      const { json, noCache } = argv.flags;
+      if (!standardsFileExists()) {
+        ce(
+          source_default.yellow(
+            "\u26A0\uFE0F  No code standards configured.\n\nFor better review results, configure code standards first:\n" + source_default.cyan("  cmt standards import") + " - Import from popular style guides\n" + source_default.cyan("  cmt standards set") + "    - Create custom standards\n"
+          )
+        );
+        const continueWithoutStandards = await Q3({
+          message: "Continue review without standards?",
+          initialValue: true
+        });
+        if (hD2(continueWithoutStandards) || !continueWithoutStandards) {
+          ce(source_default.yellow("Review cancelled. Configure standards and try again."));
+          process.exit(0);
+        }
+      }
+      const diff = await getStagedDiff();
+      const result = await performCodeReview(diff, !noCache);
+      if (json) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        printReviewResult(result);
+        if (result.recommendation === "block") {
+          ce(source_default.red("\u26A0\uFE0F  Critical issues found. Please address them before committing."));
+          process.exit(1);
+        } else if (result.recommendation === "review") {
+          ce(source_default.yellow("\u{1F4DD} Review suggested. Consider addressing the findings."));
+        } else {
+          ce(source_default.green("\u2713 Code review passed. Ready to commit!"));
+        }
+      }
+    } catch (error) {
+      ce(source_default.red(`\u2716 ${error instanceof Error ? error.message : error}`));
+      process.exit(1);
+    }
+  }
+);
+
+// src/commands/commit.ts
+var config7 = getConfig();
 var getGitRemotes = async () => {
   const { stdout } = await execa("git", ["remote"]);
   return stdout.split("\n").filter((remote) => Boolean(remote.trim()));
@@ -65017,16 +66624,16 @@ var runWithHeartbeat = async (label, action) => {
 };
 var checkMessageTemplate = (extraArgs2) => {
   for (const key in extraArgs2) {
-    if (extraArgs2[key].includes(config6.CMT_MESSAGE_TEMPLATE_PLACEHOLDER))
+    if (extraArgs2[key].includes(config7.CMT_MESSAGE_TEMPLATE_PLACEHOLDER))
       return extraArgs2[key];
   }
   return false;
 };
 var openInEditor = async (message) => {
   const editor = process.env.EDITOR || process.env.VISUAL || "vi";
-  const tmpFile = (0, import_path4.join)((0, import_os2.tmpdir)(), `COMMIT_EDITMSG_${Date.now()}`);
+  const tmpFile = (0, import_path6.join)((0, import_os3.tmpdir)(), `COMMIT_EDITMSG_${Date.now()}`);
   try {
-    (0, import_fs4.writeFileSync)(tmpFile, message, "utf-8");
+    (0, import_fs6.writeFileSync)(tmpFile, message, "utf-8");
     await execa(editor, [tmpFile], {
       stdio: "inherit",
       shell: true
@@ -65035,7 +66642,7 @@ var openInEditor = async (message) => {
     return stdout.trim();
   } finally {
     try {
-      (0, import_fs4.unlinkSync)(tmpFile);
+      (0, import_fs6.unlinkSync)(tmpFile);
     } catch (e3) {
     }
   }
@@ -65074,11 +66681,11 @@ var generateCommitMessageFromGitDiff = async ({
       async () => generateCommitMessageByDiff(diff, fullGitMojiSpec, context)
     );
     const messageTemplate = checkMessageTemplate(extraArgs2);
-    if (config6.CMT_MESSAGE_TEMPLATE_PLACEHOLDER && typeof messageTemplate === "string") {
+    if (config7.CMT_MESSAGE_TEMPLATE_PLACEHOLDER && typeof messageTemplate === "string") {
       const messageTemplateIndex = extraArgs2.indexOf(messageTemplate);
       extraArgs2.splice(messageTemplateIndex, 1);
       commitMessage = messageTemplate.replace(
-        config6.CMT_MESSAGE_TEMPLATE_PLACEHOLDER,
+        config7.CMT_MESSAGE_TEMPLATE_PLACEHOLDER,
         commitMessage
       );
     }
@@ -65125,7 +66732,7 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
       );
       ce(stdout);
       const remotes = await getGitRemotes();
-      if (config6.CMT_GITPUSH === false || noPush)
+      if (config7.CMT_GITPUSH === false || noPush)
         return;
       if (!remotes.length) {
         const { stdout: stdout2 } = await execa("git", ["push"]);
@@ -65211,7 +66818,8 @@ var commit = async (extraArgs2 = [], options = {}) => {
     skipCommitConfirmation = false,
     dryRun = false,
     edit = false,
-    noPush = false
+    noPush = false,
+    runReview = false
   } = options;
   if (stageAll) {
     const changedFiles2 = await getChangedFiles();
@@ -65243,7 +66851,7 @@ var commit = async (extraArgs2 = [], options = {}) => {
     if (hD2(isStageAllAndCommitConfirmedByUser))
       process.exit(1);
     if (isStageAllAndCommitConfirmedByUser) {
-      await commit(extraArgs2, { context, stageAll: true, fullGitMojiSpec, skipCommitConfirmation, dryRun, edit, noPush });
+      await commit(extraArgs2, { context, stageAll: true, fullGitMojiSpec, skipCommitConfirmation, dryRun, edit, noPush, runReview });
       process.exit(1);
     }
     if (stagedFiles.length === 0 && changedFiles.length > 0) {
@@ -65258,7 +66866,7 @@ var commit = async (extraArgs2 = [], options = {}) => {
         process.exit(1);
       await gitAdd({ files });
     }
-    await commit(extraArgs2, { context, stageAll: false, fullGitMojiSpec, skipCommitConfirmation, dryRun, edit, noPush });
+    await commit(extraArgs2, { context, stageAll: false, fullGitMojiSpec, skipCommitConfirmation, dryRun, edit, noPush, runReview });
     process.exit(1);
   }
   stagedFilesSpinner.stop(
@@ -65278,10 +66886,10 @@ ${stagedFiles.map((file) => `  ${file}`).join("\n")}`
     );
     process.exit(1);
   }
-  if (config6.CMT_MAX_FILES && stagedFiles.length > config6.CMT_MAX_FILES) {
+  if (config7.CMT_MAX_FILES && stagedFiles.length > config7.CMT_MAX_FILES) {
     ce(
       source_default.red(
-        `\u2716 Too many files staged (${stagedFiles.length}/${config6.CMT_MAX_FILES})
+        `\u2716 Too many files staged (${stagedFiles.length}/${config7.CMT_MAX_FILES})
 
 Suggested actions:
   \u2022 Split changes into smaller, focused commits
@@ -65291,10 +66899,10 @@ Suggested actions:
     );
     process.exit(1);
   }
-  if (config6.CMT_MAX_DIFF_BYTES && diff && Buffer.byteLength(diff, "utf8") > config6.CMT_MAX_DIFF_BYTES) {
+  if (config7.CMT_MAX_DIFF_BYTES && diff && Buffer.byteLength(diff, "utf8") > config7.CMT_MAX_DIFF_BYTES) {
     const diffSize = Buffer.byteLength(diff, "utf8");
     const diffSizeKB = (diffSize / 1024).toFixed(1);
-    const limitKB = (config6.CMT_MAX_DIFF_BYTES / 1024).toFixed(1);
+    const limitKB = (config7.CMT_MAX_DIFF_BYTES / 1024).toFixed(1);
     ce(
       source_default.red(
         `\u2716 Diff too large (${diffSizeKB} KB / ${limitKB} KB limit)
@@ -65306,6 +66914,70 @@ Suggested actions:
       )
     );
     process.exit(1);
+  }
+  if (runReview && diff) {
+    try {
+      if (!standardsFileExists()) {
+        ce(
+          source_default.yellow(
+            "\u26A0\uFE0F  No code standards configured.\n\nFor better review results, configure code standards first:\n" + source_default.cyan("  cmt standards import") + " - Import from popular style guides\n" + source_default.cyan("  cmt standards set") + "    - Create custom standards\n"
+          )
+        );
+        const continueWithoutStandards = await Q3({
+          message: "Continue commit with review (without standards)?",
+          initialValue: true
+        });
+        if (hD2(continueWithoutStandards) || !continueWithoutStandards) {
+          ce(source_default.yellow("Commit cancelled. Configure standards and try again."));
+          process.exit(0);
+        }
+      }
+      const reviewDiff = filterDiffForReview(diff);
+      if (!reviewDiff || reviewDiff.trim() === "") {
+        ce(
+          source_default.yellow(
+            "All staged files are excluded from code review (check .commit-ai-review-ignore). Skipping review step."
+          )
+        );
+      } else {
+        const reviewResult = await performCodeReview(reviewDiff);
+        printReviewResult(reviewResult);
+        const minScore = config7.CMT_REVIEW_MIN_SCORE;
+        if (minScore !== void 0 && reviewResult.overallScore < minScore) {
+          ce(
+            source_default.red(
+              `\u2716 Code quality score (${reviewResult.overallScore}) is below the minimum threshold (${minScore}).
+Please improve the code or adjust the threshold: cmt config set CMT_REVIEW_MIN_SCORE <number>`
+            )
+          );
+          process.exit(1);
+        }
+        if (reviewResult.recommendation === "block") {
+          const continueAnyway = await Q3({
+            message: source_default.yellow("Critical issues found. Do you want to continue committing anyway?"),
+            initialValue: false
+          });
+          if (hD2(continueAnyway) || !continueAnyway) {
+            ce(source_default.red("Commit aborted due to code review issues."));
+            process.exit(1);
+          }
+        } else if (reviewResult.recommendation === "review") {
+          const shouldContinue = await Q3({
+            message: source_default.yellow("Review suggested. Do you want to continue with the commit?"),
+            initialValue: true
+          });
+          if (hD2(shouldContinue) || !shouldContinue) {
+            ce(source_default.yellow("Commit aborted. Please address the review findings."));
+            process.exit(1);
+          }
+        } else {
+          console.log(source_default.green("\n\u2713 Code review passed! Proceeding with commit...\n"));
+        }
+      }
+    } catch (reviewError) {
+      ce(source_default.red(`Code review failed: ${reviewError instanceof Error ? reviewError.message : reviewError}`));
+      process.exit(1);
+    }
   }
   const [, generateCommitError] = await trytm(
     generateCommitMessageFromGitDiff({
@@ -65343,9 +67015,9 @@ var commitLog = async (branch = "master", fullGitMojiSpec = false) => {
 };
 
 // src/commands/check.ts
-var import_fs5 = require("fs");
-var import_os3 = require("os");
-var import_path5 = require("path");
+var import_fs7 = require("fs");
+var import_os4 = require("os");
+var import_path7 = require("path");
 
 // src/utils/banner.ts
 var printCommitAiBanner = ({ version } = {}) => {
@@ -65405,21 +67077,21 @@ var runCheck = async () => {
       details: "not inside a Git work tree (run inside a repo for full functionality)"
     });
   }
-  const globalConfigPath = (0, import_path5.join)((0, import_os3.homedir)(), ".commit-ai");
+  const globalConfigPath = (0, import_path7.join)((0, import_os4.homedir)(), ".commit-ai");
   results.push({
     label: "Global config",
-    status: (0, import_fs5.existsSync)(globalConfigPath) ? "pass" : "warn",
-    details: (0, import_fs5.existsSync)(globalConfigPath) ? "~/.commit-ai" : "not found"
+    status: (0, import_fs7.existsSync)(globalConfigPath) ? "pass" : "warn",
+    details: (0, import_fs7.existsSync)(globalConfigPath) ? "~/.commit-ai" : "not found"
   });
-  const envPath = (0, import_path5.join)(process.cwd(), ".env");
+  const envPath = (0, import_path7.join)(process.cwd(), ".env");
   results.push({
     label: "Repo .env",
-    status: (0, import_fs5.existsSync)(envPath) ? "pass" : "warn",
-    details: (0, import_fs5.existsSync)(envPath) ? "found" : "not found (optional)"
+    status: (0, import_fs7.existsSync)(envPath) ? "pass" : "warn",
+    details: (0, import_fs7.existsSync)(envPath) ? "found" : "not found (optional)"
   });
-  const config8 = getConfig();
-  const provider = config8.CMT_AI_PROVIDER;
-  const model = config8.CMT_MODEL;
+  const config9 = getConfig();
+  const provider = config9.CMT_AI_PROVIDER;
+  const model = config9.CMT_MODEL;
   results.push({
     label: "Provider",
     status: provider !== void 0 ? "pass" : "warn",
@@ -65430,13 +67102,13 @@ var runCheck = async () => {
     status: model !== void 0 && model !== "" ? "pass" : "warn",
     details: String(model ?? "(default)")
   });
-  const apiKey = config8.CMT_API_KEY;
+  const apiKey = config9.CMT_API_KEY;
   results.push({
     label: "API key",
     status: apiKey !== void 0 && apiKey !== "" ? "pass" : "warn",
     details: apiKey !== void 0 && apiKey !== "" ? "set" : "not set (required for hosted providers)"
   });
-  const commitlintConfigExists = (0, import_fs5.existsSync)(COMMITLINT_LLM_CONFIG_PATH);
+  const commitlintConfigExists = (0, import_fs7.existsSync)(COMMITLINT_LLM_CONFIG_PATH);
   results.push({
     label: "Commitlint prompts",
     status: commitlintConfigExists ? "pass" : "warn",
@@ -65484,6 +67156,8 @@ var checkCommand = G3(
       const usageBoxBorder = source_default.hex("#5b21b6")("\u2500".repeat(boxWidth));
       const usageCommands = [
         { cmd: "cmt", desc: "Generate commit message from staged files" },
+        { cmd: "cmt review", desc: "AI-powered code review with quality analysis" },
+        { cmd: "cmt standards import", desc: "Import code standards from popular guides" },
         { cmd: "cmt --dry-run", desc: "Preview commit message without committing" },
         { cmd: "cmt --edit", desc: "Edit generated message before committing" },
         { cmd: "cmt pr [branch]", desc: "Generate PR description from branch diff" },
@@ -65553,15 +67227,15 @@ var commitlintConfigCommand = G3(
 );
 
 // src/commands/githook.ts
-var import_fs6 = require("fs");
+var import_fs8 = require("fs");
 var import_promises3 = __toESM(require("fs/promises"));
-var import_path6 = __toESM(require("path"));
+var import_path8 = __toESM(require("path"));
 var HOOK_NAME = "prepare-commit-msg";
-var DEFAULT_SYMLINK_URL = import_path6.default.join(".git", "hooks", HOOK_NAME);
+var DEFAULT_SYMLINK_URL = import_path8.default.join(".git", "hooks", HOOK_NAME);
 var getHooksPath = async () => {
   try {
     const hooksPath = await getCoreHooksPath();
-    return import_path6.default.join(hooksPath, HOOK_NAME);
+    return import_path8.default.join(hooksPath, HOOK_NAME);
   } catch (error) {
     return DEFAULT_SYMLINK_URL;
   }
@@ -65572,7 +67246,7 @@ var isHookCalled = async () => {
 };
 var isHookExists = async () => {
   const hooksPath = await getHooksPath();
-  return (0, import_fs6.existsSync)(hooksPath);
+  return (0, import_fs8.existsSync)(hooksPath);
 };
 var hookCommand = G3(
   {
@@ -65604,7 +67278,7 @@ var hookCommand = G3(
             `Different ${HOOK_NAME} is already set. Remove it before setting commit-ai as '${HOOK_NAME}' hook.`
           );
         }
-        await import_promises3.default.mkdir(import_path6.default.dirname(SYMLINK_URL), { recursive: true });
+        await import_promises3.default.mkdir(import_path8.default.dirname(SYMLINK_URL), { recursive: true });
         await import_promises3.default.symlink(HOOK_URL, SYMLINK_URL, "file");
         await import_promises3.default.chmod(SYMLINK_URL, 493);
         return ce(`${source_default.green("\u2714")} Hook set`);
@@ -65662,8 +67336,8 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
     if (!staged)
       return;
     ae("commit-ai");
-    const config8 = getConfig();
-    if (!config8.CMT_API_KEY) {
+    const config9 = getConfig();
+    if (!config9.CMT_API_KEY) {
       ce(
         "No CMT_API_KEY is set. Set your key via `cmt config set CMT_API_KEY=<value>. For more info see https://github.com/MantisWare/commit-ai"
       );
@@ -65695,8 +67369,8 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
 };
 
 // src/commands/pr.ts
-var import_fs7 = require("fs");
-var config7 = getConfig();
+var import_fs9 = require("fs");
+var config8 = getConfig();
 var PR_DESCRIPTION_PROMPT = (baseBranch) => `You are an expert at writing clear, comprehensive pull request descriptions.
 
 Your task is to analyze the diff between the current branch and the base branch (${baseBranch}) and generate a professional PR description.
@@ -65883,7 +67557,7 @@ var prCommand = G3(
       );
       const description = await generatePRDescription(baseBranch);
       if (output) {
-        (0, import_fs7.writeFileSync)(output, description, "utf-8");
+        (0, import_fs9.writeFileSync)(output, description, "utf-8");
         ce(source_default.green(`\u2713 PR description saved to ${output}`));
       } else {
         console.log("\n" + source_default.bold("\u2550".repeat(80)));
@@ -65939,7 +67613,7 @@ var changelogCommand = G3(
         toRef
       );
       if (output) {
-        (0, import_fs7.writeFileSync)(output, changelog + "\n", "utf-8");
+        (0, import_fs9.writeFileSync)(output, changelog + "\n", "utf-8");
         ce(source_default.green(`\u2713 Changelog saved to ${output}`));
       } else {
         console.log("\n" + source_default.bold("\u2550".repeat(80)));
@@ -65985,34 +67659,34 @@ Current version: ${currentVersion}. Latest version: ${latestVersion}.
 };
 
 // src/migrations/_run.ts
-var import_fs8 = __toESM(require("fs"));
-var import_os4 = require("os");
-var import_path7 = require("path");
+var import_fs10 = __toESM(require("fs"));
+var import_os5 = require("os");
+var import_path9 = require("path");
 
 // src/migrations/00_use_single_api_key_and_url.ts
 function use_single_api_key_and_url_default() {
-  const config8 = getConfig({ setDefaultValues: false });
-  const aiProvider = config8.CMT_AI_PROVIDER;
+  const config9 = getConfig({ setDefaultValues: false });
+  const aiProvider = config9.CMT_AI_PROVIDER;
   let apiKey;
   let apiUrl;
   if (aiProvider === "ollama" /* OLLAMA */) {
-    apiKey = config8["CMT_OLLAMA_API_KEY"];
-    apiUrl = config8["CMT_OLLAMA_API_URL"];
+    apiKey = config9["CMT_OLLAMA_API_KEY"];
+    apiUrl = config9["CMT_OLLAMA_API_URL"];
   } else if (aiProvider === "anthropic" /* ANTHROPIC */) {
-    apiKey = config8["CMT_ANTHROPIC_API_KEY"];
-    apiUrl = config8["CMT_ANTHROPIC_BASE_PATH"];
+    apiKey = config9["CMT_ANTHROPIC_API_KEY"];
+    apiUrl = config9["CMT_ANTHROPIC_BASE_PATH"];
   } else if (aiProvider === "openai" /* OPENAI */) {
-    apiKey = config8["CMT_OPENAI_API_KEY"];
-    apiUrl = config8["CMT_OPENAI_BASE_PATH"];
+    apiKey = config9["CMT_OPENAI_API_KEY"];
+    apiUrl = config9["CMT_OPENAI_BASE_PATH"];
   } else if (aiProvider === "azure" /* AZURE */) {
-    apiKey = config8["CMT_AZURE_API_KEY"];
-    apiUrl = config8["CMT_AZURE_ENDPOINT"];
+    apiKey = config9["CMT_AZURE_API_KEY"];
+    apiUrl = config9["CMT_AZURE_ENDPOINT"];
   } else if (aiProvider === "gemini" /* GEMINI */) {
-    apiKey = config8["CMT_GEMINI_API_KEY"];
-    apiUrl = config8["CMT_GEMINI_BASE_PATH"];
+    apiKey = config9["CMT_GEMINI_API_KEY"];
+    apiUrl = config9["CMT_GEMINI_BASE_PATH"];
   } else if (aiProvider === "flowise" /* FLOWISE */) {
-    apiKey = config8["CMT_FLOWISE_API_KEY"];
-    apiUrl = config8["CMT_FLOWISE_ENDPOINT"];
+    apiKey = config9["CMT_FLOWISE_API_KEY"];
+    apiUrl = config9["CMT_FLOWISE_ENDPOINT"];
   } else {
     throw new Error(
       `Migration failed, set AI provider first. Run "cmt config set CMT_AI_PROVIDER=<provider>", where <provider> is one of: ${Object.values(
@@ -66051,11 +67725,11 @@ function remove_obsolete_config_keys_from_global_file_default() {
 
 // src/migrations/02_set_missing_default_values.ts
 function set_missing_default_values_default() {
-  const setDefaultConfigValues = (config8) => {
+  const setDefaultConfigValues = (config9) => {
     const entriesToSet = [];
     for (const entry of Object.entries(DEFAULT_CONFIG)) {
       const [key, _value] = entry;
-      if (config8[key] === "undefined" || config8[key] === void 0)
+      if (config9[key] === "undefined" || config9[key] === void 0)
         entriesToSet.push(entry);
     }
     if (entriesToSet.length > 0)
@@ -66082,18 +67756,18 @@ var migrations = [
 ];
 
 // src/migrations/_run.ts
-var migrationsFile = (0, import_path7.join)((0, import_os4.homedir)(), ".commit-ai_migrations");
+var migrationsFile = (0, import_path9.join)((0, import_os5.homedir)(), ".commit-ai_migrations");
 var getCompletedMigrations = () => {
-  if (!import_fs8.default.existsSync(migrationsFile)) {
+  if (!import_fs10.default.existsSync(migrationsFile)) {
     return [];
   }
-  const data = import_fs8.default.readFileSync(migrationsFile, "utf-8");
+  const data = import_fs10.default.readFileSync(migrationsFile, "utf-8");
   return data ? JSON.parse(data) : [];
 };
 var saveCompletedMigration = (migrationName) => {
   const completedMigrations = getCompletedMigrations();
   completedMigrations.push(migrationName);
-  import_fs8.default.writeFileSync(
+  import_fs10.default.writeFileSync(
     migrationsFile,
     JSON.stringify(completedMigrations, null, 2)
   );
@@ -66101,8 +67775,8 @@ var saveCompletedMigration = (migrationName) => {
 var runMigrations = async () => {
   if (!getIsGlobalConfigFileExist())
     return;
-  const config8 = getConfig();
-  if (config8.CMT_AI_PROVIDER === "test" /* TEST */)
+  const config9 = getConfig();
+  if (config9.CMT_AI_PROVIDER === "test" /* TEST */)
     return;
   const completedMigrations = getCompletedMigrations();
   let isMigrated = false;
@@ -66139,7 +67813,7 @@ Z2(
     version: package_default.version,
     name: "commit-ai",
     alias: "cmt",
-    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand, prCommand, changelogCommand],
+    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand, prCommand, changelogCommand, reviewCommand, standardsCommand],
     flags: {
       fgm: Boolean,
       context: {
@@ -66180,6 +67854,12 @@ Z2(
         alias: "a",
         description: "Non-interactively stage all files and commit",
         default: false
+      },
+      review: {
+        type: Boolean,
+        alias: "r",
+        description: "Run code review before committing",
+        default: false
       }
     },
     ignoreArgv: (type2) => type2 === "unknown-flag" || type2 === "argument",
@@ -66201,7 +67881,8 @@ Z2(
         skipCommitConfirmation: flags.yes,
         dryRun: flags.dryRun,
         edit: flags.edit,
-        noPush: flags.noPush
+        noPush: flags.noPush,
+        runReview: flags.review
       });
     }
   },

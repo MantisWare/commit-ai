@@ -4,5 +4,7 @@ export enum COMMANDS {
   commitlint = 'commitlint',
   check = 'check',
   pr = 'pr',
-  changelog = 'changelog'
+  changelog = 'changelog',
+  review = 'review',
+  standards = 'standards'
 }

@@ -29,6 +29,7 @@ export enum CONFIG_KEYS {
   CMT_MAX_FILES = 'CMT_MAX_FILES',
   CMT_MAX_DIFF_BYTES = 'CMT_MAX_DIFF_BYTES',
   CMT_SML = 'CMT_SML',
+  CMT_REVIEW_MIN_SCORE = 'CMT_REVIEW_MIN_SCORE',
   CMT_GITPUSH = 'CMT_GITPUSH' // todo: deprecate
 }
 
@@ -381,6 +382,38 @@ export const configValidators = {
       'Must be true or false'
     );
     return value;
+  },
+
+  [CONFIG_KEYS.CMT_REVIEW_MIN_SCORE](value: any) {
+    if (value === undefined || value === null || value === '') return value;
+    const numValue = Number(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_REVIEW_MIN_SCORE,
+      !isNaN(numValue) && numValue >= 0 && numValue <= 100,
+      'Must be a number between 0 and 100'
+    );
+    return numValue;
+  },
+
+  [CONFIG_KEYS.CMT_REVIEW_CACHE_TTL](value: any) {
+    if (value === undefined || value === null || value === '') return value;
+    const numValue = Number(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_REVIEW_CACHE_TTL,
+      !isNaN(numValue) && numValue > 0 && numValue <= 168,
+      'Must be a positive number (hours), maximum 168 (7 days)'
+    );
+    return numValue;
+  },
+
+  [CONFIG_KEYS.CMT_REVIEW_CACHE_DISABLED](value: any) {
+    if (value === undefined || value === null || value === '') return value;
+    validateConfig(
+      CONFIG_KEYS.CMT_REVIEW_CACHE_DISABLED,
+      value === true || value === false || value === 'true' || value === 'false',
+      'Must be true or false'
+    );
+    return value;
   }
 };
 
@@ -417,6 +450,9 @@ export type ConfigType = {
   [CONFIG_KEYS.CMT_MAX_FILES]?: number;
   [CONFIG_KEYS.CMT_MAX_DIFF_BYTES]?: number;
   [CONFIG_KEYS.CMT_SML]: boolean;
+  [CONFIG_KEYS.CMT_REVIEW_MIN_SCORE]?: number;
+  [CONFIG_KEYS.CMT_REVIEW_CACHE_TTL]?: number;
+  [CONFIG_KEYS.CMT_REVIEW_CACHE_DISABLED]: boolean;
   [CONFIG_KEYS.CMT_TEST_MOCK_TYPE]: string;
 };
 
@@ -508,6 +544,9 @@ const getEnvConfig = (envPath: string) => {
     CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
     CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
     CMT_SML: parseConfigVarValue(process.env.CMT_SML),
+    CMT_REVIEW_MIN_SCORE: parseConfigVarValue(process.env.CMT_REVIEW_MIN_SCORE),
+    CMT_REVIEW_CACHE_TTL: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_TTL),
+    CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH) // todo: deprecate
   };
 };
@@ -716,6 +755,21 @@ const CONFIG_HELP: Record<string, { description: string; example: string; defaul
   CMT_SML: {
     description: 'Generate condensed single-line messages per file with filename, line numbers, and brief description',
     example: 'true',
+    default: 'false'
+  },
+  CMT_REVIEW_MIN_SCORE: {
+    description: 'Minimum code quality score (0-100) required to proceed with commit when using --review flag',
+    example: '70',
+    default: 'not set (allows all scores)'
+  },
+  CMT_REVIEW_CACHE_TTL: {
+    description: 'Time to live for cached review results in hours (max 168 hours / 7 days)',
+    example: '24',
+    default: '24 hours'
+  },
+  CMT_REVIEW_CACHE_DISABLED: {
+    description: 'Disable review result caching (set to true to always perform fresh reviews)',
+    example: 'false',
     default: 'false'
   }
 };

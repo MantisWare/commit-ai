@@ -97,23 +97,34 @@ This is a living checklist of what CommitAI **already supports** and what we may
 
 ### Code Review
 
-- [ ] Add `cmt review` command to analyze staged changes with AI-powered code review
-- [ ] Implement code standards/rules configuration system (stored in global config or `.commit-ai-standards` file)
-- [ ] Support custom code standards per project (language-specific, framework-specific, team conventions)
-- [ ] Generate quality assessment report with scoring (e.g., readability, maintainability, security, performance)
-- [ ] Identify code smells and anti-patterns in the diff
-- [ ] Detect potential bugs, security vulnerabilities, and edge cases
-- [ ] Suggest improvements with specific code examples
-- [ ] Flag violations of configured coding standards with severity levels (error, warning, info)
-- [ ] Interactive prompt to continue/abort commit based on review results
-- [ ] Add `--review` flag to `cmt` to automatically review before committing
-- [ ] Support review thresholds (e.g., minimum quality score to proceed with commit)
-- [ ] Add `--review-only` flag to run review without generating commit message
-- [ ] Generate review summary with categorized findings (security, performance, style, best practices)
-- [ ] Support inline review comments mapped to specific lines in the diff
-- [ ] Add `cmt standards set` command to configure review rules interactively
-- [ ] Add `cmt standards import` to load standards from popular style guides (Airbnb, Google, etc.)
-- [ ] Cache review results to avoid re-analyzing unchanged code
-- [ ] Support excluding files/patterns from code review via `.commit-ai-review-ignore`
+- [x] Add `cmt review` command to analyze staged changes with AI-powered code review
+- [x] Generate quality assessment report with scoring (e.g., readability, maintainability, security, performance)
+- [x] Identify code smells and anti-patterns in the diff
+- [x] Detect potential bugs, security vulnerabilities, and edge cases
+- [x] Suggest improvements with specific code examples
+- [x] Flag violations of configured coding standards with severity levels (error, warning, info)
+- [x] Generate review summary with categorized findings (security, performance, style, best practices, bugs, maintainability)
+- [x] Support inline review comments mapped to specific lines/files in the diff
+- [x] Support `--json` flag for CI/CD integration
+- [x] Exit codes based on review recommendation (approve=0, review=0, block=1)
+- [x] Interactive prompt to continue/abort commit based on review results
+- [x] Add `--review` flag (`-r`) to `cmt` to automatically review before committing
+- [x] Support review thresholds (`CMT_REVIEW_MIN_SCORE`) - minimum quality score to proceed with commit
+- [x] Support excluding files/patterns from code review via `.commit-ai-review-ignore`
+- [x] Implement code standards/rules configuration system (stored in `.commit-ai-standards` file)
+- [x] Support custom code standards per project (language-specific, framework-specific, team conventions)
+- [x] Add `cmt standards set` command to configure review rules interactively
+- [x] Add `cmt standards import` to load standards from 10 popular style guides (React, Angular, Vue, Node.js, Python, Java, Go, Rust, TypeScript, C#)
+- [x] Add `cmt standards view` command to display current standards
+- [x] Prompt users to configure standards on first review (with option to proceed without)
+- [x] Integrate standards into AI review prompt for targeted analysis
+- [x] Cache review results to avoid re-analyzing unchanged code
+- [x] Implement SHA-256 diff hashing for cache keys
+- [x] Add configurable cache TTL (CMT_REVIEW_CACHE_TTL, default 24 hours)
+- [x] Add cache disable option (CMT_REVIEW_CACHE_DISABLED)
+- [x] Add `cmt review cache-stats` command to view cache statistics
+- [x] Add `cmt review clear-cache` command to manually clear cache
+- [x] Add `--no-cache` flag to skip cache for fresh review
+- [x] Automatic cache expiration and cleanup
 
 

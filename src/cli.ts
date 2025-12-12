@@ -10,6 +10,8 @@ import { configCommand } from './commands/config';
 import { hookCommand, isHookCalled } from './commands/githook';
 import { prepareCommitMessageHook } from './commands/prepare-commit-msg-hook';
 import { prCommand, changelogCommand } from './commands/pr';
+import { reviewCommand } from './commands/review';
+import { standardsCommand } from './commands/standards';
 import { checkIsLatestVersion } from './utils/checkIsLatestVersion';
 import { runMigrations } from './migrations/_run';
 
@@ -20,7 +22,7 @@ cli(
     version: packageJSON.version,
     name: 'commit-ai',
     alias: 'cmt',
-    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand, prCommand, changelogCommand],
+    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand, prCommand, changelogCommand, reviewCommand, standardsCommand],
     flags: {
       fgm: Boolean,
       context: {
@@ -61,6 +63,12 @@ cli(
         alias: 'a',
         description: 'Non-interactively stage all files and commit',
         default: false
+      },
+      review: {
+        type: Boolean,
+        alias: 'r',
+        description: 'Run code review before committing',
+        default: false
       }
     },
     ignoreArgv: (type) => type === 'unknown-flag' || type === 'argument',
@@ -85,7 +93,8 @@ cli(
         skipCommitConfirmation: flags.yes,
         dryRun: flags.dryRun,
         edit: flags.edit,
-        noPush: flags.noPush
+        noPush: flags.noPush,
+        runReview: flags.review
       });
     }
     

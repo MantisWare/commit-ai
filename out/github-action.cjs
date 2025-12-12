@@ -67879,6 +67879,29 @@ function getI18nLocal(value) {
 }
 
 // src/commands/config.ts
+var CONFIG_KEYS = /* @__PURE__ */ ((CONFIG_KEYS2) => {
+  CONFIG_KEYS2["CMT_API_KEY"] = "CMT_API_KEY";
+  CONFIG_KEYS2["CMT_TOKENS_MAX_INPUT"] = "CMT_TOKENS_MAX_INPUT";
+  CONFIG_KEYS2["CMT_TOKENS_MAX_OUTPUT"] = "CMT_TOKENS_MAX_OUTPUT";
+  CONFIG_KEYS2["CMT_DESCRIPTION"] = "CMT_DESCRIPTION";
+  CONFIG_KEYS2["CMT_EMOJI"] = "CMT_EMOJI";
+  CONFIG_KEYS2["CMT_MODEL"] = "CMT_MODEL";
+  CONFIG_KEYS2["CMT_LANGUAGE"] = "CMT_LANGUAGE";
+  CONFIG_KEYS2["CMT_WHY"] = "CMT_WHY";
+  CONFIG_KEYS2["CMT_MESSAGE_TEMPLATE_PLACEHOLDER"] = "CMT_MESSAGE_TEMPLATE_PLACEHOLDER";
+  CONFIG_KEYS2["CMT_PROMPT_MODULE"] = "CMT_PROMPT_MODULE";
+  CONFIG_KEYS2["CMT_AI_PROVIDER"] = "CMT_AI_PROVIDER";
+  CONFIG_KEYS2["CMT_ONE_LINE_COMMIT"] = "CMT_ONE_LINE_COMMIT";
+  CONFIG_KEYS2["CMT_TEST_MOCK_TYPE"] = "CMT_TEST_MOCK_TYPE";
+  CONFIG_KEYS2["CMT_API_URL"] = "CMT_API_URL";
+  CONFIG_KEYS2["CMT_DEBUG"] = "CMT_DEBUG";
+  CONFIG_KEYS2["CMT_MAX_FILES"] = "CMT_MAX_FILES";
+  CONFIG_KEYS2["CMT_MAX_DIFF_BYTES"] = "CMT_MAX_DIFF_BYTES";
+  CONFIG_KEYS2["CMT_SML"] = "CMT_SML";
+  CONFIG_KEYS2["CMT_REVIEW_MIN_SCORE"] = "CMT_REVIEW_MIN_SCORE";
+  CONFIG_KEYS2["CMT_GITPUSH"] = "CMT_GITPUSH";
+  return CONFIG_KEYS2;
+})(CONFIG_KEYS || {});
 var MODEL_LIST = {
   openai: [
     "gpt-4o-mini",
@@ -68182,6 +68205,38 @@ var configValidators = {
       "Must be true or false"
     );
     return value;
+  },
+  ["CMT_REVIEW_MIN_SCORE" /* CMT_REVIEW_MIN_SCORE */](value) {
+    if (value === void 0 || value === null || value === "")
+      return value;
+    const numValue = Number(value);
+    validateConfig(
+      "CMT_REVIEW_MIN_SCORE" /* CMT_REVIEW_MIN_SCORE */,
+      !isNaN(numValue) && numValue >= 0 && numValue <= 100,
+      "Must be a number between 0 and 100"
+    );
+    return numValue;
+  },
+  [CONFIG_KEYS.CMT_REVIEW_CACHE_TTL](value) {
+    if (value === void 0 || value === null || value === "")
+      return value;
+    const numValue = Number(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_REVIEW_CACHE_TTL,
+      !isNaN(numValue) && numValue > 0 && numValue <= 168,
+      "Must be a positive number (hours), maximum 168 (7 days)"
+    );
+    return numValue;
+  },
+  [CONFIG_KEYS.CMT_REVIEW_CACHE_DISABLED](value) {
+    if (value === void 0 || value === null || value === "")
+      return value;
+    validateConfig(
+      CONFIG_KEYS.CMT_REVIEW_CACHE_DISABLED,
+      value === true || value === false || value === "true" || value === "false",
+      "Must be true or false"
+    );
+    return value;
   }
 };
 var CMT_AI_PROVIDER_ENUM = /* @__PURE__ */ ((CMT_AI_PROVIDER_ENUM2) => {
@@ -68249,6 +68304,9 @@ var getEnvConfig = (envPath) => {
     CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
     CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
     CMT_SML: parseConfigVarValue(process.env.CMT_SML),
+    CMT_REVIEW_MIN_SCORE: parseConfigVarValue(process.env.CMT_REVIEW_MIN_SCORE),
+    CMT_REVIEW_CACHE_TTL: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_TTL),
+    CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH)
   };
 };
@@ -68423,6 +68481,21 @@ var CONFIG_HELP = {
   CMT_SML: {
     description: "Generate condensed single-line messages per file with filename, line numbers, and brief description",
     example: "true",
+    default: "false"
+  },
+  CMT_REVIEW_MIN_SCORE: {
+    description: "Minimum code quality score (0-100) required to proceed with commit when using --review flag",
+    example: "70",
+    default: "not set (allows all scores)"
+  },
+  CMT_REVIEW_CACHE_TTL: {
+    description: "Time to live for cached review results in hours (max 168 hours / 7 days)",
+    example: "24",
+    default: "24 hours"
+  },
+  CMT_REVIEW_CACHE_DISABLED: {
+    description: "Disable review result caching (set to true to always perform fresh reviews)",
+    example: "false",
     default: "false"
   }
 };

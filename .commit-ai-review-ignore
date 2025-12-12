@@ -1,0 +1,38 @@
+# Exclude test files from code review
+*.test.ts
+*.spec.ts
+*.test.js
+*.spec.js
+test/**
+tests/**
+__tests__/**
+
+# Exclude documentation
+*.md
+docs/**
+
+# Exclude generated files
+dist/**
+build/**
+out/**
+generated/**
+
+# Exclude lock files
+*.lock
+*-lock.*
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Exclude configuration files
+.prettierrc
+.eslintrc*
+tsconfig*.json
+
+# Exclude assets
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.webp

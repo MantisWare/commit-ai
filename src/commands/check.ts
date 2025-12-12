@@ -167,6 +167,8 @@ export const checkCommand = command(
 
       const usageCommands = [
         { cmd: 'cmt', desc: 'Generate commit message from staged files' },
+        { cmd: 'cmt review', desc: 'AI-powered code review with quality analysis' },
+        { cmd: 'cmt standards import', desc: 'Import code standards from popular guides' },
         { cmd: 'cmt --dry-run', desc: 'Preview commit message without committing' },
         { cmd: 'cmt --edit', desc: 'Edit generated message before committing' },
         { cmd: 'cmt pr [branch]', desc: 'Generate PR description from branch diff' },

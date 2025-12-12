@@ -55,7 +55,7 @@
     "deploy:patch": "pnpm version patch && pnpm -s deploy:build",
     "lint": "eslint src --ext ts && tsc --noEmit",
     "format": "prettier --write src",
-    "test": "node --no-warnings --experimental-vm-modules $( [ -f ./node_modules/.bin/jest ] && echo ./node_modules/.bin/jest || which jest ) test/unit",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest test/unit",
     "test:all": "pnpm -s test:unit:docker && pnpm -s test:e2e:docker",
     "test:docker-build": "docker build -t cmt-test -f test/Dockerfile .",
     "test:unit": "NODE_OPTIONS=--experimental-vm-modules jest test/unit",

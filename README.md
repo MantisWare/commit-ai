@@ -106,6 +106,7 @@ CMT_SML=false  # Generate condensed single-line messages per file with filename,
 CMT_DEBUG=false  # Enable debug logging for troubleshooting
 CMT_MAX_FILES=50  # Maximum number of files allowed in a single commit (optional)
 CMT_MAX_DIFF_BYTES=102400  # Maximum diff size in bytes (100 KB, optional)
+CMT_REVIEW_MIN_SCORE=70  # Minimum code quality score (0-100) required when using --review flag (optional)
 ```
 
 ### Global Configuration
@@ -208,6 +209,258 @@ When a limit is exceeded, CommitAI will display a clear error with actionable su
 - Adjust the configured limits
 
 These guardrails help maintain code review quality and encourage atomic commits.
+
+## AI-Powered Code Review
+
+CommitAI includes a comprehensive code review feature that analyzes your staged changes for security vulnerabilities, performance issues, code quality, and best practices.
+
+### Running a Code Review
+
+Analyze your staged changes before committing:
+
+```sh
+# Stage your changes
+git add <files>
+
+# Run code review
+cmt review
+```
+
+### Review Categories
+
+The AI reviewer analyzes code across multiple dimensions:
+
+- **Security**: SQL injection, XSS, authentication issues, exposed secrets
+- **Performance**: Inefficient algorithms, memory leaks, bottlenecks
+- **Best Practices**: Design patterns, language conventions, industry standards
+- **Code Quality**: Readability, maintainability, naming conventions
+- **Bugs & Edge Cases**: Potential bugs, race conditions, null pointers
+- **Style**: Formatting consistency, code organization
+
+### Review Output
+
+Each review provides:
+
+- **Summary**: Brief overview of code quality
+- **Overall Score**: 0-100 quality score
+- **Recommendation**:
+  - `APPROVED` (80-100): Ready to commit
+  - `REVIEW SUGGESTED` (50-79): Address findings
+  - `BLOCKED` (0-49): Fix critical issues
+- **Detailed Findings**: Categorized issues with severity levels, descriptions, and suggestions
+
+### Example Output
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Code Review Results                                                                                │
+├────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                    │
+│  The code introduces a new authentication endpoint with good structure but has a critical         │
+│  security vulnerability related to password handling and lacks input validation.                  │
+│                                                                                                    │
+├────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Overall Quality Score: 65/100                                                                     │
+│  Recommendation: ! REVIEW SUGGESTED - Address findings                                            │
+├────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Findings (3)                                                                                       │
+├────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                    │
+│  ✖ SECURITY - Plain text password storage                                                         │
+│    📁 src/auth/login.ts:L45                                                                        │
+│    Passwords are being stored in plain text without hashing. This is a critical security          │
+│    vulnerability that exposes user credentials.                                                   │
+│    💡 Suggestion:                                                                                  │
+│    Use bcrypt or argon2 to hash passwords before storage                                          │
+│                                                                                                    │
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### JSON Output
+
+For integration with CI/CD pipelines:
+
+```sh
+cmt review --json > review-results.json
+```
+
+### Exit Codes
+
+- `0`: Review passed (approve or review)
+- `1`: Critical issues found (blocked) or error
+
+### Automatic Review Before Commit
+
+Use the `--review` (or `-r`) flag to automatically run code review before committing:
+
+```sh
+# Stage files and commit with automatic review
+git add <files>
+cmt --review
+
+# Or use the short flag
+cmt -r
+```
+
+The review will run automatically, and you'll be prompted to continue or abort based on the results:
+- **APPROVED**: Automatically proceeds with commit
+- **REVIEW SUGGESTED**: Prompts you to continue or abort
+- **BLOCKED**: Prompts you (defaulting to abort) due to critical issues
+
+### Quality Score Threshold
+
+Set a minimum quality score that code must achieve before committing:
+
+```sh
+# Require minimum score of 70
+cmt config set CMT_REVIEW_MIN_SCORE=70
+```
+
+When set, commits with scores below the threshold will automatically be blocked:
+
+```sh
+$ cmt --review
+✖ Code quality score (65) is below the minimum threshold (70).
+Please improve the code or adjust the threshold: cmt config set CMT_REVIEW_MIN_SCORE <number>
+```
+
+This is useful for:
+- Enforcing code quality standards across teams
+- Preventing commits with critical security or performance issues
+- Maintaining consistent quality in CI/CD pipelines
+
+### Code Standards Configuration
+
+Configure project-specific code standards to get more targeted review feedback:
+
+```sh
+# Import from popular style guides
+cmt standards import
+
+# Available style guides:
+# - React + TypeScript (Airbnb)
+# - Angular + TypeScript
+# - Vue 3 + TypeScript
+# - Node.js + Express
+# - Python (PEP 8)
+# - Java (Google Style)
+# - Go (Golang)
+# - Rust
+# - TypeScript (Strict)
+# - C# (.NET)
+
+# View current standards
+cmt standards view
+
+# Create custom standards interactively
+cmt standards set
+```
+
+**How it works:**
+1. Standards are stored in `.commit-ai-standards` file in your repository root
+2. When you run `cmt review` or `cmt --review`, the AI uses these standards for analysis
+3. Review findings will specifically call out violations of your configured standards
+4. You'll be prompted to configure standards on first review (can proceed without them)
+
+**Example workflow:**
+```sh
+# First time setup
+cmt standards import  # Choose React + TypeScript
+git add .commit-ai-standards
+git commit -m "Add code review standards"
+
+# Now reviews use your standards
+cmt review
+```
+
+### Excluding Files from Review
+
+Create a `.commit-ai-review-ignore` file in your repository root to exclude specific files or patterns from code review:
+
+```sh
+# .commit-ai-review-ignore
+*.test.ts
+*.spec.js
+test/**
+docs/**
+*.md
+generated/**
+*.lock
+```
+
+The syntax is the same as `.gitignore`. Files matching these patterns will be excluded from AI analysis but still included in commits.
+
+**Use cases:**
+- Exclude test files from review to focus on production code
+- Skip generated code or vendor files
+- Ignore documentation files to reduce AI token usage
+- Exclude files that don't need quality checks
+
+**Note:** This only affects code review (`cmt review` and `cmt --review`). For excluding files from commit message generation, use `.commit-aiignore` instead.
+
+### Review Caching
+
+CommitAI automatically caches review results to avoid re-analyzing unchanged code:
+
+```sh
+# Reviews are cached automatically (default TTL: 24 hours)
+cmt review  # First run - performs AI analysis
+cmt review  # Second run - uses cached result if diff unchanged
+
+# Force fresh review (skip cache)
+cmt review --no-cache
+
+# View cache statistics
+cmt review cache-stats
+
+# Clear cache manually
+cmt review clear-cache
+```
+
+**Cache behavior:**
+- Results cached based on diff content hash + code standards hash
+- Default TTL: 24 hours (configurable)
+- Cache stored in `~/.commit-ai-cache/`
+- Automatically cleans expired entries
+- Separate cache entries for different code standards
+
+**Configuration:**
+```sh
+# Set cache TTL in hours (max 168 hours / 7 days)
+cmt config set CMT_REVIEW_CACHE_TTL=48
+
+# Disable caching completely
+cmt config set CMT_REVIEW_CACHE_DISABLED=true
+```
+
+**When cache is used:**
+- Same diff content (no code changes)
+- Same code standards configuration
+- Cache entry not expired
+
+**When cache is skipped:**
+- Code changes detected (diff hash changes)
+- Code standards modified
+- Cache expired or disabled
+- `--no-cache` flag used
+
+### Workflow Integration
+
+```sh
+# Review before every commit
+git add <files>
+cmt review && cmt
+
+# Automatic review with commit
+cmt --review
+
+# With quality threshold enforced
+cmt config set CMT_REVIEW_MIN_SCORE=70
+cmt --review
+
+# Or use in a pre-commit hook
+cmt review || exit 1
+```
 
 ## Generate PR Descriptions & Changelogs
 

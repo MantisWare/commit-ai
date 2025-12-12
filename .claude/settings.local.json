@@ -17,7 +17,10 @@
       "Bash(node out/cli.cjs check:*)",
       "Bash(node out/cli.cjs config set:*)",
       "Bash(node:*)",
-      "Bash(node out/cli.cjs config get:*)"
+      "Bash(node out/cli.cjs config get:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm test:unit:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

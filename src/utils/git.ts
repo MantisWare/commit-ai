@@ -43,6 +43,20 @@ export const getCommitAIIgnore = (): Ignore => {
 };
 
 /**
+ * Get the commit AI review ignore
+ * @returns {Ignore} The commit AI review ignore
+ */
+export const getCommitAIReviewIgnore = (): Ignore => {
+  const ig = ignore();
+
+  try {
+    ig.add(readFileSync('.commit-ai-review-ignore').toString().split('\n'));
+  } catch (e) {}
+
+  return ig;
+};
+
+/**
  * Get the core hooks path
  * @returns {Promise<string>} The core hooks path
  */
@@ -145,6 +159,40 @@ export const getDiff = async ({ files }: { files: string[] }) => {
   ]);
 
   return diff;
+};
+
+/**
+ * Filter diff for code review based on .commit-ai-review-ignore patterns
+ * @param {string} diff - The full git diff to filter
+ * @returns {string} The filtered diff excluding ignored files
+ */
+export const filterDiffForReview = (diff: string): string => {
+  if (!diff || diff.trim() === '') {
+    return diff;
+  }
+
+  const ig = getCommitAIReviewIgnore();
+
+  // Check if there are any ignore patterns
+  if (ig._rules.length === 0) {
+    return diff; // No ignore file, return full diff
+  }
+
+  // Split diff into file sections (each section starts with "diff --git")
+  const diffSections = diff.split(/(?=diff --git)/);
+
+  const filteredSections = diffSections.filter(section => {
+    if (!section.trim()) return false;
+
+    // Extract filename from diff header (e.g., "diff --git a/path/to/file.ts b/path/to/file.ts")
+    const fileMatch = section.match(/diff --git a\/(.*?) b\//);
+    if (!fileMatch) return true; // Keep sections we can't parse
+
+    const filePath = fileMatch[1];
+    return !ig.ignores(filePath); // Keep if NOT ignored
+  });
+
+  return filteredSections.join('');
 };
 
 const printErrorAndExit = (msg: string) => {

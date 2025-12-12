@@ -20,10 +20,13 @@ import {
   getDiff,
   getDiffBetweenBranches,
   getStagedFiles,
-  gitAdd
+  gitAdd,
+  filterDiffForReview
 } from '../utils/git';
 import { trytm } from '../utils/trytm';
 import { getConfig } from './config';
+import { performCodeReview, printReviewResult, ReviewResult } from './review';
+import { standardsFileExists } from './standards';
 
 const config = getConfig();
 
@@ -96,6 +99,7 @@ interface CommitOptions {
   dryRun?: boolean;
   edit?: boolean;
   noPush?: boolean;
+  runReview?: boolean;
 }
 
 const getLogMessagesFromGitDiff = async (diff: string, fullGitMojiSpec: boolean = false, context: string = '') => {
@@ -305,7 +309,8 @@ export const commit = async (
     skipCommitConfirmation = false,
     dryRun = false,
     edit = false,
-    noPush = false
+    noPush = false,
+    runReview = false
   } = options;
 
   if (stageAll) {
@@ -345,7 +350,7 @@ export const commit = async (
     if (isCancel(isStageAllAndCommitConfirmedByUser)) process.exit(1);
 
     if (isStageAllAndCommitConfirmedByUser) {
-      await commit(extraArgs, { context, stageAll: true, fullGitMojiSpec, skipCommitConfirmation, dryRun, edit, noPush });
+      await commit(extraArgs, { context, stageAll: true, fullGitMojiSpec, skipCommitConfirmation, dryRun, edit, noPush, runReview });
       process.exit(1);
     }
 
@@ -363,7 +368,7 @@ export const commit = async (
       await gitAdd({ files });
     }
 
-    await commit(extraArgs, { context, stageAll: false, fullGitMojiSpec, skipCommitConfirmation, dryRun, edit, noPush });
+    await commit(extraArgs, { context, stageAll: false, fullGitMojiSpec, skipCommitConfirmation, dryRun, edit, noPush, runReview });
     process.exit(1);
   }
 
@@ -417,6 +422,88 @@ export const commit = async (
       )
     );
     process.exit(1);
+  }
+
+  // Run code review if --review flag is set
+  if (runReview && diff) {
+    try {
+      // Check if standards file exists and prompt user
+      if (!standardsFileExists()) {
+        outro(
+          chalk.yellow(
+            '⚠️  No code standards configured.\n\n' +
+            'For better review results, configure code standards first:\n' +
+            chalk.cyan('  cmt standards import') + ' - Import from popular style guides\n' +
+            chalk.cyan('  cmt standards set') + '    - Create custom standards\n'
+          )
+        );
+
+        const continueWithoutStandards = await confirm({
+          message: 'Continue commit with review (without standards)?',
+          initialValue: true
+        });
+
+        if (isCancel(continueWithoutStandards) || !continueWithoutStandards) {
+          outro(chalk.yellow('Commit cancelled. Configure standards and try again.'));
+          process.exit(0);
+        }
+      }
+
+      // Filter diff for review based on .commit-ai-review-ignore
+      const reviewDiff = filterDiffForReview(diff);
+
+      if (!reviewDiff || reviewDiff.trim() === '') {
+        outro(
+          chalk.yellow(
+            'All staged files are excluded from code review (check .commit-ai-review-ignore). Skipping review step.'
+          )
+        );
+      } else {
+        const reviewResult = await performCodeReview(reviewDiff);
+        printReviewResult(reviewResult);
+
+      // Check if score meets minimum threshold
+      const minScore = config.CMT_REVIEW_MIN_SCORE;
+      if (minScore !== undefined && reviewResult.overallScore < minScore) {
+        outro(
+          chalk.red(
+            `✖ Code quality score (${reviewResult.overallScore}) is below the minimum threshold (${minScore}).\n` +
+            `Please improve the code or adjust the threshold: cmt config set CMT_REVIEW_MIN_SCORE <number>`
+          )
+        );
+        process.exit(1);
+      }
+
+      // If review blocks, ask user if they want to continue
+      if (reviewResult.recommendation === 'block') {
+        const continueAnyway = await confirm({
+          message: chalk.yellow('Critical issues found. Do you want to continue committing anyway?'),
+          initialValue: false
+        });
+
+        if (isCancel(continueAnyway) || !continueAnyway) {
+          outro(chalk.red('Commit aborted due to code review issues.'));
+          process.exit(1);
+        }
+      } else if (reviewResult.recommendation === 'review') {
+        const shouldContinue = await confirm({
+          message: chalk.yellow('Review suggested. Do you want to continue with the commit?'),
+          initialValue: true
+        });
+
+        if (isCancel(shouldContinue) || !shouldContinue) {
+          outro(chalk.yellow('Commit aborted. Please address the review findings.'));
+          process.exit(1);
+        }
+        } else {
+          // approve - just show a success message
+          console.log(chalk.green('\n✓ Code review passed! Proceeding with commit...\n'));
+        }
+      }
+    } catch (reviewError) {
+      outro(chalk.red(`Code review failed: ${reviewError instanceof Error ? reviewError.message : reviewError}`));
+      process.exit(1);
+    }
   }
 
   const [, generateCommitError] = await trytm(
