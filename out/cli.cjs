@@ -46521,7 +46521,7 @@ function G3(t2, e3) {
 // package.json
 var package_default = {
   name: "@mantisware/commit-ai",
-  version: "1.0.7",
+  version: "1.0.8",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
     "git",
@@ -46576,7 +46576,7 @@ var package_default = {
     "deploy:patch": "pnpm version patch && pnpm -s deploy:build",
     lint: "eslint src --ext ts && tsc --noEmit",
     format: "prettier --write src",
-    test: "node --no-warnings --experimental-vm-modules $( [ -f ./node_modules/.bin/jest ] && echo ./node_modules/.bin/jest || which jest ) test/unit",
+    test: "NODE_OPTIONS=--experimental-vm-modules jest test/unit",
     "test:all": "pnpm -s test:unit:docker && pnpm -s test:e2e:docker",
     "test:docker-build": "docker build -t cmt-test -f test/Dockerfile .",
     "test:unit": "NODE_OPTIONS=--experimental-vm-modules jest test/unit",
