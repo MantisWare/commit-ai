@@ -93,4 +93,25 @@ This is a living checklist of what CommitAI **already supports** and what we may
 - [ ] Add GitHub Action safety rails (opt-in force push, allowlist branches, explicit confirmation)
 - [ ] Add support for generating PR descriptions / changelogs from diffs (adjacent capability)
 
+### Code Review
+
+- [ ] Add `cmt review` command to analyze staged changes with AI-powered code review
+- [ ] Implement code standards/rules configuration system (stored in global config or `.commit-ai-standards` file)
+- [ ] Support custom code standards per project (language-specific, framework-specific, team conventions)
+- [ ] Generate quality assessment report with scoring (e.g., readability, maintainability, security, performance)
+- [ ] Identify code smells and anti-patterns in the diff
+- [ ] Detect potential bugs, security vulnerabilities, and edge cases
+- [ ] Suggest improvements with specific code examples
+- [ ] Flag violations of configured coding standards with severity levels (error, warning, info)
+- [ ] Interactive prompt to continue/abort commit based on review results
+- [ ] Add `--review` flag to `cmt` to automatically review before committing
+- [ ] Support review thresholds (e.g., minimum quality score to proceed with commit)
+- [ ] Add `--review-only` flag to run review without generating commit message
+- [ ] Generate review summary with categorized findings (security, performance, style, best practices)
+- [ ] Support inline review comments mapped to specific lines in the diff
+- [ ] Add `cmt standards set` command to configure review rules interactively
+- [ ] Add `cmt standards import` to load standards from popular style guides (Airbnb, Google, etc.)
+- [ ] Cache review results to avoid re-analyzing unchanged code
+- [ ] Support excluding files/patterns from code review via `.commit-ai-review-ignore`
+
 
