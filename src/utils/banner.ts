@@ -31,6 +31,10 @@ ${chalk.hex('#805cff')('                  ')}${chalk.hex('#8c49ff')('╚═╝  
   console.log(chalk.hex('#886bff')('  AI-Powered Git Commits'));
   // eslint-disable-next-line no-console
   console.log('');
+  // eslint-disable-next-line no-console
+  console.log(chalk.hex('#6682ff')('  Author: ') + chalk.hex('#9865ff')('MantisWare (Waldo Marais)'));
+  // eslint-disable-next-line no-console
+  console.log('');
 };
 
 

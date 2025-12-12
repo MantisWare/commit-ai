@@ -13,7 +13,8 @@ CommitAI is a CLI tool named `commit-ai` with alias **`cmt`**.
 ### Branding / banner
 
 - CommitAI prints a modern **cyan→purple gradient** ASCII banner (see `src/utils/banner.ts`).
-- Banner includes the version and the line **“AI-Powered Git Commits”**.
+- Banner includes the version and the line **"AI-Powered Git Commits"**.
+- Banner displays **author attribution**: "Author: MantisWare (Waldo Marais)".
 
 ### Primary command (default)
 

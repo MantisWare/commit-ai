@@ -65368,6 +65368,8 @@ ${source_default.hex("#805cff")("                  ")}${source_default.hex("#8c4
   console.log(source_default.bold.hex("#00d9ff")("  C O M M I T A I") + " " + versionText);
   console.log(source_default.hex("#886bff")("  AI-Powered Git Commits"));
   console.log("");
+  console.log(source_default.hex("#6682ff")("  Author: ") + source_default.hex("#9865ff")("MantisWare (Waldo Marais)"));
+  console.log("");
 };
 
 // src/commands/check.ts
