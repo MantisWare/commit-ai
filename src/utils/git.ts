@@ -5,6 +5,17 @@ import ignore, { Ignore } from 'ignore';
 import { outro, spinner } from '@clack/prompts';
 import chalk from 'chalk';
 
+const isDefaultExcludedFromAIDiff = (file: string): boolean => {
+  const excludedExtensions = ['.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif'];
+  const isLockFile = file.includes('.lock') || file.includes('-lock.');
+
+  const hasExcludedExtension = excludedExtensions.some((ext) =>
+    file.endsWith(ext)
+  );
+
+  return isLockFile || hasExcludedExtension;
+};
+
 /**
  * Assert that the current directory is a git repository
  * @throws {Error} If the current directory is not a git repository
@@ -110,35 +121,27 @@ export const gitAdd = async ({ files }: { files: string[] }) => {
  * @returns {Promise<string>} The diff of the staged files
  */
 export const getDiff = async ({ files }: { files: string[] }) => {
-  const lockFiles = files.filter(
-    (file) =>
-      file.includes('.lock') ||
-      file.includes('-lock.') ||
-      file.includes('.svg') ||
-      file.includes('.png') ||
-      file.includes('.jpg') ||
-      file.includes('.jpeg') ||
-      file.includes('.webp') ||
-      file.includes('.gif')
-  );
+  const excludedFiles = files.filter((file) => isDefaultExcludedFromAIDiff(file));
 
-  if (lockFiles.length) {
+  if (excludedFiles.length > 0) {
     outro(
-      `Some files are excluded by default from 'git diff'. No commit messages are generated for this files:\n${lockFiles.join(
+      `Some files are excluded by default from 'git diff'. No commit messages are generated for these files:\n${excludedFiles.join(
         '\n'
       )}`
     );
   }
 
-  const filesWithoutLocks = files.filter(
-    (file) => !file.includes('.lock') && !file.includes('-lock.')
-  );
+  const filesToDiff = files.filter((file) => isDefaultExcludedFromAIDiff(file) === false);
+
+  if (filesToDiff.length === 0) {
+    return '';
+  }
 
   const { stdout: diff } = await execa('git', [
     'diff',
     '--staged',
     '--',
-    ...filesWithoutLocks
+    ...filesToDiff
   ]);
 
   return diff;

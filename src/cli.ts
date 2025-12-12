@@ -4,12 +4,13 @@ import { cli } from 'cleye';
 
 import packageJSON from '../package.json';
 import { commit, commitLog } from './commands/commit';
+import { checkCommand } from './commands/check';
 import { commitlintConfigCommand } from './commands/commitlint';
 import { configCommand } from './commands/config';
-import { hookCommand, isHookCalled } from './commands/githook.js';
+import { hookCommand, isHookCalled } from './commands/githook';
 import { prepareCommitMessageHook } from './commands/prepare-commit-msg-hook';
 import { checkIsLatestVersion } from './utils/checkIsLatestVersion';
-import { runMigrations } from './migrations/_run.js';
+import { runMigrations } from './migrations/_run';
 
 const extraArgs = process.argv.slice(2);
 
@@ -18,7 +19,7 @@ cli(
     version: packageJSON.version,
     name: 'commit-ai',
     alias: 'cmt',
-    commands: [configCommand, hookCommand, commitlintConfigCommand],
+    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand],
     flags: {
       fgm: Boolean,
       context: {
@@ -37,6 +38,28 @@ cli(
         type: String,
         alias: 'l',
         description: 'Get all the commit messages in the current branch, diff from provided branch',
+      },
+      dryRun: {
+        type: Boolean,
+        description: 'Generate commit message without actually committing',
+        default: false
+      },
+      edit: {
+        type: Boolean,
+        alias: 'e',
+        description: 'Open generated message in $EDITOR before committing',
+        default: false
+      },
+      noPush: {
+        type: Boolean,
+        description: 'Skip push prompts and behavior',
+        default: false
+      },
+      stageAll: {
+        type: Boolean,
+        alias: 'a',
+        description: 'Non-interactively stage all files and commit',
+        default: false
       }
     },
     ignoreArgv: (type) => type === 'unknown-flag' || type === 'argument',
@@ -54,7 +77,15 @@ cli(
     } else if (await isHookCalled()) {
       prepareCommitMessageHook();
     } else {
-      commit(extraArgs, flags.context, false, flags.fgm, flags.yes);
+      commit(extraArgs, {
+        context: flags.context,
+        stageAll: flags.stageAll,
+        fullGitMojiSpec: flags.fgm,
+        skipCommitConfirmation: flags.yes,
+        dryRun: flags.dryRun,
+        edit: flags.edit,
+        noPush: flags.noPush
+      });
     }
     
   },

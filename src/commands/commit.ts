@@ -9,7 +9,11 @@ import {
 } from '@clack/prompts';
 import chalk from 'chalk';
 import { execa } from 'execa';
+import { writeFileSync, unlinkSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { generateCommitMessageByDiff } from '../generateCommitMessageFromGitDiff';
+import { startElapsedHeartbeat } from '../utils/heartbeat';
 import {
   assertGitRepo,
   getChangedFiles,
@@ -28,6 +32,18 @@ const getGitRemotes = async () => {
   return stdout.split('\n').filter((remote) => Boolean(remote.trim()));
 };
 
+const runWithHeartbeat = async <T>(
+  label: string,
+  action: () => Promise<T>
+): Promise<T> => {
+  const stop = startElapsedHeartbeat({ label });
+  try {
+    return await action();
+  } finally {
+    stop();
+  }
+};
+
 // Check for the presence of message templates
 const checkMessageTemplate = (extraArgs: string[]): string | false => {
   for (const key in extraArgs) {
@@ -37,26 +53,57 @@ const checkMessageTemplate = (extraArgs: string[]): string | false => {
   return false;
 };
 
+// Open commit message in editor for user to edit
+const openInEditor = async (message: string): Promise<string> => {
+  const editor = process.env.EDITOR || process.env.VISUAL || 'vi';
+  const tmpFile = join(tmpdir(), `COMMIT_EDITMSG_${Date.now()}`);
+
+  try {
+    writeFileSync(tmpFile, message, 'utf-8');
+
+    await execa(editor, [tmpFile], {
+      stdio: 'inherit',
+      shell: true
+    });
+
+    const { stdout } = await execa('cat', [tmpFile]);
+    return stdout.trim();
+  } finally {
+    try {
+      unlinkSync(tmpFile);
+    } catch (e) {
+      // Ignore cleanup errors
+    }
+  }
+};
+
 interface GenerateCommitMessageFromGitDiffParams {
   diff: string;
   extraArgs: string[];
   context?: string;
   fullGitMojiSpec?: boolean;
   skipCommitConfirmation?: boolean;
+  dryRun?: boolean;
+  edit?: boolean;
+  noPush?: boolean;
+}
+
+interface CommitOptions {
+  context?: string;
+  stageAll?: boolean;
+  fullGitMojiSpec?: boolean;
+  skipCommitConfirmation?: boolean;
+  dryRun?: boolean;
+  edit?: boolean;
+  noPush?: boolean;
 }
 
 const getLogMessagesFromGitDiff = async (diff: string, fullGitMojiSpec: boolean = false, context: string = '') => {
-  const commitGenerationSpinner = spinner();
-  commitGenerationSpinner.start('Cooking up the log 🍳🎶');
-
   try {
-    let commitMessage = await generateCommitMessageByDiff(
-      diff,
-      fullGitMojiSpec,
-      context
+    const commitMessage = await runWithHeartbeat(
+      'Cooking up the log 🍳🎶',
+      async () => generateCommitMessageByDiff(diff, fullGitMojiSpec, context)
     );
-
-    commitGenerationSpinner.stop('📝 Log ready');
 
     outro(
       `Generated log:
@@ -65,9 +112,6 @@ ${commitMessage}
 ${chalk.grey('——————————————————')}`
     );
   } catch (error) {
-    commitGenerationSpinner.stop(
-      `${chalk.red('✖')} Failed to generate the log`
-    );
     console.log(error);
     process.exit(1);
   }
@@ -78,17 +122,16 @@ const generateCommitMessageFromGitDiff = async ({
   extraArgs,
   context = '',
   fullGitMojiSpec = false,
-  skipCommitConfirmation = false
+  skipCommitConfirmation = false,
+  dryRun = false,
+  edit = false,
+  noPush = false
 }: GenerateCommitMessageFromGitDiffParams): Promise<void> => {
   await assertGitRepo();
-  const commitGenerationSpinner = spinner();
-  commitGenerationSpinner.start('Cooking up the commit message 🍳🎶');
-
   try {
-    let commitMessage = await generateCommitMessageByDiff(
-      diff,
-      fullGitMojiSpec,
-      context
+    let commitMessage = await runWithHeartbeat(
+      'Cooking up the commit message 🍳🎶',
+      async () => generateCommitMessageByDiff(diff, fullGitMojiSpec, context)
     );
 
     const messageTemplate = checkMessageTemplate(extraArgs);
@@ -105,14 +148,35 @@ const generateCommitMessageFromGitDiff = async ({
       );
     }
 
-    commitGenerationSpinner.stop('📝 Commit message ready');
-
     outro(
       `Generated commit message:
 ${chalk.grey('——————————————————')}
 ${commitMessage}
 ${chalk.grey('——————————————————')}`
     );
+
+    // If dry-run, just display the message and exit
+    if (dryRun) {
+      outro(chalk.cyan('Dry run mode - no commit was made'));
+      return;
+    }
+
+    // If edit flag is set, open in editor
+    if (edit) {
+      const editedMessage = await openInEditor(commitMessage);
+      if (editedMessage.trim() === '') {
+        outro(chalk.red('Empty commit message, aborting'));
+        process.exit(1);
+      }
+      commitMessage = editedMessage;
+
+      outro(
+        `Edited commit message:
+${chalk.grey('——————————————————')}
+${commitMessage}
+${chalk.grey('——————————————————')}`
+      );
+    }
 
     const isCommitConfirmedByUser =
       skipCommitConfirmation ||
@@ -140,7 +204,7 @@ ${chalk.grey('——————————————————')}`
       const remotes = await getGitRemotes();
 
       // user isn't pushing, return early
-      if (config.CMT_GITPUSH === false) return;
+      if (config.CMT_GITPUSH === false || noPush) return;
 
       if (!remotes.length) {
         const { stdout } = await execa('git', ['push']);
@@ -212,15 +276,16 @@ ${chalk.grey('——————————————————')}`
         await generateCommitMessageFromGitDiff({
           diff,
           extraArgs,
-          fullGitMojiSpec
+          context,
+          fullGitMojiSpec,
+          skipCommitConfirmation,
+          dryRun,
+          edit,
+          noPush
         });
       }
     }
   } catch (error) {
-    commitGenerationSpinner.stop(
-      `${chalk.red('✖')} Failed to generate the commit message`
-    );
-
     console.log(error);
 
     const err = error as Error;
@@ -231,12 +296,19 @@ ${chalk.grey('——————————————————')}`
 
 export const commit = async (
   extraArgs: string[] = [],
-  context: string = '',
-  isStageAllFlag: boolean = false,
-  fullGitMojiSpec: boolean = false,
-  skipCommitConfirmation: boolean = false
+  options: CommitOptions = {}
 ) => {
-  if (isStageAllFlag) {
+  const {
+    context = '',
+    stageAll = false,
+    fullGitMojiSpec = false,
+    skipCommitConfirmation = false,
+    dryRun = false,
+    edit = false,
+    noPush = false
+  } = options;
+
+  if (stageAll) {
     const changedFiles = await getChangedFiles();
 
     if (changedFiles) await gitAdd({ files: changedFiles });
@@ -273,7 +345,7 @@ export const commit = async (
     if (isCancel(isStageAllAndCommitConfirmedByUser)) process.exit(1);
 
     if (isStageAllAndCommitConfirmedByUser) {
-      await commit(extraArgs, context, true, fullGitMojiSpec);
+      await commit(extraArgs, { context, stageAll: true, fullGitMojiSpec, skipCommitConfirmation, dryRun, edit, noPush });
       process.exit(1);
     }
 
@@ -291,7 +363,7 @@ export const commit = async (
       await gitAdd({ files });
     }
 
-    await commit(extraArgs, context, false, fullGitMojiSpec);
+    await commit(extraArgs, { context, stageAll: false, fullGitMojiSpec, skipCommitConfirmation, dryRun, edit, noPush });
     process.exit(1);
   }
 
@@ -301,13 +373,31 @@ export const commit = async (
       .join('\n')}`
   );
 
+  const [diff, diffError] = await trytm(getDiff({ files: stagedFiles }));
+  if (diffError) {
+    outro(`${chalk.red('✖')} ${diffError}`);
+    process.exit(1);
+  }
+
+  if (diff !== undefined && diff.trim() === '') {
+    outro(
+      chalk.yellow(
+        'All staged files are excluded from AI processing (e.g., lock files / images). Stage at least one non-excluded file and try again.'
+      )
+    );
+    process.exit(1);
+  }
+
   const [, generateCommitError] = await trytm(
     generateCommitMessageFromGitDiff({
-      diff: await getDiff({ files: stagedFiles }),
+      diff: diff ?? '',
       extraArgs,
       context,
       fullGitMojiSpec,
-      skipCommitConfirmation
+      skipCommitConfirmation,
+      dryRun,
+      edit,
+      noPush
     })
   );
 

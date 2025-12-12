@@ -13,10 +13,16 @@ export class OpenAiEngine implements AiEngine {
   constructor(config: OpenAiConfig) {
     this.config = config;
 
+    const clientConfig = {
+      apiKey: config.apiKey,
+      timeout: 120000, // 120 second timeout
+      maxRetries: 2
+    };
+
     if (!config.baseURL) {
-      this.client = new OpenAI({ apiKey: config.apiKey });
+      this.client = new OpenAI(clientConfig);
     } else {
-      this.client = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
+      this.client = new OpenAI({ ...clientConfig, baseURL: config.baseURL });
     }
   }
 

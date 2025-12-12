@@ -20,7 +20,7 @@ CommitAI lets you automate meaningful commit messages effortlessly using the CLI
 1. Install CommitAI globally for use in any repository:
    
    ```sh
-   npm install -g @mantisware/commit-ai
+   pnpm add -g @mantisware/commit-ai
    ```
 
 2. Obtain an API key from [OpenAI](https://platform.openai.com/account/api-keys) or another supported LLM provider. Ensure your OpenAI account has an active payment method for API access.
@@ -101,6 +101,7 @@ CMT_LANGUAGE='en'  # Language preference
 CMT_MESSAGE_TEMPLATE_PLACEHOLDER='$msg'  # Message template placeholder
 CMT_PROMPT_MODULE='conventional-commit'  # Use 'conventional-commit' or '@commitlint'
 CMT_ONE_LINE_COMMIT=false  # Single-line commit messages
+CMT_DEBUG=false  # Enable debug logging for troubleshooting
 ```
 
 ### Global Configuration
@@ -129,6 +130,33 @@ To commit changes without requiring manual confirmation:
 
 ```sh
 cmt --yes
+```
+
+### Advanced CLI Options
+
+**Dry Run Mode** - Generate commit message without actually committing:
+```sh
+cmt --dry-run
+```
+
+**Edit Before Committing** - Open generated message in your `$EDITOR` before committing:
+```sh
+cmt --edit  # or -e
+```
+
+**Skip Push Prompts** - Commit without being prompted to push:
+```sh
+cmt --no-push
+```
+
+**Stage All & Commit** - Non-interactively stage all files and commit:
+```sh
+cmt --stage-all  # or -a
+```
+
+These flags can be combined:
+```sh
+cmt --stage-all --edit --no-push
 ```
 
 ## Ignore Files from AI Processing

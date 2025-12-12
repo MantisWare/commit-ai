@@ -7,6 +7,7 @@ import {
 } from '@google/generative-ai';
 import axios from 'axios';
 import { OpenAI } from 'openai';
+import { withTimeout } from '../utils/timeout';
 import { AiEngine, AiEngineConfig } from './Engine';
 
 interface GeminiConfig extends AiEngineConfig {}
@@ -44,32 +45,36 @@ export class GeminiEngine implements AiEngine {
       );
 
     try {
-      const result = await gemini.generateContent({
-        contents,
-        safetySettings: [
-          {
-            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-            threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-            threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-            threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
+      const result = await withTimeout(
+        gemini.generateContent({
+          contents,
+          safetySettings: [
+            {
+              category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+              threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+              threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+              threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+              threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
+            }
+          ],
+          generationConfig: {
+            maxOutputTokens: this.config.maxTokensOutput,
+            temperature: 0,
+            topP: 0.1
           }
-        ],
-        generationConfig: {
-          maxOutputTokens: this.config.maxTokensOutput,
-          temperature: 0,
-          topP: 0.1
-        }
-      });
+        }),
+        120000, // 120 second timeout
+        'Gemini API request timed out after 120 seconds'
+      );
 
       return result.response.text();
     } catch (error) {

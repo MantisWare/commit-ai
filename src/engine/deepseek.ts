@@ -42,6 +42,7 @@ export class DeepseekEngine implements AiEngine {
 
       const response = await axios.post(`${this.config.baseURL}/v1/chat/completions`, params, {
         headers: { 'Content-Type': 'application/json' },
+        timeout: 120000 // 120 second timeout
       });
 
       const message = response.data.choices?.[0]?.message;

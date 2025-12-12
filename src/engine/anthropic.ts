@@ -19,7 +19,11 @@ export class AnthropicEngine implements AiEngine {
 
   constructor(config) {
     this.config = config;
-    this.client = new AnthropicClient({ apiKey: this.config.apiKey });
+    this.client = new AnthropicClient({
+      apiKey: this.config.apiKey,
+      timeout: 120000, // 120 second timeout
+      maxRetries: 2
+    });
   }
 
   public generateCommitMessage = async (

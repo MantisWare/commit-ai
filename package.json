@@ -25,7 +25,7 @@
   "repository": {
     "url": "git+https://github.com/MantisWare/commit-ai.git"
   },
-  "type": "module",
+  "packageManager": "pnpm@10.24.0",
   "author": "https://github.com/MantisWare",
   "license": "MIT",
   "files": [
@@ -41,27 +41,27 @@
     "access": "public"
   },
   "scripts": {
-    "watch": "npm run -S build -- --sourcemap --watch",
+    "watch": "pnpm -s build -- --sourcemap --watch",
     "start": "node ./out/cli.cjs",
     "ollama:start": "CMT_AI_PROVIDER='ollama' node ./out/cli.cjs",
     "dev": "ts-node ./src/cli.ts",
     "dev:gemini": "CMT_AI_PROVIDER='gemini' ts-node ./src/cli.ts",
     "dev:deepseek": "CMT_AI_PROVIDER='deepseek' ts-node ./src/cli.ts",
-    "build": "rimraf out && node esbuild.config.js",
-    "build:push": "npm run build && git add . && git commit -m 'build' && git push",
-    "deploy": "npm publish --access=public --tag latest",
-    "deploy:build": "npm run build:push && git push --tags && npm run deploy",
-    "deploy:patch": "npm version patch && npm run deploy:build",
+    "build": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\" && node esbuild.config.js",
+    "build:push": "pnpm -s build && git add . && git commit -m 'build' && git push",
+    "deploy": "pnpm publish --access=public --tag latest",
+    "deploy:build": "pnpm -s build:push && git push --tags && pnpm -s deploy",
+    "deploy:patch": "pnpm version patch && pnpm -s deploy:build",
     "lint": "eslint src --ext ts && tsc --noEmit",
     "format": "prettier --write src",
     "test": "node --no-warnings --experimental-vm-modules $( [ -f ./node_modules/.bin/jest ] && echo ./node_modules/.bin/jest || which jest ) test/unit",
-    "test:all": "npm run test:unit:docker && npm run test:e2e:docker",
+    "test:all": "pnpm -s test:unit:docker && pnpm -s test:e2e:docker",
     "test:docker-build": "docker build -t cmt-test -f test/Dockerfile .",
     "test:unit": "NODE_OPTIONS=--experimental-vm-modules jest test/unit",
-    "test:unit:docker": "npm run test:docker-build && DOCKER_CONTENT_TRUST=0 docker run --rm cmt-test npm run test:unit",
-    "test:e2e": "npm run test:e2e:setup && jest test/e2e",
+    "test:unit:docker": "pnpm -s test:docker-build && DOCKER_CONTENT_TRUST=0 docker run --rm cmt-test pnpm -s test:unit",
+    "test:e2e": "pnpm -s test:e2e:setup && jest test/e2e",
     "test:e2e:setup": "sh test/e2e/setup.sh",
-    "test:e2e:docker": "npm run test:docker-build && DOCKER_CONTENT_TRUST=0 docker run --rm cmt-test npm run test:e2e",
+    "test:e2e:docker": "pnpm -s test:docker-build && DOCKER_CONTENT_TRUST=0 docker run --rm cmt-test pnpm -s test:e2e",
     "mlx:start": "CMT_AI_PROVIDER='mlx' node ./out/cli.cjs"
   },
   "devDependencies": {
@@ -103,7 +103,6 @@
     "ini": "^3.0.1",
     "inquirer": "^9.1.4",
     "openai": "^4.57.0",
-    "punycode": "^2.3.1",
     "zod": "^3.23.8"
   }
 }

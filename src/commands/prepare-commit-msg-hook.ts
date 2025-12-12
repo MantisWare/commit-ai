@@ -1,10 +1,11 @@
 import chalk from 'chalk';
 import fs from 'fs/promises';
 
-import { intro, outro, spinner } from '@clack/prompts';
+import { intro, outro } from '@clack/prompts';
 
 import { generateCommitMessageByDiff } from '../generateCommitMessageFromGitDiff';
 import { getChangedFiles, getDiff, getStagedFiles, gitAdd } from '../utils/git';
+import { startElapsedHeartbeat } from '../utils/heartbeat';
 import { getConfig } from './config';
 
 const [messageFilePath, commitSource] = process.argv.slice(2);
@@ -46,13 +47,21 @@ export const prepareCommitMessageHook = async (
       return;
     }
 
-    const spin = spinner();
-    spin.start('Generating commit message');
+    const diff = await getDiff({ files: staged });
+    if (diff.trim() === '') {
+      outro(
+        'All staged files are excluded from AI processing (e.g., lock files / images).'
+      );
+      return;
+    }
 
-    const commitMessage = await generateCommitMessageByDiff(
-      await getDiff({ files: staged })
-    );
-    spin.stop('Done');
+    const stop = startElapsedHeartbeat({ label: 'Generating commit message' });
+    let commitMessage: string;
+    try {
+      commitMessage = await generateCommitMessageByDiff(diff);
+    } finally {
+      stop();
+    }
 
     const fileContent = await fs.readFile(messageFilePath);
 
