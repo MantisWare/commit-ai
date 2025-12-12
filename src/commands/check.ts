@@ -167,10 +167,15 @@ export const checkCommand = command(
 
       const usageCommands = [
         { cmd: 'cmt', desc: 'Generate commit message from staged files' },
-        { cmd: 'cmt pr [branch]', desc: 'Generate PR description' },
-        { cmd: 'cmt changelog <version>', desc: 'Generate changelog entry' },
+        { cmd: 'cmt --dry-run', desc: 'Preview commit message without committing' },
+        { cmd: 'cmt --edit', desc: 'Edit generated message before committing' },
+        { cmd: 'cmt pr [branch]', desc: 'Generate PR description from branch diff' },
+        { cmd: 'cmt changelog <version>', desc: 'Generate changelog entry for version' },
+        { cmd: 'cmt config set CMT_SML=true', desc: 'Enable condensed per-file messages' },
+        { cmd: 'cmt config set CMT_EMOJI=true', desc: 'Enable GitMoji in commit messages' },
         { cmd: 'cmt config help', desc: 'View all configuration options' },
-        { cmd: 'cmt --help', desc: 'Show all available commands' }
+        { cmd: 'cmt hook set', desc: 'Install Git hook for auto-generation' },
+        { cmd: 'cmt --help', desc: 'Show all available commands and flags' }
       ];
 
       console.log(usageBoxTop);

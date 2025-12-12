@@ -38,7 +38,7 @@ CommitAI is a CLI tool named `commit-ai` with alias **`cmt`**.
 
 - `cmt check`
   - Prints a **gradient Commit-AI console banner** + version and runs an environment check (Git availability, config presence, basic config sanity).
-  - Includes a **Quick Start Guide** box showing common commands and usage patterns.
+  - Includes a **Quick Start Guide** box with 10 essential commands covering commit generation, PR descriptions, changelog, configuration, and Git hooks.
 - `cmt config get <KEY...>` / `cmt config set <KEY=VALUE...>`
   - Manages **global** config stored at `~/.commit-ai`.
 - `cmt config help`
@@ -86,6 +86,7 @@ CommitAI supports two “prompt module” modes:
 - **Optional description**: when `CMT_DESCRIPTION=true`, CommitAI asks the model to add a short description after the title.
   - **Description focus**: when `CMT_WHY=true` (requires `CMT_DESCRIPTION=true`), the description focuses on WHY changes were made (reasoning, motivation, context) rather than WHAT the changes do.
 - **One-line mode**: when `CMT_ONE_LINE_COMMIT=true`, CommitAI asks the model for a single unified message rather than multi-part output.
+- **Single-line Multi-file Log (SML) mode**: when `CMT_SML=true`, CommitAI generates condensed per-file messages showing filename, line numbers, and brief description (e.g., "src/file.ts:L123-L145 - Brief change description").
 - **Message templates**:
   - If you pass a commit arg containing the placeholder (default `$msg`), CommitAI will replace the placeholder with the generated message and then run `git commit ...`.
 
@@ -135,6 +136,7 @@ Common keys:
 - `CMT_DESCRIPTION`: append a short description on/off.
 - `CMT_WHY`: when enabled with `CMT_DESCRIPTION=true`, focuses description on WHY changes were made rather than WHAT they do.
 - `CMT_ONE_LINE_COMMIT`: one-line commit output on/off.
+- `CMT_SML`: Single-line Multi-file Log mode - generates condensed per-file messages with filename, line numbers, and brief description.
 - `CMT_MESSAGE_TEMPLATE_PLACEHOLDER`: placeholder token used for message templates (default `$msg`).
 - `CMT_PROMPT_MODULE`: `conventional-commit` or `@commitlint`.
 - `CMT_MAX_FILES`: maximum number of files allowed in a single commit (optional guardrail).

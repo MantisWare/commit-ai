@@ -102,6 +102,7 @@ CMT_MESSAGE_TEMPLATE_PLACEHOLDER='$msg'  # Message template placeholder
 CMT_PROMPT_MODULE='conventional-commit'  # Use 'conventional-commit' or '@commitlint'
 CMT_ONE_LINE_COMMIT=false  # Single-line commit messages
 CMT_WHY=false  # Focus description on WHY changes were made (vs WHAT changes are)
+CMT_SML=false  # Generate condensed single-line messages per file with filename, line numbers, and brief description
 CMT_DEBUG=false  # Enable debug logging for troubleshooting
 CMT_MAX_FILES=50  # Maximum number of files allowed in a single commit (optional)
 CMT_MAX_DIFF_BYTES=102400  # Maximum diff size in bytes (100 KB, optional)
@@ -161,6 +162,31 @@ These flags can be combined:
 ```sh
 cmt --stage-all --edit --no-push
 ```
+
+### Single-line Multi-file Log (SML Mode)
+
+For large commits where you want a quick overview, enable SML mode to generate condensed per-file messages:
+
+```sh
+cmt config set CMT_SML=true
+```
+
+**Example output format:**
+```
+src/commands/config.ts:L29-L32 - Added CMT_SML configuration option
+src/prompts.ts:L122-L125 - Implemented SML instruction generator
+README.md:L105 - Documented SML feature
+```
+
+Each line shows:
+- **Filename** with relative path
+- **Line numbers** or ranges where changes occurred
+- **Brief description** of what changed
+
+This is particularly useful for:
+- Code reviews of large changesets
+- Quick scanning of multi-file commits
+- Understanding the scope of changes at a glance
 
 ### Commit Size Guardrails
 

@@ -119,6 +119,11 @@ const getOneLineCommitInstruction = () =>
     ? 'Craft a concise commit message that encapsulates all changes made, with an emphasis on the primary updates. If the modifications share a common theme or scope, mention it succinctly; otherwise, leave the scope out to maintain focus. The goal is to provide a clear and unified overview of the changes in a one single message, without diverging into a list of commit per file change.'
     : '';
 
+const getSMLInstruction = () =>
+  config.CMT_SML
+    ? 'Generate condensed single-line messages per file. For each changed file, output one line with: filename (with relative path), affected line numbers or ranges, and a brief description of what changed. Format: "path/to/file.ext:L123-L145 - Brief description of change". Focus on conciseness while maintaining clarity. List all changed files separately.'
+    : '';
+
 /**
  * Get the context of the user input
  * @param extraArgs - The arguments passed to the command line
@@ -149,10 +154,11 @@ const INIT_MAIN_PROMPT = (
     const conventionGuidelines = getCommitConvention(fullGitMojiSpec);
     const descriptionGuideline = getDescriptionInstruction();
     const oneLineCommitGuideline = getOneLineCommitInstruction();
+    const smlGuideline = getSMLInstruction();
     const generalGuidelines = `Use the present tense. Lines must not be longer than 74 characters. Use ${language} for the commit message.`;
     const userInputContext = userInputCodeContext(context);
 
-    return `${missionStatement}\n${diffInstruction}\n${conventionGuidelines}\n${descriptionGuideline}\n${oneLineCommitGuideline}\n${generalGuidelines}\n${userInputContext}`;
+    return `${missionStatement}\n${diffInstruction}\n${conventionGuidelines}\n${descriptionGuideline}\n${oneLineCommitGuideline}\n${smlGuideline}\n${generalGuidelines}\n${userInputContext}`;
   })()
 });
 

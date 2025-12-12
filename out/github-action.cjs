@@ -68174,6 +68174,14 @@ var configValidators = {
       "Must be true or false"
     );
     return value;
+  },
+  ["CMT_SML" /* CMT_SML */](value) {
+    validateConfig(
+      "CMT_SML" /* CMT_SML */,
+      typeof value === "boolean",
+      "Must be true or false"
+    );
+    return value;
   }
 };
 var CMT_AI_PROVIDER_ENUM = /* @__PURE__ */ ((CMT_AI_PROVIDER_ENUM2) => {
@@ -68203,6 +68211,7 @@ var DEFAULT_CONFIG = {
   CMT_ONE_LINE_COMMIT: false,
   CMT_TEST_MOCK_TYPE: "commit-message",
   CMT_WHY: false,
+  CMT_SML: false,
   CMT_DEBUG: false,
   CMT_GITPUSH: true
 };
@@ -68239,6 +68248,7 @@ var getEnvConfig = (envPath) => {
     CMT_DEBUG: parseConfigVarValue(process.env.CMT_DEBUG),
     CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
     CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
+    CMT_SML: parseConfigVarValue(process.env.CMT_SML),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH)
   };
 };
@@ -68409,6 +68419,11 @@ var CONFIG_HELP = {
     description: "Maximum diff size in bytes",
     example: "102400",
     default: "unlimited"
+  },
+  CMT_SML: {
+    description: "Generate condensed single-line messages per file with filename, line numbers, and brief description",
+    example: "true",
+    default: "false"
   }
 };
 var printConfigHelp = () => {
@@ -83302,6 +83317,7 @@ var getDescriptionInstruction = () => {
   return `Add a short description of WHAT the changes do after the commit message. Keep it concise and factual. Don't start with "This commit", just describe the changes.`;
 };
 var getOneLineCommitInstruction = () => config4.CMT_ONE_LINE_COMMIT ? "Craft a concise commit message that encapsulates all changes made, with an emphasis on the primary updates. If the modifications share a common theme or scope, mention it succinctly; otherwise, leave the scope out to maintain focus. The goal is to provide a clear and unified overview of the changes in a one single message, without diverging into a list of commit per file change." : "";
+var getSMLInstruction = () => config4.CMT_SML ? 'Generate condensed single-line messages per file. For each changed file, output one line with: filename (with relative path), affected line numbers or ranges, and a brief description of what changed. Format: "path/to/file.ext:L123-L145 - Brief description of change". Focus on conciseness while maintaining clarity. List all changed files separately.' : "";
 var userInputCodeContext = (context2) => {
   if (context2 && context2 !== "" && context2 !== " ") {
     return `Additional context provided by the user: <context>${context2}</context>
@@ -83318,6 +83334,7 @@ var INIT_MAIN_PROMPT2 = (language, fullGitMojiSpec, context2) => ({
     const conventionGuidelines = getCommitConvention(fullGitMojiSpec);
     const descriptionGuideline = getDescriptionInstruction();
     const oneLineCommitGuideline = getOneLineCommitInstruction();
+    const smlGuideline = getSMLInstruction();
     const generalGuidelines = `Use the present tense. Lines must not be longer than 74 characters. Use ${language} for the commit message.`;
     const userInputContext = userInputCodeContext(context2);
     return `${missionStatement}
@@ -83325,6 +83342,7 @@ ${diffInstruction}
 ${conventionGuidelines}
 ${descriptionGuideline}
 ${oneLineCommitGuideline}
+${smlGuideline}
 ${generalGuidelines}
 ${userInputContext}`;
   })()

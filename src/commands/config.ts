@@ -28,6 +28,7 @@ export enum CONFIG_KEYS {
   CMT_DEBUG = 'CMT_DEBUG',
   CMT_MAX_FILES = 'CMT_MAX_FILES',
   CMT_MAX_DIFF_BYTES = 'CMT_MAX_DIFF_BYTES',
+  CMT_SML = 'CMT_SML',
   CMT_GITPUSH = 'CMT_GITPUSH' // todo: deprecate
 }
 
@@ -371,6 +372,15 @@ export const configValidators = {
       'Must be true or false'
     );
     return value;
+  },
+
+  [CONFIG_KEYS.CMT_SML](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_SML,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
   }
 };
 
@@ -406,6 +416,7 @@ export type ConfigType = {
   [CONFIG_KEYS.CMT_DEBUG]: boolean;
   [CONFIG_KEYS.CMT_MAX_FILES]?: number;
   [CONFIG_KEYS.CMT_MAX_DIFF_BYTES]?: number;
+  [CONFIG_KEYS.CMT_SML]: boolean;
   [CONFIG_KEYS.CMT_TEST_MOCK_TYPE]: string;
 };
 
@@ -451,6 +462,7 @@ export const DEFAULT_CONFIG = {
   CMT_ONE_LINE_COMMIT: false,
   CMT_TEST_MOCK_TYPE: 'commit-message',
   CMT_WHY: false,
+  CMT_SML: false,
   CMT_DEBUG: false,
   CMT_GITPUSH: true // todo: deprecate
 };
@@ -495,6 +507,7 @@ const getEnvConfig = (envPath: string) => {
     CMT_DEBUG: parseConfigVarValue(process.env.CMT_DEBUG),
     CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
     CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
+    CMT_SML: parseConfigVarValue(process.env.CMT_SML),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH) // todo: deprecate
   };
 };
@@ -699,6 +712,11 @@ const CONFIG_HELP: Record<string, { description: string; example: string; defaul
     description: 'Maximum diff size in bytes',
     example: '102400',
     default: 'unlimited'
+  },
+  CMT_SML: {
+    description: 'Generate condensed single-line messages per file with filename, line numbers, and brief description',
+    example: 'true',
+    default: 'false'
   }
 };
 

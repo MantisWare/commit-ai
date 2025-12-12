@@ -11,7 +11,7 @@ This is a living checklist of what CommitAI **already supports** and what we may
 ### CLI & UX
 
 - [x] `cmt` default command (generate commit message from staged diff)
-- [x] `cmt check` environment/version check command (prints banner + validates toolchain basics)
+- [x] `cmt check` environment/version check command (prints banner + validates toolchain basics + Quick Start Guide with 10 essential commands)
 - [x] Refresh console banner to match Commit-AI branding (cyan→purple gradient + “AI-Powered Git Commits”)
 - [x] Interactive staging when nothing is staged (stage all or choose files)
 - [x] `--context` / `-c` additional context support
@@ -23,8 +23,9 @@ This is a living checklist of what CommitAI **already supports** and what we may
 
 - [x] Conventional commit prompting (default prompt module)
 - [x] Optional GitMoji prompting (`CMT_EMOJI`)
-- [x] Optional appended description (“why”) (`CMT_DESCRIPTION`)
+- [x] Optional appended description ("why") (`CMT_DESCRIPTION`)
 - [x] One-line commit mode (`CMT_ONE_LINE_COMMIT`)
+- [x] Single-line Multi-file Log mode (`CMT_SML`) for condensed per-file messages
 - [x] Template placeholder substitution (`CMT_MESSAGE_TEMPLATE_PLACEHOLDER`)
 - [x] Token-aware diff chunking/splitting for large diffs
 
