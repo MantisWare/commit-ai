@@ -46570,8 +46570,9 @@ var package_default = {
     "dev:deepseek": "CMT_AI_PROVIDER='deepseek' ts-node ./src/cli.ts",
     build: `node -e "require('fs').rmSync('out', { recursive: true, force: true })" && node esbuild.config.mjs`,
     "build:push": "pnpm -s build && git add . && git commit -m 'build' && git push",
-    deploy: "pnpm publish --access=public --tag latest",
-    "deploy:build": "pnpm -s build:push && (git push --tags || true) && pnpm -s deploy",
+    deploy: "npm publish --access=public --tag latest",
+    "deploy:otp": "read -p 'Enter OTP: ' otp && npm publish --access=public --tag latest --otp=$otp",
+    "deploy:build": "pnpm -s build:push && (git push --tags || true) && npm run deploy:otp",
     "deploy:patch": "pnpm version patch && pnpm -s deploy:build",
     lint: "eslint src --ext ts && tsc --noEmit",
     format: "prettier --write src",
@@ -65166,26 +65167,24 @@ var import_path5 = require("path");
 
 // src/utils/banner.ts
 var printCommitAiBanner = ({ version } = {}) => {
-  const title = source_default.bold.magenta("Commit-AI");
-  const tagline = source_default.hex("#9333ea")("\u2728 Where commits meet vibes \u2728");
   const versionText = version === void 0 ? "" : source_default.gray(`v${version}`);
   const art = `
-${source_default.hex("#9333ea")(" \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2557   \u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2557   \u2588\u2588\u2588\u2557\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557")}
-${source_default.hex("#8b3ae0")("\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2554\u2550\u2550\u2550\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2551\u255A\u2550\u2550\u2588\u2588\u2554\u2550\u2550\u255D")}
-${source_default.hex("#7f42d6")("\u2588\u2588\u2551     \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2588\u2588\u2588\u2588\u2554\u2588\u2588\u2551\u2588\u2588\u2554\u2588\u2588\u2588\u2588\u2554\u2588\u2588\u2551\u2588\u2588\u2551   \u2588\u2588\u2551")}
-${source_default.hex("#6f4acc")("\u2588\u2588\u2551     \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2551\u255A\u2588\u2588\u2554\u255D\u2588\u2588\u2551\u2588\u2588\u2551\u255A\u2588\u2588\u2554\u255D\u2588\u2588\u2551\u2588\u2588\u2551   \u2588\u2588\u2551")}
-${source_default.hex("#5e52c2")("\u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2551 \u255A\u2550\u255D \u2588\u2588\u2551\u2588\u2588\u2551 \u255A\u2550\u255D \u2588\u2588\u2551\u2588\u2588\u2551   \u2588\u2588\u2551")}
-${source_default.hex("#4d5ab8")(" \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u255D     \u255A\u2550\u255D\u255A\u2550\u255D     \u255A\u2550\u255D\u255A\u2550\u255D   \u255A\u2550\u255D")}
-${source_default.hex("#3b62ae")("                \u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2557")}
-${source_default.hex("#346aaa")("               \u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2557\u2588\u2588\u2551")}
-${source_default.hex("#2d72a6")("               \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2551")}
-${source_default.hex("#267aa2")("               \u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2551\u2588\u2588\u2551")}
-${source_default.hex("#2f6bb0")("               \u2588\u2588\u2551  \u2588\u2588\u2551\u2588\u2588\u2551")}
-${source_default.hex("#2563eb")("               \u255A\u2550\u255D  \u255A\u2550\u255D\u255A\u2550\u255D")}
+${source_default.hex("#00d9ff")(" \u2588\u2588\u2588\u2588\u2588\u2588\u2557")}${source_default.hex("#22b0ff")(" \u2588\u2588\u2588\u2588\u2588\u2588\u2557")}${source_default.hex("#4499ff")(" \u2588\u2588\u2588\u2557   \u2588\u2588\u2588\u2557")}${source_default.hex("#6682ff")("\u2588\u2588\u2588\u2557   \u2588\u2588\u2588\u2557")}${source_default.hex("#886bff")("\u2588\u2588\u2557")}${source_default.hex("#aa54ff")("\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557")}
+${source_default.hex("#00ccff")("\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D")}${source_default.hex("#1eb3ff")("\u2588\u2588\u2554\u2550\u2550\u2550\u2588\u2588\u2557")}${source_default.hex("#3c9cff")("\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2551")}${source_default.hex("#5a85ff")("\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2551")}${source_default.hex("#786eff")("\u2588\u2588\u2551")}${source_default.hex("#9657ff")("\u255A\u2550\u2550\u2588\u2588\u2554\u2550\u2550\u255D")}
+${source_default.hex("#00bfff")("\u2588\u2588\u2551     ")}${source_default.hex("#1ab6ff")("\u2588\u2588\u2551   \u2588\u2588\u2551")}${source_default.hex("#349fff")("\u2588\u2588\u2554\u2588\u2588\u2588\u2588\u2554\u2588\u2588\u2551")}${source_default.hex("#4e88ff")("\u2588\u2588\u2554\u2588\u2588\u2588\u2588\u2554\u2588\u2588\u2551")}${source_default.hex("#6871ff")("\u2588\u2588\u2551")}${source_default.hex("#825aff")("   \u2588\u2588\u2551   ")}
+${source_default.hex("#11b5ff")("\u2588\u2588\u2551     ")}${source_default.hex("#26aeff")("\u2588\u2588\u2551   \u2588\u2588\u2551")}${source_default.hex("#3b9dff")("\u2588\u2588\u2551\u255A\u2588\u2588\u2554\u255D\u2588\u2588\u2551")}${source_default.hex("#508cff")("\u2588\u2588\u2551\u255A\u2588\u2588\u2554\u255D\u2588\u2588\u2551")}${source_default.hex("#657bff")("\u2588\u2588\u2551")}${source_default.hex("#7a6aff")("   \u2588\u2588\u2551   ")}
+${source_default.hex("#22abff")("\u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2557")}${source_default.hex("#32a7ff")("\u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D")}${source_default.hex("#429bff")("\u2588\u2588\u2551 \u255A\u2550\u255D \u2588\u2588\u2551")}${source_default.hex("#528fff")("\u2588\u2588\u2551 \u255A\u2550\u255D \u2588\u2588\u2551")}${source_default.hex("#6284ff")("\u2588\u2588\u2551")}${source_default.hex("#7279ff")("   \u2588\u2588\u2551   ")}
+${source_default.hex("#33a1ff")(" \u255A\u2550\u2550\u2550\u2550\u2550\u255D")}${source_default.hex("#3e9fff")(" \u255A\u2550\u2550\u2550\u2550\u2550\u255D ")}${source_default.hex("#4999ff")("\u255A\u2550\u255D     \u255A\u2550\u255D")}${source_default.hex("#5493ff")("\u255A\u2550\u255D     \u255A\u2550\u255D")}${source_default.hex("#5f8dff")("\u255A\u2550\u255D")}${source_default.hex("#6a87ff")("   \u255A\u2550\u255D   ")}
+${source_default.hex("#4499ff")("                   ")}${source_default.hex("#5a85ff")("\u2588\u2588\u2588\u2588\u2588\u2557 ")}${source_default.hex("#706fff")("\u2588\u2588\u2557")}
+${source_default.hex("#5085ff")("                  ")}${source_default.hex("#6479ff")("\u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2557")}${source_default.hex("#786dff")("\u2588\u2588\u2551")}
+${source_default.hex("#5c7aff")("                  ")}${source_default.hex("#6e6dff")("\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2551")}${source_default.hex("#806bff")("\u2588\u2588\u2551")}
+${source_default.hex("#6870ff")("                  ")}${source_default.hex("#7861ff")("\u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2551")}${source_default.hex("#8869ff")("\u2588\u2588\u2551")}
+${source_default.hex("#7466ff")("                  ")}${source_default.hex("#8255ff")("\u2588\u2588\u2551  \u2588\u2588\u2551")}${source_default.hex("#9067ff")("\u2588\u2588\u2551")}
+${source_default.hex("#805cff")("                  ")}${source_default.hex("#8c49ff")("\u255A\u2550\u255D  \u255A\u2550\u255D")}${source_default.hex("#9865ff")("\u255A\u2550\u255D")}
 `;
   console.log(art);
-  console.log(`${title} ${versionText}`.trim());
-  console.log(tagline);
+  console.log(source_default.bold.hex("#00d9ff")("  C O M M I T A I") + " " + versionText);
+  console.log(source_default.hex("#886bff")("  AI-Powered Git Commits"));
   console.log("");
 };
 
@@ -65272,7 +65271,7 @@ var checkCommand = G3(
       const fails = results.filter((r3) => r3.status === "fail").length;
       const passes = results.filter((r3) => r3.status === "pass").length;
       const maxLabelWidth = Math.max(...results.map((r3) => r3.label.length));
-      const boxWidth = 80;
+      const boxWidth = 100;
       const border = source_default.hex("#9333ea")("\u2500".repeat(boxWidth));
       const borderTop = source_default.hex("#9333ea")("\u250C") + border + source_default.hex("#9333ea")("\u2510");
       const borderBottom = source_default.hex("#2563eb")("\u2514") + border + source_default.hex("#2563eb")("\u2518");

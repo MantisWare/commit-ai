@@ -128,7 +128,7 @@ export const checkCommand = command(
 
       // Calculate max width for the box
       const maxLabelWidth = Math.max(...results.map(r => r.label.length));
-      const boxWidth = 80;
+      const boxWidth = 100;
       const border = chalk.hex('#9333ea')('─'.repeat(boxWidth));
       const borderTop = chalk.hex('#9333ea')('┌') + border + chalk.hex('#9333ea')('┐');
       const borderBottom = chalk.hex('#2563eb')('└') + border + chalk.hex('#2563eb')('┘');

@@ -10,7 +10,10 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm start -- --help)",
       "Bash(node ./out/cli.cjs:*)",
-      "Bash(npm whoami:*)"
+      "Bash(npm whoami:*)",
+      "Bash(pnpm config:*)",
+      "Bash(cat:*)",
+      "Bash(npm publish:*)"
     ],
     "deny": [],
     "ask": []
