@@ -19,8 +19,25 @@ CommitAI lets you automate meaningful commit messages effortlessly using the CLI
 
 1. Install CommitAI globally for use in any repository:
    
+   **Using npm:**
+   ```sh
+   npm install -g @mantisware/commit-ai
+   ```
+   
+   **Using pnpm:**
    ```sh
    pnpm add -g @mantisware/commit-ai
+   ```
+
+   After installation, CommitAI will automatically run an environment check and display a quick start guide.
+
+   **Updating to the latest version:**
+   ```sh
+   # Using npm
+   npm update -g @mantisware/commit-ai
+   
+   # Using pnpm
+   pnpm update -g @mantisware/commit-ai
    ```
 
 2. Obtain an API key from [OpenAI](https://platform.openai.com/account/api-keys) or another supported LLM provider. Ensure your OpenAI account has an active payment method for API access.
@@ -81,6 +98,39 @@ cmt config set CMT_MODEL='deepseek-coder-v2-lite-instruct-mlx' CMT_API_URL='http
 
 Replace `http://127.0.0.1:1234` with the appropriate endpoint provided by LM Studio.
 
+## Verify Your Setup
+
+After installation, verify that CommitAI is properly configured:
+
+```sh
+cmt check
+```
+
+This command validates your environment and displays:
+
+- **Environment Check**: Git availability, repository status, config files, API key configuration
+- **Quick Start Guide**: Most commonly used commands and flags
+- **Documentation Links**: Links to full documentation
+
+The check runs automatically after global installation, but you can run it anytime to troubleshoot issues or learn available commands.
+
+**Example output:**
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Environment Check                                                                                  │
+├────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ✔ Git              git version 2.39.0                                                              │
+│ ✔ Git repo         inside work tree                                                               │
+│ ✔ Global config    ~/.commit-ai                                                                   │
+│ ! Repo .env        not found (optional)                                                           │
+│ ✔ Provider         openai (default)                                                               │
+│ ✔ Model            gpt-4o-mini                                                                    │
+│ ✔ API key          set                                                                            │
+├────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ✓ 6/7 checks passed                                                                                │
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## Configuration Options
 
@@ -840,4 +890,4 @@ jobs:
 ## Payment Information
 
 CommitAI uses OpenAI API, and you are responsible for associated costs. 
-By default, it uses `gpt-3.5-turbo`, which should not exceed **$0.10 per workday**. Upgrading to `gpt-4o` improves quality but increases cost.
+By default, it uses `gpt-4o-mini`, which is cost-effective and should not exceed **$0.10 per workday** for typical usage. Upgrading to `gpt-4o` improves quality but increases cost. For local or free options, see Ollama, DeepSeek, or MLX configurations above.
