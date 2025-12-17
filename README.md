@@ -169,8 +169,8 @@ cmt --stage-all --edit --no-push
 For large commits where you want a quick overview, enable SML mode to generate condensed per-file messages:
 
 ```sh
-cmt config set CMT_SML=true
 ```
+cmt config set CMT_SML=true
 
 **Example output format:**
 ```

@@ -30,7 +30,8 @@
   "license": "MIT",
   "files": [
     "out/cli.cjs",
-    "out/tiktoken_bg.wasm"
+    "out/tiktoken_bg.wasm",
+    "postinstall.js"
   ],
   "release": {
     "branches": [
@@ -41,6 +42,7 @@
     "access": "public"
   },
   "scripts": {
+    "postinstall": "node postinstall.js",
     "watch": "pnpm -s build -- --sourcemap --watch",
     "start": "node ./out/cli.cjs",
     "ollama:start": "CMT_AI_PROVIDER='ollama' node ./out/cli.cjs",

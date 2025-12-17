@@ -6,6 +6,11 @@ import currentPackage from '../../package.json';
 import { getCommitAILatestVersion } from '../version';
 
 export const checkIsLatestVersion = async () => {
+  // Skip version check during postinstall or if explicitly disabled
+  if (process.env.CMT_SKIP_VERSION_CHECK === 'true') {
+    return;
+  }
+
   const latestVersion = await getCommitAILatestVersion();
 
   if (latestVersion) {

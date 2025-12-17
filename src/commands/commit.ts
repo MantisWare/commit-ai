@@ -104,6 +104,8 @@ interface CommitOptions {
 
 const getLogMessagesFromGitDiff = async (diff: string, fullGitMojiSpec: boolean = false, context: string = '') => {
   try {
+    console.log(); // Add spacing before "cooking up" message
+    
     const commitMessage = await runWithHeartbeat(
       'Cooking up the log 🍳🎶',
       async () => generateCommitMessageByDiff(diff, fullGitMojiSpec, context)
@@ -377,6 +379,8 @@ export const commit = async (
       .map((file) => `  ${file}`)
       .join('\n')}`
   );
+
+  console.log(); // Add spacing before "cooking up" message
 
   const [diff, diffError] = await trytm(getDiff({ files: stagedFiles }));
   if (diffError) {
