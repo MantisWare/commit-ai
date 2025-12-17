@@ -46521,7 +46521,7 @@ function G3(t2, e3) {
 // package.json
 var package_default = {
   name: "@mantisware/commit-ai",
-  version: "1.0.9",
+  version: "1.0.10",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
     "git",
@@ -46551,7 +46551,8 @@ var package_default = {
   license: "MIT",
   files: [
     "out/cli.cjs",
-    "out/tiktoken_bg.wasm"
+    "out/tiktoken_bg.wasm",
+    "postinstall.js"
   ],
   release: {
     branches: [
@@ -46562,6 +46563,7 @@ var package_default = {
     access: "public"
   },
   scripts: {
+    postinstall: "node postinstall.js",
     watch: "pnpm -s build -- --sourcemap --watch",
     start: "node ./out/cli.cjs",
     "ollama:start": "CMT_AI_PROVIDER='ollama' node ./out/cli.cjs",
@@ -66666,6 +66668,7 @@ var openInEditor = async (message) => {
 };
 var getLogMessagesFromGitDiff = async (diff, fullGitMojiSpec = false, context = "") => {
   try {
+    console.log();
     const commitMessage = await runWithHeartbeat(
       "Cooking up the log \u{1F373}\u{1F3B6}",
       async () => generateCommitMessageByDiff(diff, fullGitMojiSpec, context)
@@ -66890,6 +66893,7 @@ var commit = async (extraArgs2 = [], options = {}) => {
     `${stagedFiles.length} staged files:
 ${stagedFiles.map((file) => `  ${file}`).join("\n")}`
   );
+  console.log();
   const [diff, diffError] = await trytm(getDiff({ files: stagedFiles }));
   if (diffError) {
     ce(`${source_default.red("\u2716")} ${diffError}`);
@@ -67629,6 +67633,9 @@ var getCommitAILatestVersion = async () => {
 
 // src/utils/checkIsLatestVersion.ts
 var checkIsLatestVersion = async () => {
+  if (process.env.CMT_SKIP_VERSION_CHECK === "true") {
+    return;
+  }
   const latestVersion = await getCommitAILatestVersion();
   if (latestVersion) {
     const currentVersion = package_default.version;
