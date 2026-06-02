@@ -46521,7 +46521,7 @@ function G3(t2, e3) {
 // package.json
 var package_default = {
   name: "@mantisware/commit-ai",
-  version: "1.0.13",
+  version: "1.0.14",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
     "git",
@@ -65204,7 +65204,7 @@ var checkCommitSizeGuardrails = (stagedFileCount, diffByteLength, limits) => {
   const { maxFiles, maxDiffBytes } = limits;
   if (maxFiles !== void 0 && typeof maxFiles === "number" && stagedFileCount > maxFiles) {
     throw new Error(
-      `Too many staged files (${stagedFileCount}). Maximum allowed: ${maxFiles}. Unstage some files or split into multiple commits. Adjust with: cmt config set CMT_MAX_FILES=<number>`
+      `Too many staged files (${stagedFileCount}). Maximum allowed: ${maxFiles}. Use \`cmt\` to split into multiple commits automatically, stage fewer files, or adjust with: cmt config set CMT_MAX_FILES=<number>`
     );
   }
   if (maxDiffBytes !== void 0 && typeof maxDiffBytes === "number" && diffByteLength > maxDiffBytes) {
@@ -65213,12 +65213,28 @@ var checkCommitSizeGuardrails = (stagedFileCount, diffByteLength, limits) => {
     );
   }
 };
-var assertCommitSizeGuardrails = (stagedFileCount, diffByteLength) => {
+var getCommitSizeLimits = () => {
   const config9 = getConfig();
-  checkCommitSizeGuardrails(stagedFileCount, diffByteLength, {
+  return {
     maxFiles: config9.CMT_MAX_FILES,
     maxDiffBytes: config9.CMT_MAX_DIFF_BYTES
-  });
+  };
+};
+var assertCommitSizeGuardrails = (stagedFileCount, diffByteLength) => {
+  checkCommitSizeGuardrails(stagedFileCount, diffByteLength, getCommitSizeLimits());
+};
+var exceedsMaxStagedFiles = (stagedFileCount, limits = getCommitSizeLimits()) => limits.maxFiles !== void 0 && typeof limits.maxFiles === "number" && stagedFileCount > limits.maxFiles;
+
+// src/utils/chunkStagedFiles.ts
+var chunkStagedFiles = (items, maxChunkSize) => {
+  if (maxChunkSize <= 0) {
+    throw new Error("maxChunkSize must be a positive number");
+  }
+  const chunks = [];
+  for (let i3 = 0; i3 < items.length; i3 += maxChunkSize) {
+    chunks.push(items.slice(i3, i3 + maxChunkSize));
+  }
+  return chunks;
 };
 
 // src/utils/commitProgressLabel.ts
@@ -65363,6 +65379,9 @@ var gitAdd = async ({ files }) => {
   gitAddSpinner.start("Adding files to commit");
   await execa("git", ["add", ...files]);
   gitAddSpinner.stop("Done");
+};
+var gitResetStaged = async () => {
+  await execa("git", ["reset"]);
 };
 var getDiff = async ({ files }) => {
   const excludedFiles = files.filter((file) => isDefaultExcludedFromAIDiff(file));
@@ -66947,6 +66966,176 @@ var openInEditor = async (message) => {
     }
   }
 };
+var runCommitReviewIfNeeded = async (diff, runReview) => {
+  if (!runReview) {
+    return true;
+  }
+  if (!standardsFileExists()) {
+    ce(
+      source_default.yellow(
+        "\u26A0\uFE0F  No code standards configured.\n\nFor better review results, configure code standards first:\n" + source_default.cyan("  cmt standards import") + " - Import from popular style guides\n" + source_default.cyan("  cmt standards set") + "    - Create custom standards\n"
+      )
+    );
+    const continueWithoutStandards = await Q3({
+      message: "Continue commit with review (without standards)?",
+      initialValue: true
+    });
+    if (hD2(continueWithoutStandards) || !continueWithoutStandards) {
+      ce(
+        source_default.yellow("Commit cancelled. Configure standards and try again.")
+      );
+      return false;
+    }
+  }
+  const reviewDiff = filterDiffForReview(diff);
+  if (!reviewDiff || reviewDiff.trim() === "") {
+    ce(
+      source_default.yellow(
+        "All staged files are excluded from code review (check .commit-ai-review-ignore). Skipping review step."
+      )
+    );
+    return true;
+  }
+  const reviewResult = await performCodeReview(reviewDiff);
+  printReviewResult(reviewResult);
+  const minScore = config7.CMT_REVIEW_MIN_SCORE;
+  if (minScore !== void 0 && reviewResult.overallScore < minScore) {
+    ce(
+      source_default.red(
+        `\u2716 Code quality score (${reviewResult.overallScore}) is below the minimum threshold (${minScore}).
+Please improve the code or adjust the threshold: cmt config set CMT_REVIEW_MIN_SCORE <number>`
+      )
+    );
+    return false;
+  }
+  if (reviewResult.recommendation === "block") {
+    const continueAnyway = await Q3({
+      message: source_default.yellow(
+        "Critical issues found. Do you want to continue committing anyway?"
+      ),
+      initialValue: false
+    });
+    if (hD2(continueAnyway) || !continueAnyway) {
+      ce(source_default.red("Commit aborted due to code review issues."));
+      return false;
+    }
+  } else if (reviewResult.recommendation === "review") {
+    const shouldContinue = await Q3({
+      message: source_default.yellow(
+        "Review suggested. Do you want to continue with the commit?"
+      ),
+      initialValue: true
+    });
+    if (hD2(shouldContinue) || !shouldContinue) {
+      ce(
+        source_default.yellow("Commit aborted. Please address the review findings.")
+      );
+      return false;
+    }
+  } else {
+    console.log(
+      source_default.green("\n\u2713 Code review passed! Proceeding with commit...\n")
+    );
+  }
+  return true;
+};
+var formatBatchFileList = (files, previewLimit = 10) => {
+  const preview = files.slice(0, previewLimit).map((file) => `  ${file}`);
+  if (files.length > previewLimit) {
+    preview.push(`  \u2026 and ${files.length - previewLimit} more`);
+  }
+  return preview.join("\n");
+};
+var commitStagedFilesInBatches = async (stagedFiles, maxFilesPerCommit, extraArgs2, options) => {
+  const chunks = chunkStagedFiles(stagedFiles, maxFilesPerCommit);
+  const totalBatches = chunks.length;
+  console.log(
+    source_default.cyan(
+      `
+Splitting ${stagedFiles.length} staged files into ${totalBatches} commits (max ${maxFilesPerCommit} files each).
+`
+    )
+  );
+  await gitResetStaged();
+  for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+    const batchFiles = chunks[batchIndex];
+    const batchNumber = batchIndex + 1;
+    const isLastBatch = batchIndex === totalBatches - 1;
+    console.log(
+      source_default.cyan(
+        `
+\u2500\u2500 Batch ${batchNumber}/${totalBatches} (${batchFiles.length} files) \u2500\u2500
+${formatBatchFileList(batchFiles)}
+`
+      )
+    );
+    await gitAdd({ files: batchFiles });
+    const [diff, diffError] = await trytm(getDiff({ files: batchFiles }));
+    if (diffError) {
+      ce(`${source_default.red("\u2716")} ${diffError}`);
+      process.exit(1);
+    }
+    if (diff !== void 0 && diff.trim() === "") {
+      ce(
+        source_default.yellow(
+          `Batch ${batchNumber}/${totalBatches}: all files are excluded from AI processing. Unstaging and skipping.`
+        )
+      );
+      await execa("git", ["reset", "HEAD", "--", ...batchFiles]);
+      continue;
+    }
+    try {
+      assertCommitSizeGuardrails(
+        batchFiles.length,
+        Buffer.byteLength(diff ?? "", "utf8")
+      );
+    } catch (guardrailError) {
+      ce(`${source_default.red("\u2716")} ${guardrailError.message}`);
+      process.exit(1);
+    }
+    if (options.runReview && diff) {
+      try {
+        const shouldContinue = await runCommitReviewIfNeeded(
+          diff,
+          options.runReview
+        );
+        if (!shouldContinue) {
+          process.exit(1);
+        }
+      } catch (reviewError) {
+        ce(
+          source_default.red(
+            `Code review failed: ${reviewError instanceof Error ? reviewError.message : reviewError}`
+          )
+        );
+        process.exit(1);
+      }
+    }
+    const [, generateCommitError] = await trytm(
+      generateCommitMessageFromGitDiff({
+        diff: diff ?? "",
+        extraArgs: extraArgs2,
+        context: options.context,
+        fullGitMojiSpec: options.fullGitMojiSpec,
+        skipCommitConfirmation: options.skipCommitConfirmation,
+        dryRun: options.dryRun,
+        edit: options.edit,
+        noPush: options.noPush === true || !isLastBatch
+      })
+    );
+    if (generateCommitError) {
+      ce(`${source_default.red("\u2716")} ${generateCommitError}`);
+      process.exit(1);
+    }
+  }
+  if (options.dryRun !== true) {
+    ce(
+      source_default.green(
+        `\u2714 Completed ${totalBatches} commit${totalBatches === 1 ? "" : "s"} from ${stagedFiles.length} staged files.`
+      )
+    );
+  }
+};
 var getLogMessagesFromGitDiff = async (diff, fullGitMojiSpec = false, context = "") => {
   try {
     console.log();
@@ -67174,6 +67363,25 @@ var commit = async (extraArgs2 = [], options = {}) => {
     `${stagedFiles.length} staged files:
 ${stagedFiles.map((file) => `  ${file}`).join("\n")}`
   );
+  const commitSizeLimits = getCommitSizeLimits();
+  if (exceedsMaxStagedFiles(stagedFiles.length, commitSizeLimits)) {
+    await commitStagedFilesInBatches(
+      stagedFiles,
+      commitSizeLimits.maxFiles,
+      extraArgs2,
+      {
+        context,
+        stageAll,
+        fullGitMojiSpec,
+        skipCommitConfirmation,
+        dryRun,
+        edit,
+        noPush,
+        runReview
+      }
+    );
+    process.exit(0);
+  }
   console.log();
   const [diff, diffError] = await trytm(getDiff({ files: stagedFiles }));
   if (diffError) {
@@ -67199,65 +67407,16 @@ ${stagedFiles.map((file) => `  ${file}`).join("\n")}`
   }
   if (runReview && diff) {
     try {
-      if (!standardsFileExists()) {
-        ce(
-          source_default.yellow(
-            "\u26A0\uFE0F  No code standards configured.\n\nFor better review results, configure code standards first:\n" + source_default.cyan("  cmt standards import") + " - Import from popular style guides\n" + source_default.cyan("  cmt standards set") + "    - Create custom standards\n"
-          )
-        );
-        const continueWithoutStandards = await Q3({
-          message: "Continue commit with review (without standards)?",
-          initialValue: true
-        });
-        if (hD2(continueWithoutStandards) || !continueWithoutStandards) {
-          ce(source_default.yellow("Commit cancelled. Configure standards and try again."));
-          process.exit(0);
-        }
-      }
-      const reviewDiff = filterDiffForReview(diff);
-      if (!reviewDiff || reviewDiff.trim() === "") {
-        ce(
-          source_default.yellow(
-            "All staged files are excluded from code review (check .commit-ai-review-ignore). Skipping review step."
-          )
-        );
-      } else {
-        const reviewResult = await performCodeReview(reviewDiff);
-        printReviewResult(reviewResult);
-        const minScore = config7.CMT_REVIEW_MIN_SCORE;
-        if (minScore !== void 0 && reviewResult.overallScore < minScore) {
-          ce(
-            source_default.red(
-              `\u2716 Code quality score (${reviewResult.overallScore}) is below the minimum threshold (${minScore}).
-Please improve the code or adjust the threshold: cmt config set CMT_REVIEW_MIN_SCORE <number>`
-            )
-          );
-          process.exit(1);
-        }
-        if (reviewResult.recommendation === "block") {
-          const continueAnyway = await Q3({
-            message: source_default.yellow("Critical issues found. Do you want to continue committing anyway?"),
-            initialValue: false
-          });
-          if (hD2(continueAnyway) || !continueAnyway) {
-            ce(source_default.red("Commit aborted due to code review issues."));
-            process.exit(1);
-          }
-        } else if (reviewResult.recommendation === "review") {
-          const shouldContinue = await Q3({
-            message: source_default.yellow("Review suggested. Do you want to continue with the commit?"),
-            initialValue: true
-          });
-          if (hD2(shouldContinue) || !shouldContinue) {
-            ce(source_default.yellow("Commit aborted. Please address the review findings."));
-            process.exit(1);
-          }
-        } else {
-          console.log(source_default.green("\n\u2713 Code review passed! Proceeding with commit...\n"));
-        }
+      const shouldContinue = await runCommitReviewIfNeeded(diff, runReview);
+      if (!shouldContinue) {
+        process.exit(1);
       }
     } catch (reviewError) {
-      ce(source_default.red(`Code review failed: ${reviewError instanceof Error ? reviewError.message : reviewError}`));
+      ce(
+        source_default.red(
+          `Code review failed: ${reviewError instanceof Error ? reviewError.message : reviewError}`
+        )
+      );
       process.exit(1);
     }
   }
