@@ -14349,7 +14349,7 @@ var require_progressevent = __commonJS({
 var require_encoding = __commonJS({
   "node_modules/.pnpm/undici@5.28.4/node_modules/undici/lib/fileapi/encoding.js"(exports, module2) {
     "use strict";
-    function getEncoding(label) {
+    function getEncoding2(label) {
       if (!label) {
         return "failure";
       }
@@ -14626,7 +14626,7 @@ var require_encoding = __commonJS({
       }
     }
     module2.exports = {
-      getEncoding
+      getEncoding: getEncoding2
     };
   }
 });
@@ -14643,7 +14643,7 @@ var require_util4 = __commonJS({
       kLastProgressEventFired
     } = require_symbols3();
     var { ProgressEvent } = require_progressevent();
-    var { getEncoding } = require_encoding();
+    var { getEncoding: getEncoding2 } = require_encoding();
     var { DOMException: DOMException3 } = require_constants2();
     var { serializeAMimeType, parseMIMEType } = require_dataURL();
     var { types } = require("util");
@@ -14748,12 +14748,12 @@ var require_util4 = __commonJS({
         case "Text": {
           let encoding = "failure";
           if (encodingName) {
-            encoding = getEncoding(encodingName);
+            encoding = getEncoding2(encodingName);
           }
           if (encoding === "failure" && mimeType) {
             const type3 = parseMIMEType(mimeType);
             if (type3 !== "failure") {
-              encoding = getEncoding(type3.parameters.get("charset"));
+              encoding = getEncoding2(type3.parameters.get("charset"));
             }
           }
           if (encoding === "failure") {
@@ -67897,6 +67897,8 @@ var CONFIG_KEYS = /* @__PURE__ */ ((CONFIG_KEYS2) => {
   CONFIG_KEYS2["CMT_DEBUG"] = "CMT_DEBUG";
   CONFIG_KEYS2["CMT_MAX_FILES"] = "CMT_MAX_FILES";
   CONFIG_KEYS2["CMT_MAX_DIFF_BYTES"] = "CMT_MAX_DIFF_BYTES";
+  CONFIG_KEYS2["CMT_CHUNK_CONCURRENCY"] = "CMT_CHUNK_CONCURRENCY";
+  CONFIG_KEYS2["CMT_SYNTHESIZE_CHUNKS"] = "CMT_SYNTHESIZE_CHUNKS";
   CONFIG_KEYS2["CMT_SML"] = "CMT_SML";
   CONFIG_KEYS2["CMT_REVIEW_MIN_SCORE"] = "CMT_REVIEW_MIN_SCORE";
   CONFIG_KEYS2["CMT_GITPUSH"] = "CMT_GITPUSH";
@@ -68152,6 +68154,23 @@ var configValidators = {
     );
     return value;
   },
+  ["CMT_CHUNK_CONCURRENCY" /* CMT_CHUNK_CONCURRENCY */](value) {
+    value = parseInt(value, 10);
+    validateConfig(
+      "CMT_CHUNK_CONCURRENCY" /* CMT_CHUNK_CONCURRENCY */,
+      !isNaN(value) && value >= 1 && value <= 10,
+      "Must be a number between 1 and 10"
+    );
+    return value;
+  },
+  ["CMT_SYNTHESIZE_CHUNKS" /* CMT_SYNTHESIZE_CHUNKS */](value) {
+    validateConfig(
+      "CMT_SYNTHESIZE_CHUNKS" /* CMT_SYNTHESIZE_CHUNKS */,
+      typeof value === "boolean",
+      "Must be true or false"
+    );
+    return value;
+  },
   ["CMT_GITPUSH" /* CMT_GITPUSH */](value) {
     validateConfig(
       "CMT_GITPUSH" /* CMT_GITPUSH */,
@@ -68268,6 +68287,8 @@ var DEFAULT_CONFIG = {
   CMT_WHY: false,
   CMT_SML: false,
   CMT_DEBUG: false,
+  CMT_CHUNK_CONCURRENCY: 4,
+  CMT_SYNTHESIZE_CHUNKS: true,
   CMT_GITPUSH: true
 };
 var initGlobalConfig = (configPath = defaultConfigPath) => {
@@ -68303,6 +68324,12 @@ var getEnvConfig = (envPath) => {
     CMT_DEBUG: parseConfigVarValue(process.env.CMT_DEBUG),
     CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
     CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
+    CMT_CHUNK_CONCURRENCY: parseConfigVarValue(
+      process.env.CMT_CHUNK_CONCURRENCY
+    ),
+    CMT_SYNTHESIZE_CHUNKS: parseConfigVarValue(
+      process.env.CMT_SYNTHESIZE_CHUNKS
+    ),
     CMT_SML: parseConfigVarValue(process.env.CMT_SML),
     CMT_REVIEW_MIN_SCORE: parseConfigVarValue(process.env.CMT_REVIEW_MIN_SCORE),
     CMT_REVIEW_CACHE_TTL: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_TTL),
@@ -68477,6 +68504,16 @@ var CONFIG_HELP = {
     description: "Maximum diff size in bytes",
     example: "102400",
     default: "unlimited"
+  },
+  CMT_CHUNK_CONCURRENCY: {
+    description: "Maximum parallel LLM requests when generating commit messages from large chunked diffs (1\u201310)",
+    example: "4",
+    default: "4"
+  },
+  CMT_SYNTHESIZE_CHUNKS: {
+    description: "When true, merge multiple chunk commit messages into one cohesive message via a final LLM pass",
+    example: "true",
+    default: "true"
   },
   CMT_SML: {
     description: "Generate condensed single-line messages per file with filename, line numbers, and brief description",
@@ -73900,16 +73937,21 @@ function sanitizeSpecialTokens(content) {
 }
 
 // src/utils/tokenCount.ts
+var sharedEncoding;
+var getEncoding = () => {
+  if (sharedEncoding === void 0) {
+    sharedEncoding = new import_lite.Tiktoken(
+      cl100k_base_default.bpe_ranks,
+      cl100k_base_default.special_tokens,
+      cl100k_base_default.pat_str
+    );
+  }
+  return sharedEncoding;
+};
 function tokenCount(content) {
-  const encoding = new import_lite.Tiktoken(
-    cl100k_base_default.bpe_ranks,
-    cl100k_base_default.special_tokens,
-    cl100k_base_default.pat_str
-  );
+  const encoding = getEncoding();
   const sanitized = sanitizeSpecialTokens(content);
-  const tokens = encoding.encode(sanitized);
-  encoding.free();
-  return tokens.length;
+  return encoding.encode(sanitized).length;
 }
 
 // src/engine/anthropic.ts
@@ -83508,6 +83550,34 @@ var getMainCommitPrompt = async (fullGitMojiSpec, context2) => {
   }
   return returnArray;
 };
+var getSynthesisPrompt = (chunkMessages, fullGitMojiSpec, context2) => {
+  const commitConvention = fullGitMojiSpec ? "GitMoji specification" : "Conventional Commit Convention";
+  const conventionGuidelines = getCommitConvention(fullGitMojiSpec);
+  const descriptionGuideline = getDescriptionInstruction();
+  const oneLineCommitGuideline = getOneLineCommitInstruction();
+  const smlGuideline = getSMLInstruction();
+  const userInputContext = userInputCodeContext(context2);
+  const numberedChunks = chunkMessages.map((msg, index) => `${index + 1}. ${msg.trim()}`).join("\n\n");
+  return [
+    {
+      role: "system",
+      content: `${IDENTITY} You received partial commit messages generated from separate chunks of a large staged diff. Your task is to produce ONE final commit message that follows the ${commitConvention} and summarizes all changes coherently.
+${conventionGuidelines}
+${descriptionGuideline}
+${oneLineCommitGuideline}
+${smlGuideline}
+Use the present tense. Lines must not be longer than 74 characters. Use ${translation3.localLanguage} for the commit message.
+${userInputContext}
+Do not list chunk numbers in the output. Merge overlapping themes into a single subject line and optional body.`
+    },
+    {
+      role: "user",
+      content: `Partial commit messages from ${chunkMessages.length} chunks:
+
+${numberedChunks}`
+    }
+  ];
+};
 
 // src/utils/debug.ts
 function debug3(...args) {
@@ -83533,10 +83603,92 @@ function mergeDiffs(arr, maxStringLength) {
   return mergedArr;
 }
 
+// src/utils/runWithConcurrency.ts
+var getErrorMessage2 = (error) => {
+  if (error instanceof Error)
+    return error.message;
+  if (typeof error === "string")
+    return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+};
+var isRateLimitError = (error) => {
+  const message = getErrorMessage2(error).toLowerCase();
+  return message.includes("429") || message.includes("rate limit") || message.includes("too many requests");
+};
+var delay3 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+var jitterMs = (baseMs, spreadMs) => baseMs + Math.floor(Math.random() * spreadMs);
+async function runWithConcurrency({
+  tasks,
+  concurrency,
+  onProgress,
+  batchDelayMs = 0,
+  maxRetries = 3
+}) {
+  if (tasks.length === 0)
+    return [];
+  const results = new Array(tasks.length);
+  const effectiveConcurrency = Math.max(
+    1,
+    Math.min(concurrency, tasks.length)
+  );
+  let completed = 0;
+  for (let step = 0; step < tasks.length; step += effectiveConcurrency) {
+    const batchStart = step;
+    const batchEnd = Math.min(step + effectiveConcurrency, tasks.length);
+    const batchTasks = tasks.slice(batchStart, batchEnd);
+    let retries = 0;
+    while (true) {
+      try {
+        const batchResults = await Promise.all(
+          batchTasks.map((task) => task())
+        );
+        for (let i3 = 0; i3 < batchResults.length; i3 += 1) {
+          results[batchStart + i3] = batchResults[i3];
+        }
+        completed += batchResults.length;
+        onProgress?.(completed, tasks.length);
+        break;
+      } catch (error) {
+        if (isRateLimitError(error) && retries < maxRetries) {
+          retries += 1;
+          const sleepMs = retries === 1 ? jitterMs(5e3, 2e3) : jitterMs(6e4, 5e3);
+          await delay3(sleepMs);
+          continue;
+        }
+        throw error;
+      }
+    }
+    const hasMoreBatches = batchEnd < tasks.length;
+    if (hasMoreBatches && batchDelayMs > 0 && effectiveConcurrency > 1) {
+      await delay3(jitterMs(batchDelayMs, 500));
+    }
+  }
+  return results;
+}
+
+// src/utils/yieldToEventLoop.ts
+var yieldToEventLoop = () => new Promise((resolve) => {
+  setImmediate(resolve);
+});
+
 // src/generateCommitMessageFromGitDiff.ts
 var config5 = getConfig();
-var MAX_TOKENS_INPUT = config5.CMT_TOKENS_MAX_INPUT || 8192;
-var MAX_TOKENS_OUTPUT = config5.CMT_TOKENS_MAX_OUTPUT || 2048;
+var MAX_TOKENS_INPUT = config5.CMT_TOKENS_MAX_INPUT ?? 8192;
+var MAX_TOKENS_OUTPUT = config5.CMT_TOKENS_MAX_OUTPUT ?? 2048;
+var DEFAULT_CHUNK_CONCURRENCY = 4;
+var PREP_YIELD_EVERY_N_FILES = 8;
+var getChunkConcurrency = () => {
+  const configured = config5.CMT_CHUNK_CONCURRENCY;
+  if (configured === void 0 || typeof configured !== "number") {
+    return DEFAULT_CHUNK_CONCURRENCY;
+  }
+  return Math.max(1, Math.min(10, configured));
+};
+var shouldSynthesizeChunks = () => config5.CMT_SYNTHESIZE_CHUNKS !== false;
 var generateCommitMessageChatCompletionPrompt = async (diff, fullGitMojiSpec, context2) => {
   const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(fullGitMojiSpec, context2);
   const chatContextAsCompletionRequest = [...INIT_MESSAGES_PROMPT];
@@ -83549,7 +83701,7 @@ var generateCommitMessageChatCompletionPrompt = async (diff, fullGitMojiSpec, co
 };
 var getOutputTokensErrorMessage = () => `Token limit exceeded. Please adjust CMT_TOKENS_MAX_OUTPUT to match your provider's limits.`;
 var ADJUSTMENT_FACTOR = 20;
-var getErrorMessage2 = (error) => {
+var getErrorMessage3 = (error) => {
   if (error instanceof Error)
     return error.message;
   if (typeof error === "string")
@@ -83561,7 +83713,7 @@ var getErrorMessage2 = (error) => {
   }
 };
 var isTimeoutLikeError = (error) => {
-  const message = getErrorMessage2(error).toLowerCase();
+  const message = getErrorMessage3(error).toLowerCase();
   const patterns = [
     "timeout",
     "timed out",
@@ -83572,7 +83724,66 @@ var isTimeoutLikeError = (error) => {
   ];
   return patterns.some((p3) => message.includes(p3));
 };
-var generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context2 = "") => {
+var collectNonEmptyMessages = (messages) => messages.filter(
+  (msg) => msg !== null && msg !== void 0 && msg.trim() !== ""
+);
+var joinChunkMessages = (messages) => messages.join("\n\n");
+var synthesizeChunkMessages = async (chunkMessages, fullGitMojiSpec, context2, onProgress) => {
+  onProgress?.({ phase: "synthesizing" });
+  try {
+    const engine = getEngine();
+    const messages = getSynthesisPrompt(chunkMessages, fullGitMojiSpec, context2);
+    const synthesized = await engine.generateCommitMessage(messages);
+    if (synthesized !== null && synthesized !== void 0 && synthesized.trim() !== "") {
+      return synthesized;
+    }
+  } catch (error) {
+    debug3("Synthesis failed, falling back to joined chunk messages:", error);
+  }
+  return joinChunkMessages(chunkMessages);
+};
+var finalizeChunkMessages = async (chunkMessages, fullGitMojiSpec, context2, onProgress) => {
+  if (chunkMessages.length === 0) {
+    throw new Error("EMPTY_MESSAGE" /* emptyMessage */);
+  }
+  if (chunkMessages.length === 1) {
+    return chunkMessages[0];
+  }
+  if (shouldSynthesizeChunks()) {
+    return synthesizeChunkMessages(
+      chunkMessages,
+      fullGitMojiSpec,
+      context2,
+      onProgress
+    );
+  }
+  return joinChunkMessages(chunkMessages);
+};
+var runChunkTasks = async (commitMessageTasks, fullGitMojiSpec, context2, onProgress) => {
+  const concurrency = getChunkConcurrency();
+  const batchDelayMs = concurrency > 1 ? 750 : 0;
+  onProgress?.({
+    phase: "generating",
+    completed: 0,
+    total: commitMessageTasks.length
+  });
+  const results = await runWithConcurrency({
+    tasks: commitMessageTasks,
+    concurrency,
+    batchDelayMs,
+    onProgress: (completed, total) => {
+      onProgress?.({ phase: "generating", completed, total });
+    }
+  });
+  const chunkMessages = collectNonEmptyMessages(results);
+  return finalizeChunkMessages(
+    chunkMessages,
+    fullGitMojiSpec,
+    context2,
+    onProgress
+  );
+};
+var generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context2 = "", onProgress) => {
   try {
     debug3("Starting generateCommitMessageByDiff");
     debug3("Getting main commit prompt...");
@@ -83595,17 +83806,15 @@ var generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context2
         diff,
         MAX_REQUEST_TOKENS,
         fullGitMojiSpec,
-        context2
+        context2,
+        onProgress
       );
-      const commitMessages = [];
-      for (const task of commitMessageTasks) {
-        const msg = await task();
-        if (msg !== null && msg !== void 0 && msg.trim() !== "") {
-          commitMessages.push(msg);
-        }
-        await delay3(2e3);
-      }
-      return commitMessages.join("\n\n");
+      return runChunkTasks(
+        commitMessageTasks,
+        fullGitMojiSpec,
+        context2,
+        onProgress
+      );
     }
     debug3("Generating chat completion prompt...");
     const messages = await generateCommitMessageChatCompletionPrompt(
@@ -83623,23 +83832,24 @@ var generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context2
     return commitMessage;
   } catch (error) {
     if (isTimeoutLikeError(error)) {
-      const fallbackMaxDiffLength = Math.max(200, Math.floor(MAX_TOKENS_INPUT / 6));
+      const fallbackMaxDiffLength = Math.max(
+        200,
+        Math.floor(MAX_TOKENS_INPUT / 6)
+      );
       const commitMessageTasks = await getCommitMsgsTasksFromFileDiffs(
         diff,
         fallbackMaxDiffLength,
         fullGitMojiSpec,
-        context2
+        context2,
+        onProgress
       );
-      const commitMessages = [];
-      for (const task of commitMessageTasks) {
-        const msg = await task();
-        if (msg !== null && msg !== void 0 && msg.trim() !== "") {
-          commitMessages.push(msg);
-        }
-        await delay3(2e3);
-      }
-      if (commitMessages.length > 0) {
-        return commitMessages.join("\n\n");
+      if (commitMessageTasks.length > 0) {
+        return runChunkTasks(
+          commitMessageTasks,
+          fullGitMojiSpec,
+          context2,
+          onProgress
+        );
       }
     }
     throw error;
@@ -83663,16 +83873,14 @@ function getMessagesPromisesByChangesInFile(fileDiff, separator, maxChangeLength
     }
   }
   const engine = getEngine();
-  const commitMsgsFromFileLineDiffs = lineDiffsWithHeader.map(
-    (lineDiff) => async () => {
-      const messages = await generateCommitMessageChatCompletionPrompt(
-        separator + lineDiff,
-        fullGitMojiSpec,
-        context2
-      );
-      return engine.generateCommitMessage(messages);
-    }
-  );
+  const commitMsgsFromFileLineDiffs = lineDiffsWithHeader.map((lineDiff) => async () => {
+    const messages = await generateCommitMessageChatCompletionPrompt(
+      separator + lineDiff,
+      fullGitMojiSpec,
+      context2
+    );
+    return engine.generateCommitMessage(messages);
+  });
   return commitMsgsFromFileLineDiffs;
 }
 function splitDiff(diff, maxChangeLength) {
@@ -83700,10 +83908,27 @@ function splitDiff(diff, maxChangeLength) {
   }
   return splitDiffs;
 }
-var getCommitMsgsTasksFromFileDiffs = async (diff, maxDiffLength, fullGitMojiSpec, context2) => {
+var getCommitMsgsTasksFromFileDiffs = async (diff, maxDiffLength, fullGitMojiSpec, context2, onProgress) => {
   const separator = "diff --git ";
   const diffByFiles = diff.split(separator).slice(1);
+  const totalFiles = diffByFiles.length;
+  onProgress?.({ phase: "preparing", completed: 0, total: totalFiles });
+  for (let fileIndex = 0; fileIndex < diffByFiles.length; fileIndex += 1) {
+    if (fileIndex > 0 && fileIndex % PREP_YIELD_EVERY_N_FILES === 0) {
+      onProgress?.({
+        phase: "preparing",
+        completed: fileIndex,
+        total: totalFiles
+      });
+      await yieldToEventLoop();
+    }
+  }
   const mergedFilesDiffs = mergeDiffs(diffByFiles, maxDiffLength);
+  onProgress?.({
+    phase: "preparing",
+    completed: totalFiles,
+    total: totalFiles
+  });
   const commitMessageTasks = [];
   for (const fileDiff of mergedFilesDiffs) {
     if (tokenCount(fileDiff) >= maxDiffLength) {
@@ -83729,9 +83954,6 @@ var getCommitMsgsTasksFromFileDiffs = async (diff, maxDiffLength, fullGitMojiSpe
   }
   return commitMessageTasks;
 };
-function delay3(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 // src/utils/randomIntFromInterval.ts
 function randomIntFromInterval(min, max) {
