@@ -39,6 +39,7 @@ import {
   filterDiffForReview
 } from '../utils/git';
 import { runWithConcurrency } from '../utils/runWithConcurrency';
+import { withTimeout } from '../utils/timeout';
 import { trytm } from '../utils/trytm';
 import { getConfig } from './config';
 import { performCodeReview, printReviewResult } from './review';
@@ -46,6 +47,8 @@ import { standardsFileExists } from './standards';
 
 const config = getConfig();
 const DEFAULT_BATCH_GENERATION_CONCURRENCY = 4;
+const BATCH_GENERATION_TIMEOUT_MS = 300_000;
+const BATCH_STATUS_INTERVAL_MS = 10_000;
 
 interface PreparedCommitBatch {
   files: string[];
@@ -428,39 +431,106 @@ const commitStagedFilesInBatches = async (
 
   await gitResetStaged();
 
-  const generationSpinner = spinner();
-  generationSpinner.start(
-    `Generating commit messages (0/${totalBatches}) in parallel…`
+  const batchConcurrency = getBatchGenerationConcurrency();
+
+  console.log(
+    chalk.dim(
+      `Generating up to ${batchConcurrency} commit messages at a time (timeout ${BATCH_GENERATION_TIMEOUT_MS / 1000}s each)…\n`
+    )
   );
 
   const context = options.context ?? '';
   const fullGitMojiSpec = options.fullGitMojiSpec ?? false;
 
+  const formatMessagePreview = (message: string): string => {
+    const firstLine = message.split('\n').find((line) => line.trim() !== '') ?? '';
+    if (firstLine.length <= 72) {
+      return firstLine;
+    }
+    return `${firstLine.slice(0, 69)}…`;
+  };
+
+  type BatchFlightStatus = {
+    startedAt: number;
+    detail: string;
+  };
+
+  const inFlight = new Map<number, BatchFlightStatus>();
+
+  const logInFlightStatus = (): void => {
+    if (inFlight.size === 0) {
+      return;
+    }
+
+    console.log(chalk.dim('\nStill working on:'));
+    for (const [index, status] of inFlight) {
+      const elapsedSec = Math.floor((Date.now() - status.startedAt) / 1000);
+      console.log(
+        chalk.dim(
+          `  • Batch ${index + 1}/${totalBatches}: ${status.detail} (${elapsedSec}s)`
+        )
+      );
+    }
+  };
+
+  const statusTimer = setInterval(logInFlightStatus, BATCH_STATUS_INTERVAL_MS);
+
   let generatedMessages: string[];
   try {
     generatedMessages = await runWithConcurrency({
-      tasks: preparedBatches.map(
-        (batch) => () =>
-          createCommitMessageFromDiff(batch.diff, fullGitMojiSpec, context)
-      ),
-      concurrency: getBatchGenerationConcurrency(),
-      onProgress: (completed, total) => {
-        generationSpinner.stop(
-          `Generating commit messages (${completed}/${total}) in parallel…`
+      tasks: preparedBatches.map((batch, batchIndex) => async () => {
+        const startedAt = Date.now();
+        inFlight.set(batchIndex, { startedAt, detail: 'starting…' });
+
+        try {
+          return await withTimeout(
+            generateCommitMessageByDiff(
+              batch.diff,
+              fullGitMojiSpec,
+              context,
+              (progress) => {
+                inFlight.set(batchIndex, {
+                  startedAt,
+                  detail: formatCommitProgressLabel('generating message', progress)
+                });
+              }
+            ),
+            BATCH_GENERATION_TIMEOUT_MS,
+            `Batch ${batchIndex + 1}/${totalBatches} timed out after ${BATCH_GENERATION_TIMEOUT_MS / 1000}s. Check your AI provider or try lowering CMT_MAX_DIFF_BYTES.`
+          );
+        } finally {
+          inFlight.delete(batchIndex);
+        }
+      }),
+      concurrency: batchConcurrency,
+      onRetry: (taskIndex, attempt, waitMs) => {
+        console.log(
+          chalk.yellow(
+            `⏳ Batch ${taskIndex + 1}/${totalBatches}: rate limited, retry ${attempt} in ${Math.round(waitMs / 1000)}s…`
+          )
         );
-        generationSpinner.start(
-          `Generating commit messages (${completed}/${total}) in parallel…`
+      },
+      onTaskComplete: (completed, total, taskIndex, message) => {
+        const batch = preparedBatches[taskIndex];
+        const preview = formatMessagePreview(message);
+
+        console.log(
+          `${chalk.green('✔')} ${completed}/${total} — ${preview} ${chalk.dim(
+            `(${batch.files.length} files)`
+          )}`
         );
       }
     });
   } catch (error) {
-    generationSpinner.stop(`${chalk.red('✖')} Failed to generate commit messages`);
+    outro(`${chalk.red('✖')} Failed to generate commit messages`);
     outro(`${chalk.red('✖')} ${error instanceof Error ? error.message : error}`);
     process.exit(1);
+  } finally {
+    clearInterval(statusTimer);
   }
 
-  generationSpinner.stop(
-    `${chalk.green('✔')} Generated ${totalBatches} commit messages`
+  console.log(
+    chalk.green(`\n✔ Generated ${totalBatches} commit messages\n`)
   );
 
   const plannedCommits: PlannedCommitWithMessage[] = preparedBatches.map(

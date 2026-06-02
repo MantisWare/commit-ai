@@ -15,7 +15,8 @@ export class MLXEngine implements AiEngine {
             url: config.baseURL
             ? `${config.baseURL}/${config.apiKey}`
             : 'http://localhost:8080/v1/chat/completions',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 120_000
         });
     }
 

@@ -23,6 +23,19 @@ export interface RunWithConcurrencyOptions<T> {
   tasks: TaskRunner<T>[];
   concurrency: number;
   onProgress?: (completed: number, total: number) => void;
+  onTaskStart?: (taskIndex: number, total: number) => void;
+  onTaskComplete?: (
+    completed: number,
+    total: number,
+    taskIndex: number,
+    result: T
+  ) => void;
+  onRetry?: (
+    taskIndex: number,
+    attempt: number,
+    waitMs: number,
+    error: unknown
+  ) => void;
   batchDelayMs?: number;
   maxRetries?: number;
 }
@@ -33,66 +46,88 @@ const delay = (ms: number): Promise<void> =>
 const jitterMs = (baseMs: number, spreadMs: number): number =>
   baseMs + Math.floor(Math.random() * spreadMs);
 
+const runTaskWithRetries = async <T>(
+  taskIndex: number,
+  task: TaskRunner<T>,
+  maxRetries: number,
+  onRetry?: RunWithConcurrencyOptions<T>['onRetry']
+): Promise<T> => {
+  let retries = 0;
+
+  while (true) {
+    try {
+      return await task();
+    } catch (error) {
+      if (isRateLimitError(error) && retries < maxRetries) {
+        retries += 1;
+        const sleepMs =
+          retries === 1 ? jitterMs(5000, 2000) : jitterMs(60000, 5000);
+        onRetry?.(taskIndex, retries, sleepMs, error);
+        await delay(sleepMs);
+        continue;
+      }
+      throw error;
+    }
+  }
+};
+
 export async function runWithConcurrency<T>({
   tasks,
   concurrency,
   onProgress,
+  onTaskStart,
+  onTaskComplete,
+  onRetry,
   batchDelayMs = 0,
   maxRetries = 3
 }: RunWithConcurrencyOptions<T>): Promise<T[]> {
   if (tasks.length === 0) return [];
 
   const results: T[] = new Array(tasks.length);
-  const effectiveConcurrency = Math.max(
-    1,
-    Math.min(concurrency, tasks.length)
-  );
+  const total = tasks.length;
+  const effectiveConcurrency = Math.max(1, Math.min(concurrency, total));
 
+  let nextTaskIndex = 0;
   let completed = 0;
 
-  for (let step = 0; step < tasks.length; step += effectiveConcurrency) {
-    const batchStart = step;
-    const batchEnd = Math.min(step + effectiveConcurrency, tasks.length);
-    const batchTasks = tasks.slice(batchStart, batchEnd);
-
-    let retries = 0;
-
+  const runWorker = async (): Promise<void> => {
     while (true) {
-      try {
-        const batchResults = await Promise.all(
-          batchTasks.map((task) => task())
-        );
+      const taskIndex = nextTaskIndex;
+      nextTaskIndex += 1;
 
-        for (let i = 0; i < batchResults.length; i += 1) {
-          results[batchStart + i] = batchResults[i];
-        }
+      if (taskIndex >= total) {
+        return;
+      }
 
-        completed += batchResults.length;
-        onProgress?.(completed, tasks.length);
-        break;
-      } catch (error) {
-        if (isRateLimitError(error) && retries < maxRetries) {
-          retries += 1;
-          const sleepMs =
-            retries === 1
-              ? jitterMs(5000, 2000)
-              : jitterMs(60000, 5000);
-          await delay(sleepMs);
-          continue;
-        }
-        throw error;
+      onTaskStart?.(taskIndex, total);
+
+      const result = await runTaskWithRetries(
+        taskIndex,
+        tasks[taskIndex],
+        maxRetries,
+        onRetry
+      );
+      results[taskIndex] = result;
+      completed += 1;
+
+      onProgress?.(completed, total);
+      onTaskComplete?.(completed, total, taskIndex, result);
+
+      const hasMoreTasks = nextTaskIndex < total;
+      if (
+        hasMoreTasks &&
+        batchDelayMs > 0 &&
+        effectiveConcurrency > 1 &&
+        completed % effectiveConcurrency === 0
+      ) {
+        await delay(jitterMs(batchDelayMs, 500));
       }
     }
+  };
 
-    const hasMoreBatches = batchEnd < tasks.length;
-    if (
-      hasMoreBatches &&
-      batchDelayMs > 0 &&
-      effectiveConcurrency > 1
-    ) {
-      await delay(jitterMs(batchDelayMs, 500));
-    }
-  }
+  await Promise.all(
+    Array.from({ length: effectiveConcurrency }, () => runWorker())
+  );
 
   return results;
-}
+};

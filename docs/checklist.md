@@ -37,7 +37,7 @@ This is a living checklist of what CommitAI **already supports** and what we may
 
 > **Auto-updated by Cursor:** Added `cmt update` and `CMT_AUTO_UPDATE` on 2026-06-02.
 
-> **Auto-updated by Cursor:** Auto-split respects both `CMT_MAX_FILES` and `CMT_MAX_DIFF_BYTES` on 2026-06-02.
+> **Auto-updated by Cursor:** Batch generation uses per-batch timeouts, in-flight status updates, and rate-limit retry logging on 2026-06-02.
 
 ### Config & project setup
 

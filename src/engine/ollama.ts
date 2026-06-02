@@ -14,7 +14,8 @@ export class OllamaEngine implements AiEngine {
       url: config.baseURL
         ? `${config.baseURL}/${config.apiKey}`
         : 'http://localhost:11434/api/chat',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 120_000
     });
   }
 

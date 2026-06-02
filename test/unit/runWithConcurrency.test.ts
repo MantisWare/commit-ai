@@ -33,9 +33,25 @@ describe('runWithConcurrency', () => {
     });
 
     expect(progress).toEqual([
+      [1, 3],
       [2, 3],
       [3, 3]
     ]);
+  });
+
+  it('calls onTaskComplete for each finished task', async () => {
+    const completedIndices: number[] = [];
+
+    await runWithConcurrency({
+      tasks: [async () => 'a', async () => 'b'],
+      concurrency: 2,
+      batchDelayMs: 0,
+      onTaskComplete: (_completed, _total, taskIndex) => {
+        completedIndices.push(taskIndex);
+      }
+    });
+
+    expect(completedIndices.sort()).toEqual([0, 1]);
   });
 
   it('retries batch on rate limit errors', async () => {
