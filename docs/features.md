@@ -133,7 +133,7 @@ If a provider call fails with a **timeout-like error**, CommitAI retries by chun
 
 CommitAI can enforce limits to prevent overly large commits:
 
-- **Maximum files**: When `CMT_MAX_FILES` is set, CommitAI rejects commits with more staged files than the limit.
+- **Maximum files**: When `CMT_MAX_FILES` is set, `cmt` automatically splits oversized staged changes into multiple commits (one batch per limit). Git hooks still require staging within the limit.
 - **Maximum diff size**: When `CMT_MAX_DIFF_BYTES` is set, CommitAI rejects commits when the diff exceeds the byte limit.
 - Both guardrails provide clear error messages with actionable suggestions (split commits, unstage files, or adjust limits).
 
@@ -168,7 +168,7 @@ Common keys:
 - `CMT_SML`: Single-line Multi-file Log mode - generates condensed per-file messages with filename, line numbers, and brief description.
 - `CMT_MESSAGE_TEMPLATE_PLACEHOLDER`: placeholder token used for message templates (default `$msg`).
 - `CMT_PROMPT_MODULE`: `conventional-commit` or `@commitlint`.
-- `CMT_MAX_FILES`: maximum number of files allowed in a single commit (optional guardrail, enforced before generation).
+- `CMT_MAX_FILES`: maximum number of files per commit; `cmt` splits into multiple commits when staged files exceed this limit (optional guardrail).
 - `CMT_MAX_DIFF_BYTES`: maximum diff size in bytes (optional guardrail, enforced before generation).
 - `CMT_CHUNK_CONCURRENCY`: parallel LLM requests when chunking large diffs (1–10, default `4`).
 - `CMT_SYNTHESIZE_CHUNKS`: merge chunk messages into one final commit via an extra LLM pass (default `true`).

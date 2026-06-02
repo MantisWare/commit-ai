@@ -16,7 +16,12 @@ import {
   generateCommitMessageByDiff,
   type OnGenerateCommitProgress
 } from '../generateCommitMessageFromGitDiff';
-import { assertCommitSizeGuardrails } from '../utils/commitGuardrails';
+import {
+  assertCommitSizeGuardrails,
+  exceedsMaxStagedFiles,
+  getCommitSizeLimits
+} from '../utils/commitGuardrails';
+import { chunkStagedFiles } from '../utils/chunkStagedFiles';
 import { formatCommitProgressLabel } from '../utils/commitProgressLabel';
 import { startElapsedHeartbeat } from '../utils/heartbeat';
 import {
@@ -26,11 +31,12 @@ import {
   getDiffBetweenBranches,
   getStagedFiles,
   gitAdd,
+  gitResetStaged,
   filterDiffForReview
 } from '../utils/git';
 import { trytm } from '../utils/trytm';
 import { getConfig } from './config';
-import { performCodeReview, printReviewResult, ReviewResult } from './review';
+import { performCodeReview, printReviewResult } from './review';
 import { standardsFileExists } from './standards';
 
 const config = getConfig();
@@ -100,7 +106,7 @@ interface GenerateCommitMessageFromGitDiffParams {
   noPush?: boolean;
 }
 
-interface CommitOptions {
+export interface CommitOptions {
   context?: string;
   stageAll?: boolean;
   fullGitMojiSpec?: boolean;
@@ -110,6 +116,210 @@ interface CommitOptions {
   noPush?: boolean;
   runReview?: boolean;
 }
+
+const runCommitReviewIfNeeded = async (
+  diff: string,
+  runReview: boolean
+): Promise<boolean> => {
+  if (!runReview) {
+    return true;
+  }
+
+  if (!standardsFileExists()) {
+    outro(
+      chalk.yellow(
+        '⚠️  No code standards configured.\n\n' +
+          'For better review results, configure code standards first:\n' +
+          chalk.cyan('  cmt standards import') +
+          ' - Import from popular style guides\n' +
+          chalk.cyan('  cmt standards set') +
+          '    - Create custom standards\n'
+      )
+    );
+
+    const continueWithoutStandards = await confirm({
+      message: 'Continue commit with review (without standards)?',
+      initialValue: true
+    });
+
+    if (isCancel(continueWithoutStandards) || !continueWithoutStandards) {
+      outro(
+        chalk.yellow('Commit cancelled. Configure standards and try again.')
+      );
+      return false;
+    }
+  }
+
+  const reviewDiff = filterDiffForReview(diff);
+
+  if (!reviewDiff || reviewDiff.trim() === '') {
+    outro(
+      chalk.yellow(
+        'All staged files are excluded from code review (check .commit-ai-review-ignore). Skipping review step.'
+      )
+    );
+    return true;
+  }
+
+  const reviewResult = await performCodeReview(reviewDiff);
+  printReviewResult(reviewResult);
+
+  const minScore = config.CMT_REVIEW_MIN_SCORE;
+  if (minScore !== undefined && reviewResult.overallScore < minScore) {
+    outro(
+      chalk.red(
+        `✖ Code quality score (${reviewResult.overallScore}) is below the minimum threshold (${minScore}).\n` +
+          `Please improve the code or adjust the threshold: cmt config set CMT_REVIEW_MIN_SCORE <number>`
+      )
+    );
+    return false;
+  }
+
+  if (reviewResult.recommendation === 'block') {
+    const continueAnyway = await confirm({
+      message: chalk.yellow(
+        'Critical issues found. Do you want to continue committing anyway?'
+      ),
+      initialValue: false
+    });
+
+    if (isCancel(continueAnyway) || !continueAnyway) {
+      outro(chalk.red('Commit aborted due to code review issues.'));
+      return false;
+    }
+  } else if (reviewResult.recommendation === 'review') {
+    const shouldContinue = await confirm({
+      message: chalk.yellow(
+        'Review suggested. Do you want to continue with the commit?'
+      ),
+      initialValue: true
+    });
+
+    if (isCancel(shouldContinue) || !shouldContinue) {
+      outro(
+        chalk.yellow('Commit aborted. Please address the review findings.')
+      );
+      return false;
+    }
+  } else {
+    console.log(
+      chalk.green('\n✓ Code review passed! Proceeding with commit...\n')
+    );
+  }
+
+  return true;
+};
+
+const formatBatchFileList = (files: string[], previewLimit = 10): string => {
+  const preview = files.slice(0, previewLimit).map((file) => `  ${file}`);
+  if (files.length > previewLimit) {
+    preview.push(`  … and ${files.length - previewLimit} more`);
+  }
+  return preview.join('\n');
+};
+
+const commitStagedFilesInBatches = async (
+  stagedFiles: string[],
+  maxFilesPerCommit: number,
+  extraArgs: string[],
+  options: CommitOptions
+): Promise<void> => {
+  const chunks = chunkStagedFiles(stagedFiles, maxFilesPerCommit);
+  const totalBatches = chunks.length;
+
+  console.log(
+    chalk.cyan(
+      `\nSplitting ${stagedFiles.length} staged files into ${totalBatches} commits (max ${maxFilesPerCommit} files each).\n`
+    )
+  );
+
+  await gitResetStaged();
+
+  for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+    const batchFiles = chunks[batchIndex];
+    const batchNumber = batchIndex + 1;
+    const isLastBatch = batchIndex === totalBatches - 1;
+
+    console.log(
+      chalk.cyan(
+        `\n── Batch ${batchNumber}/${totalBatches} (${batchFiles.length} files) ──\n${formatBatchFileList(batchFiles)}\n`
+      )
+    );
+
+    await gitAdd({ files: batchFiles });
+
+    const [diff, diffError] = await trytm(getDiff({ files: batchFiles }));
+    if (diffError) {
+      outro(`${chalk.red('✖')} ${diffError}`);
+      process.exit(1);
+    }
+
+    if (diff !== undefined && diff.trim() === '') {
+      outro(
+        chalk.yellow(
+          `Batch ${batchNumber}/${totalBatches}: all files are excluded from AI processing. Unstaging and skipping.`
+        )
+      );
+      await execa('git', ['reset', 'HEAD', '--', ...batchFiles]);
+      continue;
+    }
+
+    try {
+      assertCommitSizeGuardrails(
+        batchFiles.length,
+        Buffer.byteLength(diff ?? '', 'utf8')
+      );
+    } catch (guardrailError) {
+      outro(`${chalk.red('✖')} ${(guardrailError as Error).message}`);
+      process.exit(1);
+    }
+
+    if (options.runReview && diff) {
+      try {
+        const shouldContinue = await runCommitReviewIfNeeded(
+          diff,
+          options.runReview
+        );
+        if (!shouldContinue) {
+          process.exit(1);
+        }
+      } catch (reviewError) {
+        outro(
+          chalk.red(
+            `Code review failed: ${reviewError instanceof Error ? reviewError.message : reviewError}`
+          )
+        );
+        process.exit(1);
+      }
+    }
+
+    const [, generateCommitError] = await trytm(
+      generateCommitMessageFromGitDiff({
+        diff: diff ?? '',
+        extraArgs,
+        context: options.context,
+        fullGitMojiSpec: options.fullGitMojiSpec,
+        skipCommitConfirmation: options.skipCommitConfirmation,
+        dryRun: options.dryRun,
+        edit: options.edit,
+        noPush: options.noPush === true || !isLastBatch
+      })
+    );
+
+    if (generateCommitError) {
+      outro(`${chalk.red('✖')} ${generateCommitError}`);
+      process.exit(1);
+    }
+  }
+
+  if (options.dryRun !== true) {
+    outro(
+      chalk.green(
+        `✔ Completed ${totalBatches} commit${totalBatches === 1 ? '' : 's'} from ${stagedFiles.length} staged files.`
+      )
+    );
+  }
+};
 
 const getLogMessagesFromGitDiff = async (diff: string, fullGitMojiSpec: boolean = false, context: string = '') => {
   try {
@@ -133,7 +343,7 @@ ${chalk.grey('——————————————————')}`
   }
 };
 
-const generateCommitMessageFromGitDiff = async ({
+export const generateCommitMessageFromGitDiff = async ({
   diff,
   extraArgs,
   context = '',
@@ -391,6 +601,26 @@ export const commit = async (
       .join('\n')}`
   );
 
+  const commitSizeLimits = getCommitSizeLimits();
+  if (exceedsMaxStagedFiles(stagedFiles.length, commitSizeLimits)) {
+    await commitStagedFilesInBatches(
+      stagedFiles,
+      commitSizeLimits.maxFiles as number,
+      extraArgs,
+      {
+        context,
+        stageAll,
+        fullGitMojiSpec,
+        skipCommitConfirmation,
+        dryRun,
+        edit,
+        noPush,
+        runReview
+      }
+    );
+    process.exit(0);
+  }
+
   console.log(); // Add spacing before "cooking up" message
 
   const [diff, diffError] = await trytm(getDiff({ files: stagedFiles }));
@@ -418,84 +648,18 @@ export const commit = async (
     process.exit(1);
   }
 
-  // Run code review if --review flag is set
   if (runReview && diff) {
     try {
-      // Check if standards file exists and prompt user
-      if (!standardsFileExists()) {
-        outro(
-          chalk.yellow(
-            '⚠️  No code standards configured.\n\n' +
-            'For better review results, configure code standards first:\n' +
-            chalk.cyan('  cmt standards import') + ' - Import from popular style guides\n' +
-            chalk.cyan('  cmt standards set') + '    - Create custom standards\n'
-          )
-        );
-
-        const continueWithoutStandards = await confirm({
-          message: 'Continue commit with review (without standards)?',
-          initialValue: true
-        });
-
-        if (isCancel(continueWithoutStandards) || !continueWithoutStandards) {
-          outro(chalk.yellow('Commit cancelled. Configure standards and try again.'));
-          process.exit(0);
-        }
-      }
-
-      // Filter diff for review based on .commit-ai-review-ignore
-      const reviewDiff = filterDiffForReview(diff);
-
-      if (!reviewDiff || reviewDiff.trim() === '') {
-        outro(
-          chalk.yellow(
-            'All staged files are excluded from code review (check .commit-ai-review-ignore). Skipping review step.'
-          )
-        );
-      } else {
-        const reviewResult = await performCodeReview(reviewDiff);
-        printReviewResult(reviewResult);
-
-      // Check if score meets minimum threshold
-      const minScore = config.CMT_REVIEW_MIN_SCORE;
-      if (minScore !== undefined && reviewResult.overallScore < minScore) {
-        outro(
-          chalk.red(
-            `✖ Code quality score (${reviewResult.overallScore}) is below the minimum threshold (${minScore}).\n` +
-            `Please improve the code or adjust the threshold: cmt config set CMT_REVIEW_MIN_SCORE <number>`
-          )
-        );
+      const shouldContinue = await runCommitReviewIfNeeded(diff, runReview);
+      if (!shouldContinue) {
         process.exit(1);
       }
-
-      // If review blocks, ask user if they want to continue
-      if (reviewResult.recommendation === 'block') {
-        const continueAnyway = await confirm({
-          message: chalk.yellow('Critical issues found. Do you want to continue committing anyway?'),
-          initialValue: false
-        });
-
-        if (isCancel(continueAnyway) || !continueAnyway) {
-          outro(chalk.red('Commit aborted due to code review issues.'));
-          process.exit(1);
-        }
-      } else if (reviewResult.recommendation === 'review') {
-        const shouldContinue = await confirm({
-          message: chalk.yellow('Review suggested. Do you want to continue with the commit?'),
-          initialValue: true
-        });
-
-        if (isCancel(shouldContinue) || !shouldContinue) {
-          outro(chalk.yellow('Commit aborted. Please address the review findings.'));
-          process.exit(1);
-        }
-        } else {
-          // approve - just show a success message
-          console.log(chalk.green('\n✓ Code review passed! Proceeding with commit...\n'));
-        }
-      }
     } catch (reviewError) {
-      outro(chalk.red(`Code review failed: ${reviewError instanceof Error ? reviewError.message : reviewError}`));
+      outro(
+        chalk.red(
+          `Code review failed: ${reviewError instanceof Error ? reviewError.message : reviewError}`
+        )
+      );
       process.exit(1);
     }
   }

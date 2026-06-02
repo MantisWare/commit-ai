@@ -19,8 +19,7 @@ export const checkCommitSizeGuardrails = (
   ) {
     throw new Error(
       `Too many staged files (${stagedFileCount}). Maximum allowed: ${maxFiles}. ` +
-        'Unstage some files or split into multiple commits. ' +
-        'Adjust with: cmt config set CMT_MAX_FILES=<number>'
+        'Use `cmt` to split into multiple commits automatically, stage fewer files, or adjust with: cmt config set CMT_MAX_FILES=<number>'
     );
   }
 
@@ -36,14 +35,26 @@ export const checkCommitSizeGuardrails = (
   }
 };
 
+export const getCommitSizeLimits = (): CommitSizeLimits => {
+  const config = getConfig();
+
+  return {
+    maxFiles: config.CMT_MAX_FILES,
+    maxDiffBytes: config.CMT_MAX_DIFF_BYTES
+  };
+};
+
 export const assertCommitSizeGuardrails = (
   stagedFileCount: number,
   diffByteLength: number
 ): void => {
-  const config = getConfig();
-
-  checkCommitSizeGuardrails(stagedFileCount, diffByteLength, {
-    maxFiles: config.CMT_MAX_FILES,
-    maxDiffBytes: config.CMT_MAX_DIFF_BYTES
-  });
+  checkCommitSizeGuardrails(stagedFileCount, diffByteLength, getCommitSizeLimits());
 };
+
+export const exceedsMaxStagedFiles = (
+  stagedFileCount: number,
+  limits: CommitSizeLimits = getCommitSizeLimits()
+): boolean =>
+  limits.maxFiles !== undefined &&
+  typeof limits.maxFiles === 'number' &&
+  stagedFileCount > limits.maxFiles;

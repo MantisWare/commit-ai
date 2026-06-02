@@ -130,6 +130,13 @@ export const gitAdd = async ({ files }: { files: string[] }) => {
 };
 
 /**
+ * Unstage all currently staged files while keeping working tree changes.
+ */
+export const gitResetStaged = async (): Promise<void> => {
+  await execa('git', ['reset']);
+};
+
+/**
  * Get the diff of the staged files
  * @param {string[]} files - The files to get the diff for
  * @returns {Promise<string>} The diff of the staged files
