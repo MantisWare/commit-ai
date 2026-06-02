@@ -46521,7 +46521,7 @@ function G3(t2, e3) {
 // package.json
 var package_default = {
   name: "@mantisware/commit-ai",
-  version: "1.0.16",
+  version: "1.0.17",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
     "git",
@@ -59830,7 +59830,8 @@ var OllamaEngine = class {
     this.config = config9;
     this.client = axios_default.create({
       url: config9.baseURL ? `${config9.baseURL}/${config9.apiKey}` : "http://localhost:11434/api/chat",
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
+      timeout: 12e4
     });
   }
   async generateCommitMessage(messages) {
@@ -64220,7 +64221,8 @@ var MLXEngine = class {
     this.config = config9;
     this.client = axios_default.create({
       url: config9.baseURL ? `${config9.baseURL}/${config9.apiKey}` : "http://localhost:8080/v1/chat/completions",
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
+      timeout: 12e4
     });
   }
   async generateCommitMessage(messages) {
@@ -64881,52 +64883,67 @@ var isRateLimitError = (error) => {
 };
 var delay3 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 var jitterMs = (baseMs, spreadMs) => baseMs + Math.floor(Math.random() * spreadMs);
+var runTaskWithRetries = async (taskIndex, task, maxRetries, onRetry) => {
+  let retries = 0;
+  while (true) {
+    try {
+      return await task();
+    } catch (error) {
+      if (isRateLimitError(error) && retries < maxRetries) {
+        retries += 1;
+        const sleepMs = retries === 1 ? jitterMs(5e3, 2e3) : jitterMs(6e4, 5e3);
+        onRetry?.(taskIndex, retries, sleepMs, error);
+        await delay3(sleepMs);
+        continue;
+      }
+      throw error;
+    }
+  }
+};
 async function runWithConcurrency({
   tasks,
   concurrency,
   onProgress,
+  onTaskStart,
+  onTaskComplete,
+  onRetry,
   batchDelayMs = 0,
   maxRetries = 3
 }) {
   if (tasks.length === 0)
     return [];
   const results = new Array(tasks.length);
-  const effectiveConcurrency = Math.max(
-    1,
-    Math.min(concurrency, tasks.length)
-  );
+  const total = tasks.length;
+  const effectiveConcurrency = Math.max(1, Math.min(concurrency, total));
+  let nextTaskIndex = 0;
   let completed = 0;
-  for (let step = 0; step < tasks.length; step += effectiveConcurrency) {
-    const batchStart = step;
-    const batchEnd = Math.min(step + effectiveConcurrency, tasks.length);
-    const batchTasks = tasks.slice(batchStart, batchEnd);
-    let retries = 0;
+  const runWorker = async () => {
     while (true) {
-      try {
-        const batchResults = await Promise.all(
-          batchTasks.map((task) => task())
-        );
-        for (let i3 = 0; i3 < batchResults.length; i3 += 1) {
-          results[batchStart + i3] = batchResults[i3];
-        }
-        completed += batchResults.length;
-        onProgress?.(completed, tasks.length);
-        break;
-      } catch (error) {
-        if (isRateLimitError(error) && retries < maxRetries) {
-          retries += 1;
-          const sleepMs = retries === 1 ? jitterMs(5e3, 2e3) : jitterMs(6e4, 5e3);
-          await delay3(sleepMs);
-          continue;
-        }
-        throw error;
+      const taskIndex = nextTaskIndex;
+      nextTaskIndex += 1;
+      if (taskIndex >= total) {
+        return;
+      }
+      onTaskStart?.(taskIndex, total);
+      const result = await runTaskWithRetries(
+        taskIndex,
+        tasks[taskIndex],
+        maxRetries,
+        onRetry
+      );
+      results[taskIndex] = result;
+      completed += 1;
+      onProgress?.(completed, total);
+      onTaskComplete?.(completed, total, taskIndex, result);
+      const hasMoreTasks = nextTaskIndex < total;
+      if (hasMoreTasks && batchDelayMs > 0 && effectiveConcurrency > 1 && completed % effectiveConcurrency === 0) {
+        await delay3(jitterMs(batchDelayMs, 500));
       }
     }
-    const hasMoreBatches = batchEnd < tasks.length;
-    if (hasMoreBatches && batchDelayMs > 0 && effectiveConcurrency > 1) {
-      await delay3(jitterMs(batchDelayMs, 500));
-    }
-  }
+  };
+  await Promise.all(
+    Array.from({ length: effectiveConcurrency }, () => runWorker())
+  );
   return results;
 }
 
@@ -67010,6 +67027,8 @@ var reviewCommand = G3(
 // src/commands/commit.ts
 var config7 = getConfig();
 var DEFAULT_BATCH_GENERATION_CONCURRENCY = 4;
+var BATCH_GENERATION_TIMEOUT_MS = 3e5;
+var BATCH_STATUS_INTERVAL_MS = 1e4;
 var getBatchGenerationConcurrency = () => {
   const configured = config7.CMT_CHUNK_CONCURRENCY;
   if (configured === void 0 || typeof configured !== "number") {
@@ -67272,35 +67291,93 @@ Splitting ${stagedFiles.length} staged files into ${totalBatches} commits (${for
     );
   }
   await gitResetStaged();
-  const generationSpinner = le();
-  generationSpinner.start(
-    `Generating commit messages (0/${totalBatches}) in parallel\u2026`
+  const batchConcurrency = getBatchGenerationConcurrency();
+  console.log(
+    source_default.dim(
+      `Generating up to ${batchConcurrency} commit messages at a time (timeout ${BATCH_GENERATION_TIMEOUT_MS / 1e3}s each)\u2026
+`
+    )
   );
   const context = options.context ?? "";
   const fullGitMojiSpec = options.fullGitMojiSpec ?? false;
+  const formatMessagePreview = (message) => {
+    const firstLine = message.split("\n").find((line) => line.trim() !== "") ?? "";
+    if (firstLine.length <= 72) {
+      return firstLine;
+    }
+    return `${firstLine.slice(0, 69)}\u2026`;
+  };
+  const inFlight = /* @__PURE__ */ new Map();
+  const logInFlightStatus = () => {
+    if (inFlight.size === 0) {
+      return;
+    }
+    console.log(source_default.dim("\nStill working on:"));
+    for (const [index, status] of inFlight) {
+      const elapsedSec = Math.floor((Date.now() - status.startedAt) / 1e3);
+      console.log(
+        source_default.dim(
+          `  \u2022 Batch ${index + 1}/${totalBatches}: ${status.detail} (${elapsedSec}s)`
+        )
+      );
+    }
+  };
+  const statusTimer = setInterval(logInFlightStatus, BATCH_STATUS_INTERVAL_MS);
   let generatedMessages;
   try {
     generatedMessages = await runWithConcurrency({
-      tasks: preparedBatches.map(
-        (batch) => () => createCommitMessageFromDiff(batch.diff, fullGitMojiSpec, context)
-      ),
-      concurrency: getBatchGenerationConcurrency(),
-      onProgress: (completed, total) => {
-        generationSpinner.stop(
-          `Generating commit messages (${completed}/${total}) in parallel\u2026`
+      tasks: preparedBatches.map((batch, batchIndex) => async () => {
+        const startedAt = Date.now();
+        inFlight.set(batchIndex, { startedAt, detail: "starting\u2026" });
+        try {
+          return await withTimeout(
+            generateCommitMessageByDiff(
+              batch.diff,
+              fullGitMojiSpec,
+              context,
+              (progress) => {
+                inFlight.set(batchIndex, {
+                  startedAt,
+                  detail: formatCommitProgressLabel("generating message", progress)
+                });
+              }
+            ),
+            BATCH_GENERATION_TIMEOUT_MS,
+            `Batch ${batchIndex + 1}/${totalBatches} timed out after ${BATCH_GENERATION_TIMEOUT_MS / 1e3}s. Check your AI provider or try lowering CMT_MAX_DIFF_BYTES.`
+          );
+        } finally {
+          inFlight.delete(batchIndex);
+        }
+      }),
+      concurrency: batchConcurrency,
+      onRetry: (taskIndex, attempt, waitMs) => {
+        console.log(
+          source_default.yellow(
+            `\u23F3 Batch ${taskIndex + 1}/${totalBatches}: rate limited, retry ${attempt} in ${Math.round(waitMs / 1e3)}s\u2026`
+          )
         );
-        generationSpinner.start(
-          `Generating commit messages (${completed}/${total}) in parallel\u2026`
+      },
+      onTaskComplete: (completed, total, taskIndex, message) => {
+        const batch = preparedBatches[taskIndex];
+        const preview = formatMessagePreview(message);
+        console.log(
+          `${source_default.green("\u2714")} ${completed}/${total} \u2014 ${preview} ${source_default.dim(
+            `(${batch.files.length} files)`
+          )}`
         );
       }
     });
   } catch (error) {
-    generationSpinner.stop(`${source_default.red("\u2716")} Failed to generate commit messages`);
+    ce(`${source_default.red("\u2716")} Failed to generate commit messages`);
     ce(`${source_default.red("\u2716")} ${error instanceof Error ? error.message : error}`);
     process.exit(1);
+  } finally {
+    clearInterval(statusTimer);
   }
-  generationSpinner.stop(
-    `${source_default.green("\u2714")} Generated ${totalBatches} commit messages`
+  console.log(
+    source_default.green(`
+\u2714 Generated ${totalBatches} commit messages
+`)
   );
   const plannedCommits = preparedBatches.map(
     (batch, index) => {
