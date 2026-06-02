@@ -115,7 +115,9 @@ export async function performCodeReview(diff: string, useCache: boolean = true):
     }
   }
 
-  const stopHeartbeat = startElapsedHeartbeat({ label: 'Analyzing code quality' });
+  const { stop: stopHeartbeat } = startElapsedHeartbeat({
+    label: 'Analyzing code quality'
+  });
 
   try {
     // Rebuild prompt to include any standards that may have been added

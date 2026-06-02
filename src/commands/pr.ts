@@ -98,7 +98,9 @@ async function getDefaultBaseBranch(): Promise<string> {
 }
 
 async function generatePRDescription(baseBranch: string): Promise<string> {
-  const stopHeartbeat = startElapsedHeartbeat({ label: 'Generating PR description' });
+  const { stop: stopHeartbeat } = startElapsedHeartbeat({
+    label: 'Generating PR description'
+  });
 
   try {
     // Get diff between current branch and base branch
@@ -140,7 +142,9 @@ async function generateChangelog(
   fromRef: string,
   toRef: string
 ): Promise<string> {
-  const stopHeartbeat = startElapsedHeartbeat({ label: 'Generating changelog' });
+  const { stop: stopHeartbeat } = startElapsedHeartbeat({
+    label: 'Generating changelog'
+  });
 
   try {
     // Get diff between refs

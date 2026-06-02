@@ -7,6 +7,11 @@ export interface StartHeartbeatOptions {
   stream?: NodeJS.WriteStream;
 }
 
+export interface StartHeartbeatResult {
+  stop: StopHeartbeat;
+  updateLabel: (label: string) => void;
+}
+
 const DEFAULT_INTERVAL_MS = 1000;
 
 const padRight = (input: string, width: number): string => {
@@ -19,30 +24,40 @@ export const startElapsedHeartbeat = ({
   intervalMs = DEFAULT_INTERVAL_MS,
   enabled,
   stream
-}: StartHeartbeatOptions): StopHeartbeat => {
+}: StartHeartbeatOptions): StartHeartbeatResult => {
   const output = stream ?? process.stdout;
   const isTty = output.isTTY === true;
 
   const shouldEnable = enabled ?? isTty;
-  if (shouldEnable !== true) return () => undefined;
+  if (shouldEnable !== true) {
+    return {
+      stop: () => undefined,
+      updateLabel: () => undefined
+    };
+  }
 
   const startedAt = Date.now();
   const lineWidth = 90;
+  let currentLabel = label;
 
   const tick = () => {
     const elapsedMs = Date.now() - startedAt;
     const elapsedSeconds = Math.floor(elapsedMs / 1000);
-    const line = `${label} (${elapsedSeconds}s elapsed)…`;
+    const line = `${currentLabel} (${elapsedSeconds}s elapsed)…`;
     output.write(`\r${padRight(line, lineWidth)}`);
   };
 
   tick();
   const timer = setInterval(tick, intervalMs);
 
-  return () => {
-    clearInterval(timer);
-    output.write(`\r${' '.repeat(lineWidth)}\r`);
+  return {
+    updateLabel: (nextLabel: string) => {
+      currentLabel = nextLabel;
+      tick();
+    },
+    stop: () => {
+      clearInterval(timer);
+      output.write(`\r${' '.repeat(lineWidth)}\r`);
+    }
   };
 };
-
-

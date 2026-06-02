@@ -156,6 +156,8 @@ CMT_SML=false  # Generate condensed single-line messages per file with filename,
 CMT_DEBUG=false  # Enable debug logging for troubleshooting
 CMT_MAX_FILES=50  # Maximum number of files allowed in a single commit (optional)
 CMT_MAX_DIFF_BYTES=102400  # Maximum diff size in bytes (100 KB, optional)
+CMT_CHUNK_CONCURRENCY=4  # Parallel LLM requests when chunking large diffs (1-10, default: 4)
+CMT_SYNTHESIZE_CHUNKS=true  # Merge chunk messages into one commit via a final LLM pass (default: true)
 CMT_REVIEW_MIN_SCORE=70  # Minimum code quality score (0-100) required when using --review flag (optional)
 ```
 

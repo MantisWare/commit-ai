@@ -258,3 +258,40 @@ export const getMainCommitPrompt = async (
 
   return returnArray;
 };
+
+export const getSynthesisPrompt = (
+  chunkMessages: string[],
+  fullGitMojiSpec: boolean,
+  context?: string
+): OpenAI.Chat.Completions.ChatCompletionMessageParam[] => {
+  const commitConvention = fullGitMojiSpec
+    ? 'GitMoji specification'
+    : 'Conventional Commit Convention';
+  const conventionGuidelines = getCommitConvention(fullGitMojiSpec);
+  const descriptionGuideline = getDescriptionInstruction();
+  const oneLineCommitGuideline = getOneLineCommitInstruction();
+  const smlGuideline = getSMLInstruction();
+  const userInputContext = userInputCodeContext(context);
+
+  const numberedChunks = chunkMessages
+    .map((msg, index) => `${index + 1}. ${msg.trim()}`)
+    .join('\n\n');
+
+  return [
+    {
+      role: 'system',
+      content: `${IDENTITY} You received partial commit messages generated from separate chunks of a large staged diff. Your task is to produce ONE final commit message that follows the ${commitConvention} and summarizes all changes coherently.
+${conventionGuidelines}
+${descriptionGuideline}
+${oneLineCommitGuideline}
+${smlGuideline}
+Use the present tense. Lines must not be longer than 74 characters. Use ${translation.localLanguage} for the commit message.
+${userInputContext}
+Do not list chunk numbers in the output. Merge overlapping themes into a single subject line and optional body.`
+    },
+    {
+      role: 'user',
+      content: `Partial commit messages from ${chunkMessages.length} chunks:\n\n${numberedChunks}`
+    }
+  ];
+};

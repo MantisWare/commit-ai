@@ -12,7 +12,12 @@ import { execa } from 'execa';
 import { writeFileSync, unlinkSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { generateCommitMessageByDiff } from '../generateCommitMessageFromGitDiff';
+import {
+  generateCommitMessageByDiff,
+  type OnGenerateCommitProgress
+} from '../generateCommitMessageFromGitDiff';
+import { assertCommitSizeGuardrails } from '../utils/commitGuardrails';
+import { formatCommitProgressLabel } from '../utils/commitProgressLabel';
 import { startElapsedHeartbeat } from '../utils/heartbeat';
 import {
   assertGitRepo,
@@ -37,11 +42,15 @@ const getGitRemotes = async () => {
 
 const runWithHeartbeat = async <T>(
   label: string,
-  action: () => Promise<T>
+  action: (onProgress?: OnGenerateCommitProgress) => Promise<T>
 ): Promise<T> => {
-  const stop = startElapsedHeartbeat({ label });
+  const { stop, updateLabel } = startElapsedHeartbeat({ label });
+  const onProgress: OnGenerateCommitProgress = (progress) => {
+    updateLabel(formatCommitProgressLabel(label, progress));
+  };
+
   try {
-    return await action();
+    return await action(onProgress);
   } finally {
     stop();
   }
@@ -108,7 +117,8 @@ const getLogMessagesFromGitDiff = async (diff: string, fullGitMojiSpec: boolean 
     
     const commitMessage = await runWithHeartbeat(
       'Cooking up the log 🍳🎶',
-      async () => generateCommitMessageByDiff(diff, fullGitMojiSpec, context)
+      async (onProgress) =>
+        generateCommitMessageByDiff(diff, fullGitMojiSpec, context, onProgress)
     );
 
     outro(
@@ -137,7 +147,8 @@ const generateCommitMessageFromGitDiff = async ({
   try {
     let commitMessage = await runWithHeartbeat(
       'Cooking up the commit message 🍳🎶',
-      async () => generateCommitMessageByDiff(diff, fullGitMojiSpec, context)
+      async (onProgress) =>
+        generateCommitMessageByDiff(diff, fullGitMojiSpec, context, onProgress)
     );
 
     const messageTemplate = checkMessageTemplate(extraArgs);
@@ -394,6 +405,16 @@ export const commit = async (
         'All staged files are excluded from AI processing (e.g., lock files / images). Stage at least one non-excluded file and try again.'
       )
     );
+    process.exit(1);
+  }
+
+  try {
+    assertCommitSizeGuardrails(
+      stagedFiles.length,
+      Buffer.byteLength(diff ?? '', 'utf8')
+    );
+  } catch (guardrailError) {
+    outro(`${chalk.red('✖')} ${(guardrailError as Error).message}`);
     process.exit(1);
   }
 

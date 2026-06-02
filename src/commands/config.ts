@@ -28,6 +28,8 @@ export enum CONFIG_KEYS {
   CMT_DEBUG = 'CMT_DEBUG',
   CMT_MAX_FILES = 'CMT_MAX_FILES',
   CMT_MAX_DIFF_BYTES = 'CMT_MAX_DIFF_BYTES',
+  CMT_CHUNK_CONCURRENCY = 'CMT_CHUNK_CONCURRENCY',
+  CMT_SYNTHESIZE_CHUNKS = 'CMT_SYNTHESIZE_CHUNKS',
   CMT_SML = 'CMT_SML',
   CMT_REVIEW_MIN_SCORE = 'CMT_REVIEW_MIN_SCORE',
   CMT_GITPUSH = 'CMT_GITPUSH' // todo: deprecate
@@ -320,6 +322,25 @@ export const configValidators = {
     return value;
   },
 
+  [CONFIG_KEYS.CMT_CHUNK_CONCURRENCY](value: any) {
+    value = parseInt(value, 10);
+    validateConfig(
+      CONFIG_KEYS.CMT_CHUNK_CONCURRENCY,
+      !isNaN(value) && value >= 1 && value <= 10,
+      'Must be a number between 1 and 10'
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_SYNTHESIZE_CHUNKS](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_SYNTHESIZE_CHUNKS,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
+  },
+
   // todo: deprecate
   [CONFIG_KEYS.CMT_GITPUSH](value: any) {
     validateConfig(
@@ -449,6 +470,8 @@ export type ConfigType = {
   [CONFIG_KEYS.CMT_DEBUG]: boolean;
   [CONFIG_KEYS.CMT_MAX_FILES]?: number;
   [CONFIG_KEYS.CMT_MAX_DIFF_BYTES]?: number;
+  [CONFIG_KEYS.CMT_CHUNK_CONCURRENCY]?: number;
+  [CONFIG_KEYS.CMT_SYNTHESIZE_CHUNKS]?: boolean;
   [CONFIG_KEYS.CMT_SML]: boolean;
   [CONFIG_KEYS.CMT_REVIEW_MIN_SCORE]?: number;
   [CONFIG_KEYS.CMT_REVIEW_CACHE_TTL]?: number;
@@ -500,6 +523,8 @@ export const DEFAULT_CONFIG = {
   CMT_WHY: false,
   CMT_SML: false,
   CMT_DEBUG: false,
+  CMT_CHUNK_CONCURRENCY: 4,
+  CMT_SYNTHESIZE_CHUNKS: true,
   CMT_GITPUSH: true // todo: deprecate
 };
 
@@ -543,6 +568,12 @@ const getEnvConfig = (envPath: string) => {
     CMT_DEBUG: parseConfigVarValue(process.env.CMT_DEBUG),
     CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
     CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
+    CMT_CHUNK_CONCURRENCY: parseConfigVarValue(
+      process.env.CMT_CHUNK_CONCURRENCY
+    ),
+    CMT_SYNTHESIZE_CHUNKS: parseConfigVarValue(
+      process.env.CMT_SYNTHESIZE_CHUNKS
+    ),
     CMT_SML: parseConfigVarValue(process.env.CMT_SML),
     CMT_REVIEW_MIN_SCORE: parseConfigVarValue(process.env.CMT_REVIEW_MIN_SCORE),
     CMT_REVIEW_CACHE_TTL: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_TTL),
@@ -751,6 +782,18 @@ const CONFIG_HELP: Record<string, { description: string; example: string; defaul
     description: 'Maximum diff size in bytes',
     example: '102400',
     default: 'unlimited'
+  },
+  CMT_CHUNK_CONCURRENCY: {
+    description:
+      'Maximum parallel LLM requests when generating commit messages from large chunked diffs (1–10)',
+    example: '4',
+    default: '4'
+  },
+  CMT_SYNTHESIZE_CHUNKS: {
+    description:
+      'When true, merge multiple chunk commit messages into one cohesive message via a final LLM pass',
+    example: 'true',
+    default: 'true'
   },
   CMT_SML: {
     description: 'Generate condensed single-line messages per file with filename, line numbers, and brief description',

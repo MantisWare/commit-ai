@@ -121,8 +121,11 @@ CommitAI supports two “prompt module” modes:
 If the staged diff is too large for the configured input/output budget:
 
 - CommitAI splits/merges diffs into smaller chunks,
-- generates messages for each chunk sequentially (avoids parallel overload/timeouts), and
-- joins the results.
+- generates messages for each chunk in **parallel batches** (bounded by `CMT_CHUNK_CONCURRENCY`, default `4`),
+- optionally **synthesizes** chunk messages into one cohesive commit (`CMT_SYNTHESIZE_CHUNKS`, default `true`), and
+- falls back to joining chunk messages with blank lines if synthesis fails or is disabled.
+
+The CLI heartbeat shows phase progress (`preparing chunks`, `generating chunk N/M`, `synthesizing`) so large commits do not appear stuck at `0s elapsed`.
 
 If a provider call fails with a **timeout-like error**, CommitAI retries by chunking the diff into smaller pieces and combining the results.
 
@@ -165,8 +168,10 @@ Common keys:
 - `CMT_SML`: Single-line Multi-file Log mode - generates condensed per-file messages with filename, line numbers, and brief description.
 - `CMT_MESSAGE_TEMPLATE_PLACEHOLDER`: placeholder token used for message templates (default `$msg`).
 - `CMT_PROMPT_MODULE`: `conventional-commit` or `@commitlint`.
-- `CMT_MAX_FILES`: maximum number of files allowed in a single commit (optional guardrail).
-- `CMT_MAX_DIFF_BYTES`: maximum diff size in bytes (optional guardrail).
+- `CMT_MAX_FILES`: maximum number of files allowed in a single commit (optional guardrail, enforced before generation).
+- `CMT_MAX_DIFF_BYTES`: maximum diff size in bytes (optional guardrail, enforced before generation).
+- `CMT_CHUNK_CONCURRENCY`: parallel LLM requests when chunking large diffs (1–10, default `4`).
+- `CMT_SYNTHESIZE_CHUNKS`: merge chunk messages into one final commit via an extra LLM pass (default `true`).
 - `CMT_REVIEW_MIN_SCORE`: minimum code quality score (0-100) required when using `--review` flag (optional guardrail).
 - `CMT_REVIEW_CACHE_TTL`: time to live for cached review results in hours (default: 24, max: 168).
 - `CMT_REVIEW_CACHE_DISABLED`: disable review result caching completely (default: false).

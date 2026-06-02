@@ -28,6 +28,11 @@ This is a living checklist of what CommitAI **already supports** and what we may
 - [x] Single-line Multi-file Log mode (`CMT_SML`) for condensed per-file messages
 - [x] Template placeholder substitution (`CMT_MESSAGE_TEMPLATE_PLACEHOLDER`)
 - [x] Token-aware diff chunking/splitting for large diffs
+- [x] Parallel chunk LLM generation with `CMT_CHUNK_CONCURRENCY` and synthesis pass (`CMT_SYNTHESIZE_CHUNKS`)
+- [x] Chunk progress in CLI heartbeat (preparing / generating / synthesizing)
+- [x] Enforce `CMT_MAX_FILES` and `CMT_MAX_DIFF_BYTES` guardrails before commit generation
+
+> **Auto-updated by Cursor:** Parallel chunk generation, synthesis pass, heartbeat progress, and guardrail enforcement on 2026-06-02.
 
 ### Config & project setup
 

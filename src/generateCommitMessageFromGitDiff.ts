@@ -1,16 +1,30 @@
 import { OpenAI } from 'openai';
 import { getConfig } from './commands/config';
-import { getMainCommitPrompt } from './prompts';
+import { getMainCommitPrompt, getSynthesisPrompt } from './prompts';
 import { debug } from './utils/debug';
 import { getEngine } from './utils/engine';
 import { mergeDiffs } from './utils/mergeDiffs';
+import { runWithConcurrency } from './utils/runWithConcurrency';
 import { sanitizeSpecialTokens } from './utils/sanitizeSpecialTokens';
 import { tokenCount } from './utils/tokenCount';
+import { yieldToEventLoop } from './utils/yieldToEventLoop';
 
 const config = getConfig();
-// Fallback to reasonable defaults if not configured (users should configure for their provider)
-const MAX_TOKENS_INPUT = config.CMT_TOKENS_MAX_INPUT || 8192;
-const MAX_TOKENS_OUTPUT = config.CMT_TOKENS_MAX_OUTPUT || 2048;
+const MAX_TOKENS_INPUT = config.CMT_TOKENS_MAX_INPUT ?? 8192;
+const MAX_TOKENS_OUTPUT = config.CMT_TOKENS_MAX_OUTPUT ?? 2048;
+const DEFAULT_CHUNK_CONCURRENCY = 4;
+const PREP_YIELD_EVERY_N_FILES = 8;
+
+const getChunkConcurrency = (): number => {
+  const configured = config.CMT_CHUNK_CONCURRENCY;
+  if (configured === undefined || typeof configured !== 'number') {
+    return DEFAULT_CHUNK_CONCURRENCY;
+  }
+  return Math.max(1, Math.min(10, configured));
+};
+
+const shouldSynthesizeChunks = (): boolean =>
+  config.CMT_SYNTHESIZE_CHUNKS !== false;
 
 const generateCommitMessageChatCompletionPrompt = async (
   diff: string,
@@ -21,7 +35,6 @@ const generateCommitMessageChatCompletionPrompt = async (
 
   const chatContextAsCompletionRequest = [...INIT_MESSAGES_PROMPT];
 
-  // Sanitize the diff to remove special tokens that could cause issues
   const sanitizedDiff = sanitizeSpecialTokens(diff);
 
   chatContextAsCompletionRequest.push({
@@ -43,6 +56,21 @@ export const getOutputTokensErrorMessage = () =>
   `Token limit exceeded. Please adjust CMT_TOKENS_MAX_OUTPUT to match your provider's limits.`;
 
 const ADJUSTMENT_FACTOR = 20;
+
+export type GenerateCommitProgressPhase =
+  | 'preparing'
+  | 'generating'
+  | 'synthesizing';
+
+export interface GenerateCommitProgress {
+  phase: GenerateCommitProgressPhase;
+  completed?: number;
+  total?: number;
+}
+
+export type OnGenerateCommitProgress = (
+  progress: GenerateCommitProgress
+) => void;
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -70,10 +98,108 @@ const isTimeoutLikeError = (error: unknown): boolean => {
 
 type CommitMessageTask = () => Promise<string | null | undefined>;
 
+const collectNonEmptyMessages = (
+  messages: Array<string | null | undefined>
+): string[] =>
+  messages.filter(
+    (msg): msg is string =>
+      msg !== null && msg !== undefined && msg.trim() !== ''
+  );
+
+const joinChunkMessages = (messages: string[]): string =>
+  messages.join('\n\n');
+
+const synthesizeChunkMessages = async (
+  chunkMessages: string[],
+  fullGitMojiSpec: boolean,
+  context: string,
+  onProgress?: OnGenerateCommitProgress
+): Promise<string> => {
+  onProgress?.({ phase: 'synthesizing' });
+
+  try {
+    const engine = getEngine();
+    const messages = getSynthesisPrompt(chunkMessages, fullGitMojiSpec, context);
+    const synthesized = await engine.generateCommitMessage(messages);
+
+    if (
+      synthesized !== null &&
+      synthesized !== undefined &&
+      synthesized.trim() !== ''
+    ) {
+      return synthesized;
+    }
+  } catch (error) {
+    debug('Synthesis failed, falling back to joined chunk messages:', error);
+  }
+
+  return joinChunkMessages(chunkMessages);
+};
+
+const finalizeChunkMessages = async (
+  chunkMessages: string[],
+  fullGitMojiSpec: boolean,
+  context: string,
+  onProgress?: OnGenerateCommitProgress
+): Promise<string> => {
+  if (chunkMessages.length === 0) {
+    throw new Error(GenerateCommitMessageErrorEnum.emptyMessage);
+  }
+
+  if (chunkMessages.length === 1) {
+    return chunkMessages[0];
+  }
+
+  if (shouldSynthesizeChunks()) {
+    return synthesizeChunkMessages(
+      chunkMessages,
+      fullGitMojiSpec,
+      context,
+      onProgress
+    );
+  }
+
+  return joinChunkMessages(chunkMessages);
+};
+
+const runChunkTasks = async (
+  commitMessageTasks: CommitMessageTask[],
+  fullGitMojiSpec: boolean,
+  context: string,
+  onProgress?: OnGenerateCommitProgress
+): Promise<string> => {
+  const concurrency = getChunkConcurrency();
+  const batchDelayMs = concurrency > 1 ? 750 : 0;
+
+  onProgress?.({
+    phase: 'generating',
+    completed: 0,
+    total: commitMessageTasks.length
+  });
+
+  const results = await runWithConcurrency({
+    tasks: commitMessageTasks,
+    concurrency,
+    batchDelayMs,
+    onProgress: (completed, total) => {
+      onProgress?.({ phase: 'generating', completed, total });
+    }
+  });
+
+  const chunkMessages = collectNonEmptyMessages(results);
+  return finalizeChunkMessages(
+    chunkMessages,
+    fullGitMojiSpec,
+    context,
+    onProgress
+  );
+};
+
 export const generateCommitMessageByDiff = async (
   diff: string,
   fullGitMojiSpec: boolean = false,
-  context: string = ""
+  context: string = '',
+  onProgress?: OnGenerateCommitProgress
 ): Promise<string> => {
   try {
     debug('Starting generateCommitMessageByDiff');
@@ -105,26 +231,23 @@ export const generateCommitMessageByDiff = async (
         diff,
         MAX_REQUEST_TOKENS,
         fullGitMojiSpec,
-        context
+        context,
+        onProgress
       );
 
-      const commitMessages = [] as string[];
-      for (const task of commitMessageTasks) {
-        const msg = await task();
-        if (msg !== null && msg !== undefined && msg.trim() !== '') {
-          commitMessages.push(msg);
-        }
-        await delay(2000);
-      }
-
-      return commitMessages.join('\n\n');
+      return runChunkTasks(
+        commitMessageTasks,
+        fullGitMojiSpec,
+        context,
+        onProgress
+      );
     }
 
     debug('Generating chat completion prompt...');
     const messages = await generateCommitMessageChatCompletionPrompt(
       diff,
       fullGitMojiSpec,
-      context,
+      context
     );
     debug('Got messages, initializing engine...');
 
@@ -139,25 +262,25 @@ export const generateCommitMessageByDiff = async (
     return commitMessage;
   } catch (error) {
     if (isTimeoutLikeError(error)) {
-      const fallbackMaxDiffLength = Math.max(200, Math.floor(MAX_TOKENS_INPUT / 6));
+      const fallbackMaxDiffLength = Math.max(
+        200,
+        Math.floor(MAX_TOKENS_INPUT / 6)
+      );
       const commitMessageTasks = await getCommitMsgsTasksFromFileDiffs(
         diff,
         fallbackMaxDiffLength,
         fullGitMojiSpec,
-        context
+        context,
+        onProgress
       );
 
-      const commitMessages = [] as string[];
-      for (const task of commitMessageTasks) {
-        const msg = await task();
-        if (msg !== null && msg !== undefined && msg.trim() !== '') {
-          commitMessages.push(msg);
-        }
-        await delay(2000);
-      }
-
-      if (commitMessages.length > 0) {
-        return commitMessages.join('\n\n');
+      if (commitMessageTasks.length > 0) {
+        return runChunkTasks(
+          commitMessageTasks,
+          fullGitMojiSpec,
+          context,
+          onProgress
+        );
       }
     }
 
@@ -175,7 +298,6 @@ function getMessagesPromisesByChangesInFile(
   const hunkHeaderSeparator = '@@ ';
   const [fileHeader, ...fileDiffByLines] = fileDiff.split(hunkHeaderSeparator);
 
-  // merge multiple line-diffs into 1 to save tokens
   const mergedChanges = mergeDiffs(
     fileDiffByLines.map((line) => hunkHeaderSeparator + line),
     maxChangeLength
@@ -185,7 +307,6 @@ function getMessagesPromisesByChangesInFile(
   for (const change of mergedChanges) {
     const totalChange = fileHeader + change;
     if (tokenCount(totalChange) > maxChangeLength) {
-      // If the totalChange is too large, split it into smaller pieces
       const splitChanges = splitDiff(totalChange, maxChangeLength);
       lineDiffsWithHeader.push(...splitChanges);
     } else {
@@ -194,8 +315,8 @@ function getMessagesPromisesByChangesInFile(
   }
 
   const engine = getEngine();
-  const commitMsgsFromFileLineDiffs: CommitMessageTask[] = lineDiffsWithHeader.map(
-    (lineDiff) => async () => {
+  const commitMsgsFromFileLineDiffs: CommitMessageTask[] =
+    lineDiffsWithHeader.map((lineDiff) => async () => {
       const messages = await generateCommitMessageChatCompletionPrompt(
         separator + lineDiff,
         fullGitMojiSpec,
@@ -203,8 +324,7 @@ function getMessagesPromisesByChangesInFile(
       );
 
       return engine.generateCommitMessage(messages);
-    }
-  );
+    });
 
   return commitMsgsFromFileLineDiffs;
 }
@@ -219,25 +339,20 @@ function splitDiff(diff: string, maxChangeLength: number) {
   }
 
   for (let line of lines) {
-    // If a single line exceeds maxChangeLength, split it into multiple lines
     while (tokenCount(line) > maxChangeLength) {
       const subLine = line.substring(0, maxChangeLength);
       line = line.substring(maxChangeLength);
       splitDiffs.push(subLine);
     }
 
-    // Check the tokenCount of the currentDiff and the line separately
     if (tokenCount(currentDiff) + tokenCount('\n' + line) > maxChangeLength) {
-      // If adding the next line would exceed the maxChangeLength, start a new diff
       splitDiffs.push(currentDiff);
       currentDiff = line;
     } else {
-      // Otherwise, add the line to the current diff
       currentDiff += '\n' + line;
     }
   }
 
-  // Add the last diff
   if (currentDiff) {
     splitDiffs.push(currentDiff);
   }
@@ -250,28 +365,54 @@ export const getCommitMsgsPromisesFromFileDiffs = async (
   maxDiffLength: number,
   fullGitMojiSpec: boolean
 ) => {
-  // kept for backward-compatibility inside this file; prefer getCommitMsgsTasksFromFileDiffs
-  return getCommitMsgsTasksFromFileDiffs(diff, maxDiffLength, fullGitMojiSpec, '');
+  return getCommitMsgsTasksFromFileDiffs(
+    diff,
+    maxDiffLength,
+    fullGitMojiSpec,
+    ''
+  );
 };
 
 const getCommitMsgsTasksFromFileDiffs = async (
   diff: string,
   maxDiffLength: number,
   fullGitMojiSpec: boolean,
-  context: string
+  context: string,
+  onProgress?: OnGenerateCommitProgress
 ): Promise<CommitMessageTask[]> => {
   const separator = 'diff --git ';
 
   const diffByFiles = diff.split(separator).slice(1);
+  const totalFiles = diffByFiles.length;
 
-  // merge multiple files-diffs into 1 prompt to save tokens
+  onProgress?.({ phase: 'preparing', completed: 0, total: totalFiles });
+
+  for (let fileIndex = 0; fileIndex < diffByFiles.length; fileIndex += 1) {
+    if (
+      fileIndex > 0 &&
+      fileIndex % PREP_YIELD_EVERY_N_FILES === 0
+    ) {
+      onProgress?.({
+        phase: 'preparing',
+        completed: fileIndex,
+        total: totalFiles
+      });
+      await yieldToEventLoop();
+    }
+  }
+
   const mergedFilesDiffs = mergeDiffs(diffByFiles, maxDiffLength);
+
+  onProgress?.({
+    phase: 'preparing',
+    completed: totalFiles,
+    total: totalFiles
+  });
 
   const commitMessageTasks = [] as CommitMessageTask[];
 
   for (const fileDiff of mergedFilesDiffs) {
     if (tokenCount(fileDiff) >= maxDiffLength) {
-      // if file-diff is bigger than gpt context — split fileDiff into lineDiff
       const messagesPromises = getMessagesPromisesByChangesInFile(
         fileDiff,
         separator,
@@ -296,7 +437,3 @@ const getCommitMsgsTasksFromFileDiffs = async (
 
   return commitMessageTasks;
 };
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

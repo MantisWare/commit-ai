@@ -4,6 +4,8 @@ import fs from 'fs/promises';
 import { intro, outro } from '@clack/prompts';
 
 import { generateCommitMessageByDiff } from '../generateCommitMessageFromGitDiff';
+import { assertCommitSizeGuardrails } from '../utils/commitGuardrails';
+import { formatCommitProgressLabel } from '../utils/commitProgressLabel';
 import { getChangedFiles, getDiff, getStagedFiles, gitAdd } from '../utils/git';
 import { startElapsedHeartbeat } from '../utils/heartbeat';
 import { getConfig } from './config';
@@ -55,10 +57,23 @@ export const prepareCommitMessageHook = async (
       return;
     }
 
-    const stop = startElapsedHeartbeat({ label: 'Generating commit message' });
+    assertCommitSizeGuardrails(
+      staged.length,
+      Buffer.byteLength(diff, 'utf8')
+    );
+
+    const baseLabel = 'Generating commit message';
+    const { stop, updateLabel } = startElapsedHeartbeat({ label: baseLabel });
     let commitMessage: string;
     try {
-      commitMessage = await generateCommitMessageByDiff(diff);
+      commitMessage = await generateCommitMessageByDiff(
+        diff,
+        false,
+        '',
+        (progress) => {
+          updateLabel(formatCommitProgressLabel(baseLabel, progress));
+        }
+      );
     } finally {
       stop();
     }
