@@ -39,7 +39,12 @@ CommitAI is a CLI tool named `commit-ai` with alias **`cmt`**.
 
 - `cmt check`
   - Prints a **gradient Commit-AI console banner** + version and runs an environment check (Git availability, config presence, basic config sanity).
-  - Includes a **Quick Start Guide** box with 10 essential commands covering commit generation, PR descriptions, changelog, configuration, and Git hooks.
+  - Includes npm registry version check (warns when an update is available).
+  - Includes a **Quick Start Guide** box with essential commands covering commit generation, PR descriptions, changelog, configuration, and Git hooks.
+- `cmt update`
+  - Checks npm for the latest `@mantisware/commit-ai` version and installs it when an update is available.
+  - `--check`: report update availability without installing (exit code 1 when an update exists).
+  - `--yes`, `-y`: install without confirmation prompt.
 - `cmt config get <KEY...>` / `cmt config set <KEY=VALUE...>`
   - Manages **global** config stored at `~/.commit-ai`.
 - `cmt config help`
@@ -177,6 +182,7 @@ Common keys:
 - `CMT_REVIEW_CACHE_DISABLED`: disable review result caching completely (default: false).
 - `CMT_DEBUG`: prints prompt payloads for debugging.
 - `CMT_GITPUSH`: controls whether CommitAI prompts for / runs `git push` after a successful commit (noted in code as "todo: deprecate").
+- `CMT_AUTO_UPDATE`: when `true`, automatically installs the latest CommitAI version when an update is available (checked on each default `cmt` run).
 
 ---
 

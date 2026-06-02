@@ -10,6 +10,7 @@ import { COMMANDS } from './ENUMS';
 import { getConfig } from './config';
 import { printCommitAiBanner } from '../utils/banner';
 import { COMMITLINT_LLM_CONFIG_PATH } from '../modules/commitlint/constants';
+import { checkForUpdates } from '../utils/versionUpdate';
 
 type CheckStatus = 'pass' | 'warn' | 'fail';
 
@@ -110,6 +111,27 @@ const runCheck = async (): Promise<CheckResult[]> => {
       : 'not configured (optional, for CMT_PROMPT_MODULE=@commitlint)'
   });
 
+  const updateResult = await checkForUpdates();
+  if (updateResult.latestVersion === undefined) {
+    results.push({
+      label: 'Version',
+      status: 'warn',
+      details: `v${updateResult.currentVersion} (could not check npm registry)`
+    });
+  } else if (updateResult.updateAvailable) {
+    results.push({
+      label: 'Version',
+      status: 'warn',
+      details: `v${updateResult.currentVersion} (latest: v${updateResult.latestVersion}) — run cmt update`
+    });
+  } else {
+    results.push({
+      label: 'Version',
+      status: 'pass',
+      details: `v${updateResult.currentVersion} (latest)`
+    });
+  }
+
   return results;
 };
 
@@ -177,6 +199,7 @@ export const checkCommand = command(
         { cmd: 'cmt config set CMT_EMOJI=true', desc: 'Enable GitMoji in commit messages' },
         { cmd: 'cmt config help', desc: 'View all configuration options' },
         { cmd: 'cmt hook set', desc: 'Install Git hook for auto-generation' },
+        { cmd: 'cmt update', desc: 'Check for and install CommitAI updates' },
         { cmd: 'cmt --help', desc: 'Show all available commands and flags' }
       ];
 

@@ -2,30 +2,65 @@ import chalk from 'chalk';
 
 import { outro } from '@clack/prompts';
 
-import currentPackage from '../../package.json';
-import { getCommitAILatestVersion } from '../version';
+import { getConfig } from '../commands/config';
+import {
+  checkForUpdates,
+  getUpdateCommand,
+  runUpdate
+} from './versionUpdate';
 
-export const checkIsLatestVersion = async () => {
-  // Skip version check during postinstall or if explicitly disabled
-  if (process.env.CMT_SKIP_VERSION_CHECK === 'true') {
+export type CheckLatestVersionOptions = {
+  autoUpdate?: boolean;
+  skipCheck?: boolean;
+};
+
+export const checkIsLatestVersion = async (
+  options: CheckLatestVersionOptions = {}
+) => {
+  if (options.skipCheck ?? process.env.CMT_SKIP_VERSION_CHECK === 'true') {
     return;
   }
 
-  const latestVersion = await getCommitAILatestVersion();
+  const config = getConfig();
+  const shouldAutoUpdate = options.autoUpdate ?? config.CMT_AUTO_UPDATE === true;
 
-  if (latestVersion) {
-    const currentVersion = currentPackage.version;
+  const result = await checkForUpdates();
 
-    if (currentVersion !== latestVersion) {
+  if (result.latestVersion === undefined) {
+    return;
+  }
+
+  if (!result.updateAvailable) {
+    return;
+  }
+
+  if (shouldAutoUpdate) {
+    try {
+      outro(
+        chalk.cyan(
+          `Updating CommitAI ${result.currentVersion} → ${result.latestVersion}...`
+        )
+      );
+      await runUpdate();
+      outro(chalk.green(`CommitAI updated to ${result.latestVersion}.`));
+    } catch {
       outro(
         chalk.yellow(
-          `
-You are not using the latest stable version of CommitAI with new features and bug fixes.
-Current version: ${currentVersion}. Latest version: ${latestVersion}.
-🚀 To update run: npm i -g @mantisware/commit-ai@latest.
-        `
+          `Auto-update failed. Run manually: ${getUpdateCommand()}`
         )
       );
     }
+    return;
   }
+
+  outro(
+    chalk.yellow(
+      `
+You are not using the latest stable version of CommitAI with new features and bug fixes.
+Current version: ${result.currentVersion}. Latest version: ${result.latestVersion}.
+🚀 To update run: cmt update
+   Or enable auto-update: cmt config set CMT_AUTO_UPDATE=true
+      `
+    )
+  );
 };

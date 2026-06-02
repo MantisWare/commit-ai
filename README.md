@@ -33,6 +33,16 @@ CommitAI lets you automate meaningful commit messages effortlessly using the CLI
 
    **Updating to the latest version:**
    ```sh
+   # Check for updates and install interactively
+   cmt update
+
+   # Check only (no install)
+   cmt update --check
+
+   # Enable automatic updates on each cmt run
+   cmt config set CMT_AUTO_UPDATE=true
+
+   # Or update manually with your package manager
    # Using npm
    npm update -g @mantisware/commit-ai
    

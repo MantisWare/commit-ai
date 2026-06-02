@@ -3,6 +3,7 @@ export enum COMMANDS {
   hook = 'hook',
   commitlint = 'commitlint',
   check = 'check',
+  update = 'update',
   pr = 'pr',
   changelog = 'changelog',
   review = 'review',

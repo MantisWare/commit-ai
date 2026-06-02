@@ -12,6 +12,8 @@ This is a living checklist of what CommitAI **already supports** and what we may
 
 - [x] `cmt` default command (generate commit message from staged diff)
 - [x] `cmt check` environment/version check command (prints banner + validates toolchain basics + Quick Start Guide with 10 essential commands)
+- [x] `cmt update` command to check for and install updates (`--check`, `--yes`)
+- [x] `CMT_AUTO_UPDATE` config to auto-install updates when running `cmt`
 - [x] Refresh console banner to match Commit-AI branding (cyan→purple gradient + "AI-Powered Git Commits" + author attribution)
 - [x] Interactive staging when nothing is staged (stage all or choose files)
 - [x] `--context` / `-c` additional context support
@@ -32,6 +34,8 @@ This is a living checklist of what CommitAI **already supports** and what we may
 - [x] Chunk progress in CLI heartbeat (preparing / generating / synthesizing)
 - [x] Enforce `CMT_MAX_FILES` and `CMT_MAX_DIFF_BYTES` guardrails before commit generation
 - [x] Auto-split oversized staged changes into multiple commits when `CMT_MAX_FILES` is exceeded (`cmt` CLI)
+
+> **Auto-updated by Cursor:** Added `cmt update` and `CMT_AUTO_UPDATE` on 2026-06-02.
 
 > **Auto-updated by Cursor:** Auto-split respects both `CMT_MAX_FILES` and `CMT_MAX_DIFF_BYTES` on 2026-06-02.
 

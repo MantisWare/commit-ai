@@ -32,7 +32,8 @@ export enum CONFIG_KEYS {
   CMT_SYNTHESIZE_CHUNKS = 'CMT_SYNTHESIZE_CHUNKS',
   CMT_SML = 'CMT_SML',
   CMT_REVIEW_MIN_SCORE = 'CMT_REVIEW_MIN_SCORE',
-  CMT_GITPUSH = 'CMT_GITPUSH' // todo: deprecate
+  CMT_GITPUSH = 'CMT_GITPUSH', // todo: deprecate
+  CMT_AUTO_UPDATE = 'CMT_AUTO_UPDATE'
 }
 
 export enum CONFIG_MODES {
@@ -351,6 +352,15 @@ export const configValidators = {
     return value;
   },
 
+  [CONFIG_KEYS.CMT_AUTO_UPDATE](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_AUTO_UPDATE,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
+  },
+
   [CONFIG_KEYS.CMT_AI_PROVIDER](value: any) {
     if (!value) value = 'openai';
 
@@ -466,6 +476,7 @@ export type ConfigType = {
   [CONFIG_KEYS.CMT_PROMPT_MODULE]: CMT_PROMPT_MODULE_ENUM;
   [CONFIG_KEYS.CMT_AI_PROVIDER]: CMT_AI_PROVIDER_ENUM;
   [CONFIG_KEYS.CMT_GITPUSH]: boolean;
+  [CONFIG_KEYS.CMT_AUTO_UPDATE]: boolean;
   [CONFIG_KEYS.CMT_ONE_LINE_COMMIT]: boolean;
   [CONFIG_KEYS.CMT_DEBUG]: boolean;
   [CONFIG_KEYS.CMT_MAX_FILES]?: number;
@@ -525,7 +536,8 @@ export const DEFAULT_CONFIG = {
   CMT_DEBUG: false,
   CMT_CHUNK_CONCURRENCY: 4,
   CMT_SYNTHESIZE_CHUNKS: true,
-  CMT_GITPUSH: true // todo: deprecate
+  CMT_GITPUSH: true, // todo: deprecate
+  CMT_AUTO_UPDATE: false
 };
 
 const initGlobalConfig = (configPath: string = defaultConfigPath) => {
@@ -578,7 +590,8 @@ const getEnvConfig = (envPath: string) => {
     CMT_REVIEW_MIN_SCORE: parseConfigVarValue(process.env.CMT_REVIEW_MIN_SCORE),
     CMT_REVIEW_CACHE_TTL: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_TTL),
     CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
-    CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH) // todo: deprecate
+    CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH), // todo: deprecate
+    CMT_AUTO_UPDATE: parseConfigVarValue(process.env.CMT_AUTO_UPDATE)
   };
 };
 
@@ -813,6 +826,12 @@ const CONFIG_HELP: Record<string, { description: string; example: string; defaul
   CMT_REVIEW_CACHE_DISABLED: {
     description: 'Disable review result caching (set to true to always perform fresh reviews)',
     example: 'false',
+    default: 'false'
+  },
+  CMT_AUTO_UPDATE: {
+    description:
+      'Automatically install the latest CommitAI version when an update is available (checked on each cmt run)',
+    example: 'true',
     default: 'false'
   }
 };
