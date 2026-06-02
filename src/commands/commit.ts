@@ -30,6 +30,7 @@ import {
   assertGitRepo,
   getChangedFiles,
   getDiff,
+  getDiffContent,
   getDiffByteLength,
   getDiffBetweenBranches,
   getStagedFiles,
@@ -37,12 +38,32 @@ import {
   gitResetStaged,
   filterDiffForReview
 } from '../utils/git';
+import { runWithConcurrency } from '../utils/runWithConcurrency';
 import { trytm } from '../utils/trytm';
 import { getConfig } from './config';
 import { performCodeReview, printReviewResult } from './review';
 import { standardsFileExists } from './standards';
 
 const config = getConfig();
+const DEFAULT_BATCH_GENERATION_CONCURRENCY = 4;
+
+interface PreparedCommitBatch {
+  files: string[];
+  diff: string;
+}
+
+interface PlannedCommitWithMessage extends PreparedCommitBatch {
+  message: string;
+  commitArgs: string[];
+}
+
+const getBatchGenerationConcurrency = (): number => {
+  const configured = config.CMT_CHUNK_CONCURRENCY;
+  if (configured === undefined || typeof configured !== 'number') {
+    return DEFAULT_BATCH_GENERATION_CONCURRENCY;
+  }
+  return Math.max(1, Math.min(10, configured));
+};
 
 const getGitRemotes = async () => {
   const { stdout } = await execa('git', ['remote']);
@@ -73,6 +94,130 @@ const checkMessageTemplate = (extraArgs: string[]): string | false => {
   }
   return false;
 };
+
+const resolveCommitMessageAndArgs = (
+  commitMessage: string,
+  extraArgs: string[]
+): { message: string; commitArgs: string[] } => {
+  const commitArgs = [...extraArgs];
+  const messageTemplate = checkMessageTemplate(commitArgs);
+
+  if (
+    config.CMT_MESSAGE_TEMPLATE_PLACEHOLDER &&
+    typeof messageTemplate === 'string'
+  ) {
+    const messageTemplateIndex = commitArgs.indexOf(messageTemplate);
+    commitArgs.splice(messageTemplateIndex, 1);
+
+    return {
+      message: messageTemplate.replace(
+        config.CMT_MESSAGE_TEMPLATE_PLACEHOLDER,
+        commitMessage
+      ),
+      commitArgs
+    };
+  }
+
+  return { message: commitMessage, commitArgs };
+};
+
+const createCommitMessageFromDiff = async (
+  diff: string,
+  fullGitMojiSpec: boolean,
+  context: string
+): Promise<string> =>
+  runWithHeartbeat('Cooking up the commit message 🍳🎶', async (onProgress) =>
+    generateCommitMessageByDiff(diff, fullGitMojiSpec, context, onProgress)
+  );
+
+const performGitCommit = async (
+  message: string,
+  commitArgs: string[]
+): Promise<string> => {
+  const committingChangesSpinner = spinner();
+  committingChangesSpinner.start('Committing the changes');
+
+  const { stdout } = await execa('git', ['commit', '-m', message, ...commitArgs]);
+
+  committingChangesSpinner.stop(`${chalk.green('✔')} Successfully committed`);
+
+  return stdout;
+};
+
+const offerGitPush = async (noPush: boolean): Promise<void> => {
+  if (config.CMT_GITPUSH === false || noPush) {
+    return;
+  }
+
+  const remotes = await getGitRemotes();
+
+  if (!remotes.length) {
+    const { stdout } = await execa('git', ['push']);
+    if (stdout) outro(stdout);
+    return;
+  }
+
+  if (remotes.length === 1) {
+    const isPushConfirmedByUser = await confirm({
+      message: 'Do you want to run `git push`?'
+    });
+
+    if (isCancel(isPushConfirmedByUser)) process.exit(1);
+
+    if (isPushConfirmedByUser) {
+      const pushSpinner = spinner();
+
+      pushSpinner.start(`Running 'git push ${remotes[0]}'`);
+
+      const { stdout } = await execa('git', ['push', '--verbose', remotes[0]]);
+
+      pushSpinner.stop(
+        `${chalk.green('✔')} Successfully pushed all commits to ${remotes[0]}`
+      );
+
+      if (stdout) outro(stdout);
+    } else {
+      outro('`git push` aborted');
+      process.exit(0);
+    }
+    return;
+  }
+
+  const skipOption = `don't push`;
+  const selectedRemote = (await select({
+    message: 'Choose a remote to push to',
+    options: [...remotes, skipOption].map((remote) => ({
+      value: remote,
+      label: remote
+    }))
+  })) as string;
+
+  if (isCancel(selectedRemote)) process.exit(1);
+
+  if (selectedRemote !== skipOption) {
+    const pushSpinner = spinner();
+
+    pushSpinner.start(`Running 'git push ${selectedRemote}'`);
+
+    const { stdout } = await execa('git', ['push', selectedRemote]);
+
+    if (stdout) outro(stdout);
+
+    pushSpinner.stop(
+      `${chalk.green('✔')} successfully pushed all commits to ${selectedRemote}`
+    );
+  }
+};
+
+const formatBatchCommitMessagesSummary = (
+  planned: PlannedCommitWithMessage[]
+): string =>
+  planned
+    .map(
+      (batch, index) =>
+        `${chalk.cyan(`Batch ${index + 1}/${planned.length}`)} (${batch.files.length} files)\n${chalk.grey('——————————————————')}\n${batch.message}\n${chalk.grey('——————————————————')}`
+    )
+    .join('\n\n');
 
 // Open commit message in editor for user to edit
 const openInEditor = async (message: string): Promise<string> => {
@@ -241,12 +386,31 @@ const commitStagedFilesInBatches = async (
   const measureDiffBytes = (files: string[]) =>
     getDiffByteLength({ files, staged: true });
 
-  const batches = await planCommitBatches(
+  const batchFileGroups = await planCommitBatches(
     stagedFiles,
     limits,
     measureDiffBytes
   );
-  const totalBatches = batches.length;
+
+  const preparedBatches: PreparedCommitBatch[] = [];
+  for (const batchFiles of batchFileGroups) {
+    const diff = await getDiffContent({ files: batchFiles, staged: true });
+    if (diff.trim() === '') {
+      continue;
+    }
+    preparedBatches.push({ files: batchFiles, diff });
+  }
+
+  if (preparedBatches.length === 0) {
+    outro(
+      chalk.yellow(
+        'All staged files are excluded from AI processing (e.g., lock files / images).'
+      )
+    );
+    process.exit(1);
+  }
+
+  const totalBatches = preparedBatches.length;
 
   console.log(
     chalk.cyan(
@@ -254,82 +418,106 @@ const commitStagedFilesInBatches = async (
     )
   );
 
+  if (options.edit === true && totalBatches > 1) {
+    outro(
+      chalk.yellow(
+        'The --edit flag is not supported when splitting into multiple commits. Proceeding without opening the editor.'
+      )
+    );
+  }
+
   await gitResetStaged();
 
-  for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-    const batchFiles = batches[batchIndex];
+  const generationSpinner = spinner();
+  generationSpinner.start(
+    `Generating commit messages (0/${totalBatches}) in parallel…`
+  );
+
+  const context = options.context ?? '';
+  const fullGitMojiSpec = options.fullGitMojiSpec ?? false;
+
+  let generatedMessages: string[];
+  try {
+    generatedMessages = await runWithConcurrency({
+      tasks: preparedBatches.map(
+        (batch) => () =>
+          createCommitMessageFromDiff(batch.diff, fullGitMojiSpec, context)
+      ),
+      concurrency: getBatchGenerationConcurrency(),
+      onProgress: (completed, total) => {
+        generationSpinner.stop(
+          `Generating commit messages (${completed}/${total}) in parallel…`
+        );
+        generationSpinner.start(
+          `Generating commit messages (${completed}/${total}) in parallel…`
+        );
+      }
+    });
+  } catch (error) {
+    generationSpinner.stop(`${chalk.red('✖')} Failed to generate commit messages`);
+    outro(`${chalk.red('✖')} ${error instanceof Error ? error.message : error}`);
+    process.exit(1);
+  }
+
+  generationSpinner.stop(
+    `${chalk.green('✔')} Generated ${totalBatches} commit messages`
+  );
+
+  const plannedCommits: PlannedCommitWithMessage[] = preparedBatches.map(
+    (batch, index) => {
+      const { message, commitArgs } = resolveCommitMessageAndArgs(
+        generatedMessages[index],
+        extraArgs
+      );
+      return { ...batch, message, commitArgs };
+    }
+  );
+
+  console.log(
+    `\n${formatBatchCommitMessagesSummary(plannedCommits)}\n`
+  );
+
+  if (options.dryRun === true) {
+    outro(chalk.cyan('Dry run mode - no commits were made'));
+    return;
+  }
+
+  const isAllCommitsConfirmed =
+    options.skipCommitConfirmation === true ||
+    (await confirm({
+      message: `Confirm all ${totalBatches} commit messages?`
+    }));
+
+  if (isCancel(isAllCommitsConfirmed)) {
+    process.exit(1);
+  }
+
+  if (!isAllCommitsConfirmed) {
+    outro(chalk.yellow('Commits aborted.'));
+    process.exit(0);
+  }
+
+  for (let batchIndex = 0; batchIndex < plannedCommits.length; batchIndex++) {
+    const batch = plannedCommits[batchIndex];
     const batchNumber = batchIndex + 1;
-    const isLastBatch = batchIndex === totalBatches - 1;
 
     console.log(
       chalk.cyan(
-        `\n── Batch ${batchNumber}/${totalBatches} (${batchFiles.length} files) ──\n${formatBatchFileList(batchFiles)}\n`
+        `\n── Committing batch ${batchNumber}/${totalBatches} (${batch.files.length} files) ──\n${formatBatchFileList(batch.files)}\n`
       )
     );
 
-    await gitAdd({ files: batchFiles });
-
-    const [diff, diffError] = await trytm(getDiff({ files: batchFiles }));
-    if (diffError) {
-      outro(`${chalk.red('✖')} ${diffError}`);
-      process.exit(1);
-    }
-
-    if (diff !== undefined && diff.trim() === '') {
-      outro(
-        chalk.yellow(
-          `Batch ${batchNumber}/${totalBatches}: all files are excluded from AI processing. Unstaging and skipping.`
-        )
-      );
-      await execa('git', ['reset', 'HEAD', '--', ...batchFiles]);
-      continue;
-    }
-
-    if (options.runReview && diff) {
-      try {
-        const shouldContinue = await runCommitReviewIfNeeded(
-          diff,
-          options.runReview
-        );
-        if (!shouldContinue) {
-          process.exit(1);
-        }
-      } catch (reviewError) {
-        outro(
-          chalk.red(
-            `Code review failed: ${reviewError instanceof Error ? reviewError.message : reviewError}`
-          )
-        );
-        process.exit(1);
-      }
-    }
-
-    const [, generateCommitError] = await trytm(
-      generateCommitMessageFromGitDiff({
-        diff: diff ?? '',
-        extraArgs,
-        context: options.context,
-        fullGitMojiSpec: options.fullGitMojiSpec,
-        skipCommitConfirmation: options.skipCommitConfirmation,
-        dryRun: options.dryRun,
-        edit: options.edit,
-        noPush: options.noPush === true || !isLastBatch
-      })
-    );
-
-    if (generateCommitError) {
-      outro(`${chalk.red('✖')} ${generateCommitError}`);
-      process.exit(1);
-    }
+    await gitAdd({ files: batch.files });
+    await performGitCommit(batch.message, batch.commitArgs);
   }
 
-  if (options.dryRun !== true) {
-    outro(
-      chalk.green(
-        `✔ Completed ${totalBatches} commit${totalBatches === 1 ? '' : 's'} from ${stagedFiles.length} staged files.`
-      )
-    );
-  }
+  outro(
+    chalk.green(
+      `✔ Completed ${totalBatches} commit${totalBatches === 1 ? '' : 's'} from ${stagedFiles.length} staged files.`
+    )
+  );
+
+  await offerGitPush(options.noPush === true);
 };
 
 const getLogMessagesFromGitDiff = async (diff: string, fullGitMojiSpec: boolean = false, context: string = '') => {
@@ -366,25 +554,10 @@ export const generateCommitMessageFromGitDiff = async ({
 }: GenerateCommitMessageFromGitDiffParams): Promise<void> => {
   await assertGitRepo();
   try {
-    let commitMessage = await runWithHeartbeat(
-      'Cooking up the commit message 🍳🎶',
-      async (onProgress) =>
-        generateCommitMessageByDiff(diff, fullGitMojiSpec, context, onProgress)
+    let { message: commitMessage, commitArgs } = resolveCommitMessageAndArgs(
+      await createCommitMessageFromDiff(diff, fullGitMojiSpec, context),
+      extraArgs
     );
-
-    const messageTemplate = checkMessageTemplate(extraArgs);
-    if (
-      config.CMT_MESSAGE_TEMPLATE_PLACEHOLDER &&
-      typeof messageTemplate === 'string'
-    ) {
-      const messageTemplateIndex = extraArgs.indexOf(messageTemplate);
-      extraArgs.splice(messageTemplateIndex, 1);
-
-      commitMessage = messageTemplate.replace(
-        config.CMT_MESSAGE_TEMPLATE_PLACEHOLDER,
-        commitMessage
-      );
-    }
 
     outro(
       `Generated commit message:
@@ -393,13 +566,11 @@ ${commitMessage}
 ${chalk.grey('——————————————————')}`
     );
 
-    // If dry-run, just display the message and exit
     if (dryRun) {
       outro(chalk.cyan('Dry run mode - no commit was made'));
       return;
     }
 
-    // If edit flag is set, open in editor
     if (edit) {
       const editedMessage = await openInEditor(commitMessage);
       if (editedMessage.trim() === '') {
@@ -425,84 +596,9 @@ ${chalk.grey('——————————————————')}`
     if (isCancel(isCommitConfirmedByUser)) process.exit(1);
 
     if (isCommitConfirmedByUser) {
-      const committingChangesSpinner = spinner();
-      committingChangesSpinner.start('Committing the changes');
-      const { stdout } = await execa('git', [
-        'commit',
-        '-m',
-        commitMessage,
-        ...extraArgs
-      ]);
-      committingChangesSpinner.stop(
-        `${chalk.green('✔')} Successfully committed`
-      );
-
+      const stdout = await performGitCommit(commitMessage, commitArgs);
       outro(stdout);
-
-      const remotes = await getGitRemotes();
-
-      // user isn't pushing, return early
-      if (config.CMT_GITPUSH === false || noPush) return;
-
-      if (!remotes.length) {
-        const { stdout } = await execa('git', ['push']);
-        if (stdout) outro(stdout);
-        process.exit(0);
-      }
-
-      if (remotes.length === 1) {
-        const isPushConfirmedByUser = await confirm({
-          message: 'Do you want to run `git push`?'
-        });
-
-        if (isCancel(isPushConfirmedByUser)) process.exit(1);
-
-        if (isPushConfirmedByUser) {
-          const pushSpinner = spinner();
-
-          pushSpinner.start(`Running 'git push ${remotes[0]}'`);
-
-          const { stdout } = await execa('git', [
-            'push',
-            '--verbose',
-            remotes[0]
-          ]);
-
-          pushSpinner.stop(
-            `${chalk.green('✔')} Successfully pushed all commits to ${remotes[0]
-            }`
-          );
-
-          if (stdout) outro(stdout);
-        } else {
-          outro('`git push` aborted');
-          process.exit(0);
-        }
-      } else {
-        const skipOption = `don't push`
-        const selectedRemote = (await select({
-          message: 'Choose a remote to push to',
-          options: [...remotes, skipOption].map((remote) => ({ value: remote, label: remote })),
-        })) as string;
-
-        if (isCancel(selectedRemote)) process.exit(1);
-
-        if (selectedRemote !== skipOption) {
-          const pushSpinner = spinner();
-  
-          pushSpinner.start(`Running 'git push ${selectedRemote}'`);
-  
-          const { stdout } = await execa('git', ['push', selectedRemote]);
-  
-          if (stdout) outro(stdout);
-  
-          pushSpinner.stop(
-            `${chalk.green(
-              '✔'
-            )} successfully pushed all commits to ${selectedRemote}`
-          );
-        }
-      }
+      await offerGitPush(noPush);
     } else {
       const regenerateMessage = await confirm({
         message: 'Do you want to regenerate the message?'
