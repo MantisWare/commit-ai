@@ -67902,6 +67902,7 @@ var CONFIG_KEYS = /* @__PURE__ */ ((CONFIG_KEYS2) => {
   CONFIG_KEYS2["CMT_SML"] = "CMT_SML";
   CONFIG_KEYS2["CMT_REVIEW_MIN_SCORE"] = "CMT_REVIEW_MIN_SCORE";
   CONFIG_KEYS2["CMT_GITPUSH"] = "CMT_GITPUSH";
+  CONFIG_KEYS2["CMT_AUTO_UPDATE"] = "CMT_AUTO_UPDATE";
   return CONFIG_KEYS2;
 })(CONFIG_KEYS || {});
 var MODEL_LIST = {
@@ -68179,6 +68180,14 @@ var configValidators = {
     );
     return value;
   },
+  ["CMT_AUTO_UPDATE" /* CMT_AUTO_UPDATE */](value) {
+    validateConfig(
+      "CMT_AUTO_UPDATE" /* CMT_AUTO_UPDATE */,
+      typeof value === "boolean",
+      "Must be true or false"
+    );
+    return value;
+  },
   ["CMT_AI_PROVIDER" /* CMT_AI_PROVIDER */](value) {
     if (!value)
       value = "openai";
@@ -68289,7 +68298,8 @@ var DEFAULT_CONFIG = {
   CMT_DEBUG: false,
   CMT_CHUNK_CONCURRENCY: 4,
   CMT_SYNTHESIZE_CHUNKS: true,
-  CMT_GITPUSH: true
+  CMT_GITPUSH: true,
+  CMT_AUTO_UPDATE: false
 };
 var initGlobalConfig = (configPath = defaultConfigPath) => {
   (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(DEFAULT_CONFIG), "utf8");
@@ -68334,7 +68344,8 @@ var getEnvConfig = (envPath) => {
     CMT_REVIEW_MIN_SCORE: parseConfigVarValue(process.env.CMT_REVIEW_MIN_SCORE),
     CMT_REVIEW_CACHE_TTL: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_TTL),
     CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
-    CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH)
+    CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH),
+    CMT_AUTO_UPDATE: parseConfigVarValue(process.env.CMT_AUTO_UPDATE)
   };
 };
 var setGlobalConfig = (config6, configPath = defaultConfigPath) => {
@@ -68533,6 +68544,11 @@ var CONFIG_HELP = {
   CMT_REVIEW_CACHE_DISABLED: {
     description: "Disable review result caching (set to true to always perform fresh reviews)",
     example: "false",
+    default: "false"
+  },
+  CMT_AUTO_UPDATE: {
+    description: "Automatically install the latest CommitAI version when an update is available (checked on each cmt run)",
+    example: "true",
     default: "false"
   }
 };

@@ -46521,7 +46521,7 @@ function G3(t2, e3) {
 // package.json
 var package_default = {
   name: "@mantisware/commit-ai",
-  version: "1.0.14",
+  version: "1.0.15",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
     "git",
@@ -49146,6 +49146,7 @@ var CONFIG_KEYS = /* @__PURE__ */ ((CONFIG_KEYS2) => {
   CONFIG_KEYS2["CMT_SML"] = "CMT_SML";
   CONFIG_KEYS2["CMT_REVIEW_MIN_SCORE"] = "CMT_REVIEW_MIN_SCORE";
   CONFIG_KEYS2["CMT_GITPUSH"] = "CMT_GITPUSH";
+  CONFIG_KEYS2["CMT_AUTO_UPDATE"] = "CMT_AUTO_UPDATE";
   return CONFIG_KEYS2;
 })(CONFIG_KEYS || {});
 var MODEL_LIST = {
@@ -49423,6 +49424,14 @@ var configValidators = {
     );
     return value;
   },
+  ["CMT_AUTO_UPDATE" /* CMT_AUTO_UPDATE */](value) {
+    validateConfig(
+      "CMT_AUTO_UPDATE" /* CMT_AUTO_UPDATE */,
+      typeof value === "boolean",
+      "Must be true or false"
+    );
+    return value;
+  },
   ["CMT_AI_PROVIDER" /* CMT_AI_PROVIDER */](value) {
     if (!value)
       value = "openai";
@@ -49533,7 +49542,8 @@ var DEFAULT_CONFIG = {
   CMT_DEBUG: false,
   CMT_CHUNK_CONCURRENCY: 4,
   CMT_SYNTHESIZE_CHUNKS: true,
-  CMT_GITPUSH: true
+  CMT_GITPUSH: true,
+  CMT_AUTO_UPDATE: false
 };
 var initGlobalConfig = (configPath = defaultConfigPath) => {
   (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(DEFAULT_CONFIG), "utf8");
@@ -49578,7 +49588,8 @@ var getEnvConfig = (envPath) => {
     CMT_REVIEW_MIN_SCORE: parseConfigVarValue(process.env.CMT_REVIEW_MIN_SCORE),
     CMT_REVIEW_CACHE_TTL: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_TTL),
     CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
-    CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH)
+    CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH),
+    CMT_AUTO_UPDATE: parseConfigVarValue(process.env.CMT_AUTO_UPDATE)
   };
 };
 var setGlobalConfig = (config9, configPath = defaultConfigPath) => {
@@ -49777,6 +49788,11 @@ var CONFIG_HELP = {
   CMT_REVIEW_CACHE_DISABLED: {
     description: "Disable review result caching (set to true to always perform fresh reviews)",
     example: "false",
+    default: "false"
+  },
+  CMT_AUTO_UPDATE: {
+    description: "Automatically install the latest CommitAI version when an update is available (checked on each cmt run)",
+    example: "true",
     default: "false"
   }
 };
@@ -65209,7 +65225,7 @@ var checkCommitSizeGuardrails = (stagedFileCount, diffByteLength, limits) => {
   }
   if (maxDiffBytes !== void 0 && typeof maxDiffBytes === "number" && diffByteLength > maxDiffBytes) {
     throw new Error(
-      `Staged diff is too large (${diffByteLength} bytes). Maximum allowed: ${maxDiffBytes} bytes. Split your commit or adjust with: cmt config set CMT_MAX_DIFF_BYTES=<number>`
+      `Staged diff is too large (${diffByteLength} bytes). Maximum allowed: ${maxDiffBytes} bytes. Use \`cmt\` to split into multiple commits automatically, or adjust with: cmt config set CMT_MAX_DIFF_BYTES=<number>`
     );
   }
 };
@@ -65224,17 +65240,71 @@ var assertCommitSizeGuardrails = (stagedFileCount, diffByteLength) => {
   checkCommitSizeGuardrails(stagedFileCount, diffByteLength, getCommitSizeLimits());
 };
 var exceedsMaxStagedFiles = (stagedFileCount, limits = getCommitSizeLimits()) => limits.maxFiles !== void 0 && typeof limits.maxFiles === "number" && stagedFileCount > limits.maxFiles;
+var exceedsMaxDiffBytes = (diffByteLength, limits = getCommitSizeLimits()) => limits.maxDiffBytes !== void 0 && typeof limits.maxDiffBytes === "number" && diffByteLength > limits.maxDiffBytes;
+var needsCommitBatching = (stagedFileCount, diffByteLength, limits = getCommitSizeLimits()) => exceedsMaxStagedFiles(stagedFileCount, limits) || exceedsMaxDiffBytes(diffByteLength, limits);
 
-// src/utils/chunkStagedFiles.ts
-var chunkStagedFiles = (items, maxChunkSize) => {
-  if (maxChunkSize <= 0) {
-    throw new Error("maxChunkSize must be a positive number");
+// src/utils/planCommitBatches.ts
+var getMaxFiles = (limits) => limits.maxFiles ?? Number.MAX_SAFE_INTEGER;
+var getMaxDiffBytes = (limits) => limits.maxDiffBytes ?? Number.MAX_SAFE_INTEGER;
+var batchFitsLimits = (fileCount, diffBytes, limits) => fileCount <= getMaxFiles(limits) && diffBytes <= getMaxDiffBytes(limits);
+var shrinkOversizedBatch = async (files, limits, measureDiffBytes) => {
+  const diffBytes = await measureDiffBytes(files);
+  if (batchFitsLimits(files.length, diffBytes, limits)) {
+    return [files];
   }
-  const chunks = [];
-  for (let i3 = 0; i3 < items.length; i3 += maxChunkSize) {
-    chunks.push(items.slice(i3, i3 + maxChunkSize));
+  if (files.length <= 1) {
+    return [files];
   }
-  return chunks;
+  const mid = Math.ceil(files.length / 2);
+  const left = await shrinkOversizedBatch(
+    files.slice(0, mid),
+    limits,
+    measureDiffBytes
+  );
+  const right = await shrinkOversizedBatch(
+    files.slice(mid),
+    limits,
+    measureDiffBytes
+  );
+  return [...left, ...right];
+};
+var planCommitBatches = async (files, limits, measureDiffBytes) => {
+  if (files.length === 0) {
+    return [];
+  }
+  const maxFiles = getMaxFiles(limits);
+  const maxDiffBytes = getMaxDiffBytes(limits);
+  const fileDiffBytes = /* @__PURE__ */ new Map();
+  for (const file of files) {
+    fileDiffBytes.set(file, await measureDiffBytes([file]));
+  }
+  const roughBatches = [];
+  let currentBatch = [];
+  let currentRoughBytes = 0;
+  for (const file of files) {
+    const fileBytes = fileDiffBytes.get(file) ?? 0;
+    const nextCount = currentBatch.length + 1;
+    const nextRoughBytes = currentRoughBytes + fileBytes;
+    const wouldExceedFiles = nextCount > maxFiles;
+    const wouldExceedBytes = nextRoughBytes > maxDiffBytes;
+    if (currentBatch.length > 0 && (wouldExceedFiles || wouldExceedBytes)) {
+      roughBatches.push(currentBatch);
+      currentBatch = [file];
+      currentRoughBytes = fileBytes;
+    } else {
+      currentBatch.push(file);
+      currentRoughBytes = nextRoughBytes;
+    }
+  }
+  if (currentBatch.length > 0) {
+    roughBatches.push(currentBatch);
+  }
+  const finalBatches = [];
+  for (const batch of roughBatches) {
+    const shrunk = await shrinkOversizedBatch(batch, limits, measureDiffBytes);
+    finalBatches.push(...shrunk);
+  }
+  return finalBatches;
 };
 
 // src/utils/commitProgressLabel.ts
@@ -65383,9 +65453,32 @@ var gitAdd = async ({ files }) => {
 var gitResetStaged = async () => {
   await execa("git", ["reset"]);
 };
-var getDiff = async ({ files }) => {
+var getFilesIncludedInAIDiff = (files) => files.filter((file) => isDefaultExcludedFromAIDiff(file) === false);
+var getDiffContent = async ({
+  files,
+  staged = true
+}) => {
+  const filesToDiff = getFilesIncludedInAIDiff(files);
+  if (filesToDiff.length === 0) {
+    return "";
+  }
+  const diffArgs = staged ? ["diff", "--staged", "--", ...filesToDiff] : ["diff", "--", ...filesToDiff];
+  const { stdout: diff } = await execa("git", diffArgs);
+  return diff;
+};
+var getDiffByteLength = async ({
+  files,
+  staged = true
+}) => {
+  const diff = await getDiffContent({ files, staged });
+  return Buffer.byteLength(diff, "utf8");
+};
+var getDiff = async ({
+  files,
+  quiet = false
+}) => {
   const excludedFiles = files.filter((file) => isDefaultExcludedFromAIDiff(file));
-  if (excludedFiles.length > 0) {
+  if (!quiet && excludedFiles.length > 0) {
     ce(
       `Some files are excluded by default from 'git diff'. No commit messages are generated for these files:
 ${excludedFiles.join(
@@ -65393,17 +65486,7 @@ ${excludedFiles.join(
       )}`
     );
   }
-  const filesToDiff = files.filter((file) => isDefaultExcludedFromAIDiff(file) === false);
-  if (filesToDiff.length === 0) {
-    return "";
-  }
-  const { stdout: diff } = await execa("git", [
-    "diff",
-    "--staged",
-    "--",
-    ...filesToDiff
-  ]);
-  return diff;
+  return getDiffContent({ files, staged: true });
 };
 var filterDiffForReview = (diff) => {
   if (!diff || diff.trim() === "") {
@@ -67046,19 +67129,34 @@ var formatBatchFileList = (files, previewLimit = 10) => {
   }
   return preview.join("\n");
 };
-var commitStagedFilesInBatches = async (stagedFiles, maxFilesPerCommit, extraArgs2, options) => {
-  const chunks = chunkStagedFiles(stagedFiles, maxFilesPerCommit);
-  const totalBatches = chunks.length;
+var formatBatchLimits = (limits) => {
+  const parts = [];
+  if (limits.maxFiles !== void 0) {
+    parts.push(`max ${limits.maxFiles} files`);
+  }
+  if (limits.maxDiffBytes !== void 0) {
+    parts.push(`max ${limits.maxDiffBytes} bytes diff`);
+  }
+  return parts.length > 0 ? parts.join(", ") : "configured limits";
+};
+var commitStagedFilesInBatches = async (stagedFiles, limits, extraArgs2, options) => {
+  const measureDiffBytes = (files) => getDiffByteLength({ files, staged: true });
+  const batches = await planCommitBatches(
+    stagedFiles,
+    limits,
+    measureDiffBytes
+  );
+  const totalBatches = batches.length;
   console.log(
     source_default.cyan(
       `
-Splitting ${stagedFiles.length} staged files into ${totalBatches} commits (max ${maxFilesPerCommit} files each).
+Splitting ${stagedFiles.length} staged files into ${totalBatches} commits (${formatBatchLimits(limits)}).
 `
     )
   );
   await gitResetStaged();
   for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-    const batchFiles = chunks[batchIndex];
+    const batchFiles = batches[batchIndex];
     const batchNumber = batchIndex + 1;
     const isLastBatch = batchIndex === totalBatches - 1;
     console.log(
@@ -67083,15 +67181,6 @@ ${formatBatchFileList(batchFiles)}
       );
       await execa("git", ["reset", "HEAD", "--", ...batchFiles]);
       continue;
-    }
-    try {
-      assertCommitSizeGuardrails(
-        batchFiles.length,
-        Buffer.byteLength(diff ?? "", "utf8")
-      );
-    } catch (guardrailError) {
-      ce(`${source_default.red("\u2716")} ${guardrailError.message}`);
-      process.exit(1);
     }
     if (options.runReview && diff) {
       try {
@@ -67364,21 +67453,22 @@ var commit = async (extraArgs2 = [], options = {}) => {
 ${stagedFiles.map((file) => `  ${file}`).join("\n")}`
   );
   const commitSizeLimits = getCommitSizeLimits();
+  const batchOptions = {
+    context,
+    stageAll,
+    fullGitMojiSpec,
+    skipCommitConfirmation,
+    dryRun,
+    edit,
+    noPush,
+    runReview
+  };
   if (exceedsMaxStagedFiles(stagedFiles.length, commitSizeLimits)) {
     await commitStagedFilesInBatches(
       stagedFiles,
-      commitSizeLimits.maxFiles,
+      commitSizeLimits,
       extraArgs2,
-      {
-        context,
-        stageAll,
-        fullGitMojiSpec,
-        skipCommitConfirmation,
-        dryRun,
-        edit,
-        noPush,
-        runReview
-      }
+      batchOptions
     );
     process.exit(0);
   }
@@ -67396,11 +67486,18 @@ ${stagedFiles.map((file) => `  ${file}`).join("\n")}`
     );
     process.exit(1);
   }
-  try {
-    assertCommitSizeGuardrails(
-      stagedFiles.length,
-      Buffer.byteLength(diff ?? "", "utf8")
+  const diffByteLength = Buffer.byteLength(diff ?? "", "utf8");
+  if (needsCommitBatching(stagedFiles.length, diffByteLength, commitSizeLimits)) {
+    await commitStagedFilesInBatches(
+      stagedFiles,
+      commitSizeLimits,
+      extraArgs2,
+      batchOptions
     );
+    process.exit(0);
+  }
+  try {
+    assertCommitSizeGuardrails(stagedFiles.length, diffByteLength);
   } catch (guardrailError) {
     ce(`${source_default.red("\u2716")} ${guardrailError.message}`);
     process.exit(1);
@@ -67485,6 +67582,69 @@ ${source_default.hex("#805cff")("                  ")}${source_default.hex("#8c4
   console.log("");
 };
 
+// src/version.ts
+var PACKAGE_NAME = "@mantisware/commit-ai";
+var getCommitAILatestVersion = async () => {
+  try {
+    const { stdout } = await execa("npm", ["view", PACKAGE_NAME, "version"]);
+    return stdout.trim();
+  } catch {
+    return void 0;
+  }
+};
+
+// src/utils/versionUpdate.ts
+var parseSemver = (version) => {
+  const normalized = version.replace(/^v/, "");
+  const [major = 0, minor = 0, patch = 0] = normalized.split(".").map((part) => {
+    const parsed = Number.parseInt(part, 10);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  });
+  return [major, minor, patch];
+};
+var isVersionOlder = (current, latest) => {
+  const [cMaj, cMin, cPatch] = parseSemver(current);
+  const [lMaj, lMin, lPatch] = parseSemver(latest);
+  if (cMaj !== lMaj) {
+    return cMaj < lMaj;
+  }
+  if (cMin !== lMin) {
+    return cMin < lMin;
+  }
+  return cPatch < lPatch;
+};
+var checkForUpdates = async () => {
+  const currentVersion = package_default.version;
+  const latestVersion = await getCommitAILatestVersion();
+  const updateAvailable = latestVersion !== void 0 && latestVersion !== "" && isVersionOlder(currentVersion, latestVersion);
+  return { currentVersion, latestVersion, updateAvailable };
+};
+var detectGlobalPackageManager = () => {
+  const scriptPath = process.argv[1] ?? "";
+  if (scriptPath.includes("pnpm") || scriptPath.includes(".pnpm")) {
+    return "pnpm";
+  }
+  if (scriptPath.includes("yarn")) {
+    return "yarn";
+  }
+  return "npm";
+};
+var getUpdateCommand = (packageManager = detectGlobalPackageManager()) => {
+  switch (packageManager) {
+    case "pnpm":
+      return `pnpm add -g ${PACKAGE_NAME}@latest`;
+    case "yarn":
+      return `yarn global add ${PACKAGE_NAME}@latest`;
+    default:
+      return `npm i -g ${PACKAGE_NAME}@latest`;
+  }
+};
+var runUpdate = async (options = {}) => {
+  const packageManager = options.packageManager ?? detectGlobalPackageManager();
+  const args = packageManager === "pnpm" ? ["add", "-g", `${PACKAGE_NAME}@latest`] : packageManager === "yarn" ? ["global", "add", `${PACKAGE_NAME}@latest`] : ["i", "-g", `${PACKAGE_NAME}@latest`];
+  await execa(packageManager, args, { stdio: "inherit" });
+};
+
 // src/commands/check.ts
 var formatStatus = (status) => {
   switch (status) {
@@ -67555,6 +67715,26 @@ var runCheck = async () => {
     status: commitlintConfigExists ? "pass" : "warn",
     details: commitlintConfigExists ? ".commit-ai-commitlint found" : "not configured (optional, for CMT_PROMPT_MODULE=@commitlint)"
   });
+  const updateResult = await checkForUpdates();
+  if (updateResult.latestVersion === void 0) {
+    results.push({
+      label: "Version",
+      status: "warn",
+      details: `v${updateResult.currentVersion} (could not check npm registry)`
+    });
+  } else if (updateResult.updateAvailable) {
+    results.push({
+      label: "Version",
+      status: "warn",
+      details: `v${updateResult.currentVersion} (latest: v${updateResult.latestVersion}) \u2014 run cmt update`
+    });
+  } else {
+    results.push({
+      label: "Version",
+      status: "pass",
+      details: `v${updateResult.currentVersion} (latest)`
+    });
+  }
   return results;
 };
 var checkCommand = G3(
@@ -67607,6 +67787,7 @@ var checkCommand = G3(
         { cmd: "cmt config set CMT_EMOJI=true", desc: "Enable GitMoji in commit messages" },
         { cmd: "cmt config help", desc: "View all configuration options" },
         { cmd: "cmt hook set", desc: "Install Git hook for auto-generation" },
+        { cmd: "cmt update", desc: "Check for and install CommitAI updates" },
         { cmd: "cmt --help", desc: "Show all available commands and flags" }
       ];
       console.log(usageBoxTop);
@@ -68085,37 +68266,113 @@ var changelogCommand = G3(
   }
 );
 
-// src/version.ts
-var getCommitAILatestVersion = async () => {
-  try {
-    const { stdout } = await execa("npm", ["view", "@mantisware/commit-ai", "version"]);
-    return stdout;
-  } catch (_7) {
-    ce("Error while getting the latest version of commit-ai");
-    return void 0;
-  }
-};
-
-// src/utils/checkIsLatestVersion.ts
-var checkIsLatestVersion = async () => {
-  if (process.env.CMT_SKIP_VERSION_CHECK === "true") {
-    return;
-  }
-  const latestVersion = await getCommitAILatestVersion();
-  if (latestVersion) {
-    const currentVersion = package_default.version;
-    if (currentVersion !== latestVersion) {
+// src/commands/update.ts
+var updateCommand = G3(
+  {
+    name: "update" /* update */,
+    flags: {
+      check: {
+        type: Boolean,
+        description: "Check for updates without installing",
+        default: false
+      },
+      yes: {
+        type: Boolean,
+        alias: "y",
+        description: "Install update without confirmation",
+        default: false
+      }
+    },
+    help: {
+      description: "Check for and install CommitAI updates"
+    }
+  },
+  async ({ flags }) => {
+    printCommitAiBanner({ version: package_default.version });
+    ae(source_default.cyan("Checking for updates..."));
+    const result = await checkForUpdates();
+    if (result.latestVersion === void 0) {
+      ce(source_default.red("Could not reach npm registry to check for updates."));
+      process.exit(1);
+    }
+    if (!result.updateAvailable) {
+      ce(source_default.green(`CommitAI ${result.currentVersion} is up to date.`));
+      process.exit(0);
+    }
+    if (flags.check) {
       ce(
         source_default.yellow(
-          `
-You are not using the latest stable version of CommitAI with new features and bug fixes.
-Current version: ${currentVersion}. Latest version: ${latestVersion}.
-\u{1F680} To update run: npm i -g @mantisware/commit-ai@latest.
-        `
+          `Update available: ${result.currentVersion} \u2192 ${result.latestVersion}
+Run: cmt update`
+        )
+      );
+      process.exit(1);
+    }
+    if (flags.yes !== true) {
+      const shouldUpdate = await Q3({
+        message: `Update CommitAI ${result.currentVersion} \u2192 ${result.latestVersion}?`,
+        initialValue: true
+      });
+      if (shouldUpdate !== true) {
+        ce(source_default.gray("Update cancelled."));
+        process.exit(0);
+      }
+    }
+    try {
+      await runUpdate();
+      ce(source_default.green(`CommitAI updated to ${result.latestVersion}.`));
+      process.exit(0);
+    } catch {
+      ce(
+        source_default.red(`Update failed. Try manually: ${getUpdateCommand()}`)
+      );
+      process.exit(1);
+    }
+  }
+);
+
+// src/utils/checkIsLatestVersion.ts
+var checkIsLatestVersion = async (options = {}) => {
+  if (options.skipCheck ?? process.env.CMT_SKIP_VERSION_CHECK === "true") {
+    return;
+  }
+  const config9 = getConfig();
+  const shouldAutoUpdate = options.autoUpdate ?? config9.CMT_AUTO_UPDATE === true;
+  const result = await checkForUpdates();
+  if (result.latestVersion === void 0) {
+    return;
+  }
+  if (!result.updateAvailable) {
+    return;
+  }
+  if (shouldAutoUpdate) {
+    try {
+      ce(
+        source_default.cyan(
+          `Updating CommitAI ${result.currentVersion} \u2192 ${result.latestVersion}...`
+        )
+      );
+      await runUpdate();
+      ce(source_default.green(`CommitAI updated to ${result.latestVersion}.`));
+    } catch {
+      ce(
+        source_default.yellow(
+          `Auto-update failed. Run manually: ${getUpdateCommand()}`
         )
       );
     }
+    return;
   }
+  ce(
+    source_default.yellow(
+      `
+You are not using the latest stable version of CommitAI with new features and bug fixes.
+Current version: ${result.currentVersion}. Latest version: ${result.latestVersion}.
+\u{1F680} To update run: cmt update
+   Or enable auto-update: cmt config set CMT_AUTO_UPDATE=true
+      `
+    )
+  );
 };
 
 // src/migrations/_run.ts
@@ -68273,7 +68530,7 @@ Z2(
     version: package_default.version,
     name: "commit-ai",
     alias: "cmt",
-    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand, prCommand, changelogCommand, reviewCommand, standardsCommand],
+    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand, prCommand, changelogCommand, reviewCommand, standardsCommand, updateCommand],
     flags: {
       fgm: Boolean,
       context: {
