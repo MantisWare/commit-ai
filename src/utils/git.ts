@@ -136,15 +136,60 @@ export const gitResetStaged = async (): Promise<void> => {
   await execa('git', ['reset']);
 };
 
+export const getFilesIncludedInAIDiff = (files: string[]): string[] =>
+  files.filter((file) => isDefaultExcludedFromAIDiff(file) === false);
+
+/**
+ * Get the diff for the given files (staged or unstaged working-tree changes).
+ */
+export const getDiffContent = async ({
+  files,
+  staged = true
+}: {
+  files: string[];
+  staged?: boolean;
+}): Promise<string> => {
+  const filesToDiff = getFilesIncludedInAIDiff(files);
+
+  if (filesToDiff.length === 0) {
+    return '';
+  }
+
+  const diffArgs = staged
+    ? ['diff', '--staged', '--', ...filesToDiff]
+    : ['diff', '--', ...filesToDiff];
+
+  const { stdout: diff } = await execa('git', diffArgs);
+
+  return diff;
+};
+
+export const getDiffByteLength = async ({
+  files,
+  staged = true
+}: {
+  files: string[];
+  staged?: boolean;
+}): Promise<number> => {
+  const diff = await getDiffContent({ files, staged });
+  return Buffer.byteLength(diff, 'utf8');
+};
+
 /**
  * Get the diff of the staged files
  * @param {string[]} files - The files to get the diff for
  * @returns {Promise<string>} The diff of the staged files
  */
-export const getDiff = async ({ files }: { files: string[] }) => {
+export const getDiff = async ({
+  files,
+  quiet = false
+}: {
+  files: string[];
+  quiet?: boolean;
+}) => {
   const excludedFiles = files.filter((file) => isDefaultExcludedFromAIDiff(file));
 
-  if (excludedFiles.length > 0) {
+  if (!quiet && excludedFiles.length > 0) {
     outro(
       `Some files are excluded by default from 'git diff'. No commit messages are generated for these files:\n${excludedFiles.join(
         '\n'
@@ -152,20 +197,7 @@ export const getDiff = async ({ files }: { files: string[] }) => {
     );
   }
 
-  const filesToDiff = files.filter((file) => isDefaultExcludedFromAIDiff(file) === false);
-
-  if (filesToDiff.length === 0) {
-    return '';
-  }
-
-  const { stdout: diff } = await execa('git', [
-    'diff',
-    '--staged',
-    '--',
-    ...filesToDiff
-  ]);
-
-  return diff;
+  return getDiffContent({ files, staged: true });
 };
 
 /**

@@ -33,7 +33,7 @@ This is a living checklist of what CommitAI **already supports** and what we may
 - [x] Enforce `CMT_MAX_FILES` and `CMT_MAX_DIFF_BYTES` guardrails before commit generation
 - [x] Auto-split oversized staged changes into multiple commits when `CMT_MAX_FILES` is exceeded (`cmt` CLI)
 
-> **Auto-updated by Cursor:** Auto-split multi-commit flow for `CMT_MAX_FILES` on 2026-06-02.
+> **Auto-updated by Cursor:** Auto-split respects both `CMT_MAX_FILES` and `CMT_MAX_DIFF_BYTES` on 2026-06-02.
 
 ### Config & project setup
 

@@ -19,15 +19,18 @@ import {
 import {
   assertCommitSizeGuardrails,
   exceedsMaxStagedFiles,
-  getCommitSizeLimits
+  getCommitSizeLimits,
+  needsCommitBatching,
+  type CommitSizeLimits
 } from '../utils/commitGuardrails';
-import { chunkStagedFiles } from '../utils/chunkStagedFiles';
+import { planCommitBatches } from '../utils/planCommitBatches';
 import { formatCommitProgressLabel } from '../utils/commitProgressLabel';
 import { startElapsedHeartbeat } from '../utils/heartbeat';
 import {
   assertGitRepo,
   getChangedFiles,
   getDiff,
+  getDiffByteLength,
   getDiffBetweenBranches,
   getStagedFiles,
   gitAdd,
@@ -218,25 +221,43 @@ const formatBatchFileList = (files: string[], previewLimit = 10): string => {
   return preview.join('\n');
 };
 
+const formatBatchLimits = (limits: CommitSizeLimits): string => {
+  const parts: string[] = [];
+  if (limits.maxFiles !== undefined) {
+    parts.push(`max ${limits.maxFiles} files`);
+  }
+  if (limits.maxDiffBytes !== undefined) {
+    parts.push(`max ${limits.maxDiffBytes} bytes diff`);
+  }
+  return parts.length > 0 ? parts.join(', ') : 'configured limits';
+};
+
 const commitStagedFilesInBatches = async (
   stagedFiles: string[],
-  maxFilesPerCommit: number,
+  limits: CommitSizeLimits,
   extraArgs: string[],
   options: CommitOptions
 ): Promise<void> => {
-  const chunks = chunkStagedFiles(stagedFiles, maxFilesPerCommit);
-  const totalBatches = chunks.length;
+  const measureDiffBytes = (files: string[]) =>
+    getDiffByteLength({ files, staged: true });
+
+  const batches = await planCommitBatches(
+    stagedFiles,
+    limits,
+    measureDiffBytes
+  );
+  const totalBatches = batches.length;
 
   console.log(
     chalk.cyan(
-      `\nSplitting ${stagedFiles.length} staged files into ${totalBatches} commits (max ${maxFilesPerCommit} files each).\n`
+      `\nSplitting ${stagedFiles.length} staged files into ${totalBatches} commits (${formatBatchLimits(limits)}).\n`
     )
   );
 
   await gitResetStaged();
 
   for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-    const batchFiles = chunks[batchIndex];
+    const batchFiles = batches[batchIndex];
     const batchNumber = batchIndex + 1;
     const isLastBatch = batchIndex === totalBatches - 1;
 
@@ -262,16 +283,6 @@ const commitStagedFilesInBatches = async (
       );
       await execa('git', ['reset', 'HEAD', '--', ...batchFiles]);
       continue;
-    }
-
-    try {
-      assertCommitSizeGuardrails(
-        batchFiles.length,
-        Buffer.byteLength(diff ?? '', 'utf8')
-      );
-    } catch (guardrailError) {
-      outro(`${chalk.red('✖')} ${(guardrailError as Error).message}`);
-      process.exit(1);
     }
 
     if (options.runReview && diff) {
@@ -602,21 +613,23 @@ export const commit = async (
   );
 
   const commitSizeLimits = getCommitSizeLimits();
+  const batchOptions: CommitOptions = {
+    context,
+    stageAll,
+    fullGitMojiSpec,
+    skipCommitConfirmation,
+    dryRun,
+    edit,
+    noPush,
+    runReview
+  };
+
   if (exceedsMaxStagedFiles(stagedFiles.length, commitSizeLimits)) {
     await commitStagedFilesInBatches(
       stagedFiles,
-      commitSizeLimits.maxFiles as number,
+      commitSizeLimits,
       extraArgs,
-      {
-        context,
-        stageAll,
-        fullGitMojiSpec,
-        skipCommitConfirmation,
-        dryRun,
-        edit,
-        noPush,
-        runReview
-      }
+      batchOptions
     );
     process.exit(0);
   }
@@ -638,11 +651,20 @@ export const commit = async (
     process.exit(1);
   }
 
-  try {
-    assertCommitSizeGuardrails(
-      stagedFiles.length,
-      Buffer.byteLength(diff ?? '', 'utf8')
+  const diffByteLength = Buffer.byteLength(diff ?? '', 'utf8');
+
+  if (needsCommitBatching(stagedFiles.length, diffByteLength, commitSizeLimits)) {
+    await commitStagedFilesInBatches(
+      stagedFiles,
+      commitSizeLimits,
+      extraArgs,
+      batchOptions
     );
+    process.exit(0);
+  }
+
+  try {
+    assertCommitSizeGuardrails(stagedFiles.length, diffByteLength);
   } catch (guardrailError) {
     outro(`${chalk.red('✖')} ${(guardrailError as Error).message}`);
     process.exit(1);

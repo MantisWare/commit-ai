@@ -30,7 +30,7 @@ export const checkCommitSizeGuardrails = (
   ) {
     throw new Error(
       `Staged diff is too large (${diffByteLength} bytes). Maximum allowed: ${maxDiffBytes} bytes. ` +
-        'Split your commit or adjust with: cmt config set CMT_MAX_DIFF_BYTES=<number>'
+        'Use `cmt` to split into multiple commits automatically, or adjust with: cmt config set CMT_MAX_DIFF_BYTES=<number>'
     );
   }
 };
@@ -58,3 +58,19 @@ export const exceedsMaxStagedFiles = (
   limits.maxFiles !== undefined &&
   typeof limits.maxFiles === 'number' &&
   stagedFileCount > limits.maxFiles;
+
+export const exceedsMaxDiffBytes = (
+  diffByteLength: number,
+  limits: CommitSizeLimits = getCommitSizeLimits()
+): boolean =>
+  limits.maxDiffBytes !== undefined &&
+  typeof limits.maxDiffBytes === 'number' &&
+  diffByteLength > limits.maxDiffBytes;
+
+export const needsCommitBatching = (
+  stagedFileCount: number,
+  diffByteLength: number,
+  limits: CommitSizeLimits = getCommitSizeLimits()
+): boolean =>
+  exceedsMaxStagedFiles(stagedFileCount, limits) ||
+  exceedsMaxDiffBytes(diffByteLength, limits);

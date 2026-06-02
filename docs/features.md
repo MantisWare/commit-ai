@@ -133,8 +133,8 @@ If a provider call fails with a **timeout-like error**, CommitAI retries by chun
 
 CommitAI can enforce limits to prevent overly large commits:
 
-- **Maximum files**: When `CMT_MAX_FILES` is set, `cmt` automatically splits oversized staged changes into multiple commits (one batch per limit). Git hooks still require staging within the limit.
-- **Maximum diff size**: When `CMT_MAX_DIFF_BYTES` is set, CommitAI rejects commits when the diff exceeds the byte limit.
+- **Maximum files**: When `CMT_MAX_FILES` is set, `cmt` automatically splits oversized staged changes into multiple commits. Git hooks still require staging within the limit.
+- **Maximum diff size**: When `CMT_MAX_DIFF_BYTES` is set, `cmt` also splits batches so each commit’s diff stays under the byte limit (in addition to the file limit).
 - Both guardrails provide clear error messages with actionable suggestions (split commits, unstage files, or adjust limits).
 
 ---
