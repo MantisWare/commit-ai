@@ -4,6 +4,7 @@ import { GoogleGenerativeAI as GeminiClient } from '@google/generative-ai';
 import { AxiosInstance as RawAxiosClient } from 'axios';
 import { OpenAI as OpenAIClient } from 'openai';
 import { Mistral as MistralClient } from '@mistralai/mistralai';
+import type { OnEngineStatus } from '../local/types';
 
 export interface AiEngineConfig {
   apiKey: string;
@@ -11,6 +12,7 @@ export interface AiEngineConfig {
   maxTokensOutput: number;
   maxTokensInput: number;
   baseURL?: string;
+  onStatus?: OnEngineStatus;
 }
 
 type Client =

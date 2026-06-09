@@ -14,8 +14,10 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import {
   generateCommitMessageByDiff,
+  type OnEngineStatusCallback,
   type OnGenerateCommitProgress
 } from '../generateCommitMessageFromGitDiff';
+import { createEngineStatusUi } from '../utils/engineStatusUi';
 import {
   assertCommitSizeGuardrails,
   exceedsMaxStagedFiles,
@@ -75,16 +77,21 @@ const getGitRemotes = async () => {
 
 const runWithHeartbeat = async <T>(
   label: string,
-  action: (onProgress?: OnGenerateCommitProgress) => Promise<T>
+  action: (
+    onProgress?: OnGenerateCommitProgress,
+    onEngineStatus?: OnEngineStatusCallback
+  ) => Promise<T>
 ): Promise<T> => {
   const { stop, updateLabel } = startElapsedHeartbeat({ label });
+  const statusUi = createEngineStatusUi(updateLabel);
   const onProgress: OnGenerateCommitProgress = (progress) => {
     updateLabel(formatCommitProgressLabel(label, progress));
   };
 
   try {
-    return await action(onProgress);
+    return await action(onProgress, statusUi.onEngineStatus);
   } finally {
+    statusUi.stop();
     stop();
   }
 };
@@ -129,8 +136,16 @@ const createCommitMessageFromDiff = async (
   fullGitMojiSpec: boolean,
   context: string
 ): Promise<string> =>
-  runWithHeartbeat('Cooking up the commit message 🍳🎶', async (onProgress) =>
-    generateCommitMessageByDiff(diff, fullGitMojiSpec, context, onProgress)
+  runWithHeartbeat(
+    'Cooking up the commit message 🍳🎶',
+    async (onProgress, onEngineStatus) =>
+      generateCommitMessageByDiff(
+        diff,
+        fullGitMojiSpec,
+        context,
+        onProgress,
+        onEngineStatus
+      )
   );
 
 const performGitCommit = async (
@@ -596,8 +611,14 @@ const getLogMessagesFromGitDiff = async (diff: string, fullGitMojiSpec: boolean 
     
     const commitMessage = await runWithHeartbeat(
       'Cooking up the log 🍳🎶',
-      async (onProgress) =>
-        generateCommitMessageByDiff(diff, fullGitMojiSpec, context, onProgress)
+      async (onProgress, onEngineStatus) =>
+        generateCommitMessageByDiff(
+          diff,
+          fullGitMojiSpec,
+          context,
+          onProgress,
+          onEngineStatus
+        )
     );
 
     outro(

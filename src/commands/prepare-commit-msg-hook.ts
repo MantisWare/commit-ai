@@ -6,9 +6,10 @@ import { intro, outro } from '@clack/prompts';
 import { generateCommitMessageByDiff } from '../generateCommitMessageFromGitDiff';
 import { assertCommitSizeGuardrails } from '../utils/commitGuardrails';
 import { formatCommitProgressLabel } from '../utils/commitProgressLabel';
+import { createEngineStatusUi } from '../utils/engineStatusUi';
 import { getChangedFiles, getDiff, getStagedFiles, gitAdd } from '../utils/git';
 import { startElapsedHeartbeat } from '../utils/heartbeat';
-import { getConfig } from './config';
+import { CMT_AI_PROVIDER_ENUM, getConfig } from './config';
 
 const [messageFilePath, commitSource] = process.argv.slice(2);
 
@@ -42,7 +43,12 @@ export const prepareCommitMessageHook = async (
 
     const config = getConfig();
 
-    if (!config.CMT_API_KEY) {
+    const isLocalProvider =
+      config.CMT_AI_PROVIDER === CMT_AI_PROVIDER_ENUM.LOCAL;
+    if (
+      (config.CMT_API_KEY === undefined || config.CMT_API_KEY === '') &&
+      isLocalProvider !== true
+    ) {
       outro(
         'No CMT_API_KEY is set. Set your key via `cmt config set CMT_API_KEY=<value>. For more info see https://github.com/MantisWare/commit-ai'
       );
@@ -64,6 +70,7 @@ export const prepareCommitMessageHook = async (
 
     const baseLabel = 'Generating commit message';
     const { stop, updateLabel } = startElapsedHeartbeat({ label: baseLabel });
+    const statusUi = createEngineStatusUi(updateLabel);
     let commitMessage: string;
     try {
       commitMessage = await generateCommitMessageByDiff(
@@ -72,9 +79,11 @@ export const prepareCommitMessageHook = async (
         '',
         (progress) => {
           updateLabel(formatCommitProgressLabel(baseLabel, progress));
-        }
+        },
+        statusUi.onEngineStatus
       );
     } finally {
+      statusUi.stop();
       stop();
     }
 

@@ -33,7 +33,19 @@ export enum CONFIG_KEYS {
   CMT_SML = 'CMT_SML',
   CMT_REVIEW_MIN_SCORE = 'CMT_REVIEW_MIN_SCORE',
   CMT_GITPUSH = 'CMT_GITPUSH', // todo: deprecate
-  CMT_AUTO_UPDATE = 'CMT_AUTO_UPDATE'
+  CMT_AUTO_UPDATE = 'CMT_AUTO_UPDATE',
+  CMT_LOCAL_MODEL_PRESET = 'CMT_LOCAL_MODEL_PRESET',
+  CMT_LOCAL_RUNTIME = 'CMT_LOCAL_RUNTIME',
+  CMT_LOCAL_CONTEXT_SIZE = 'CMT_LOCAL_CONTEXT_SIZE',
+  CMT_LOCAL_GPU_LAYERS = 'CMT_LOCAL_GPU_LAYERS',
+  CMT_LOCAL_DAEMON_PORT = 'CMT_LOCAL_DAEMON_PORT',
+  CMT_LOCAL_IDLE_TIMEOUT = 'CMT_LOCAL_IDLE_TIMEOUT',
+  CMT_LOCAL_PREFER_DAEMON = 'CMT_LOCAL_PREFER_DAEMON',
+  CMT_LOCAL_CLOUD_FALLBACK = 'CMT_LOCAL_CLOUD_FALLBACK',
+  CMT_LOCAL_FALLBACK_PROVIDER = 'CMT_LOCAL_FALLBACK_PROVIDER',
+  CMT_LOCAL_FALLBACK_MODEL = 'CMT_LOCAL_FALLBACK_MODEL',
+  CMT_LOCAL_FALLBACK_API_KEY = 'CMT_LOCAL_FALLBACK_API_KEY',
+  CMT_LOCAL_FALLBACK_API_URL = 'CMT_LOCAL_FALLBACK_API_URL'
 }
 
 export enum CONFIG_MODES {
@@ -361,6 +373,111 @@ export const configValidators = {
     return value;
   },
 
+  [CONFIG_KEYS.CMT_LOCAL_MODEL_PRESET](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_LOCAL_MODEL_PRESET,
+      ['qwen-0.5b', 'qwen-1.5b', 'gemma-2b'].includes(value),
+      'Must be one of: qwen-0.5b, qwen-1.5b, gemma-2b'
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_RUNTIME](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_LOCAL_RUNTIME,
+      ['auto', 'mlx', 'gguf'].includes(value),
+      'Must be one of: auto, mlx, gguf'
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_CONTEXT_SIZE](value: any) {
+    const numValue = Number(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_LOCAL_CONTEXT_SIZE,
+      !isNaN(numValue) && numValue >= 512 && numValue <= 32768,
+      'Must be a number between 512 and 32768'
+    );
+    return numValue;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_GPU_LAYERS](value: any) {
+    const numValue = Number(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_LOCAL_GPU_LAYERS,
+      !isNaN(numValue) && numValue >= -1,
+      'Must be -1 (auto) or a non-negative number'
+    );
+    return numValue;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_DAEMON_PORT](value: any) {
+    const numValue = Number(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_LOCAL_DAEMON_PORT,
+      !isNaN(numValue) && numValue > 0 && numValue <= 65535,
+      'Must be a valid port number (1-65535)'
+    );
+    return numValue;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_IDLE_TIMEOUT](value: any) {
+    const numValue = Number(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_LOCAL_IDLE_TIMEOUT,
+      !isNaN(numValue) && numValue >= 0,
+      'Must be a non-negative number of seconds'
+    );
+    return numValue;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_PREFER_DAEMON](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_LOCAL_PREFER_DAEMON,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_CLOUD_FALLBACK](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_LOCAL_CLOUD_FALLBACK,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_FALLBACK_PROVIDER](value: any) {
+    const validProviders = Object.values(CMT_AI_PROVIDER_ENUM).filter(
+      (provider) => provider !== CMT_AI_PROVIDER_ENUM.LOCAL
+    );
+    validateConfig(
+      CONFIG_KEYS.CMT_LOCAL_FALLBACK_PROVIDER,
+      validProviders.includes(value as CMT_AI_PROVIDER_ENUM),
+      `Must be a supported cloud provider: ${validProviders.join(', ')}`
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_FALLBACK_MODEL](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_LOCAL_FALLBACK_MODEL,
+      typeof value === 'string' && value.length > 0,
+      'Must be a non-empty string'
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_FALLBACK_API_KEY](value: any) {
+    return value;
+  },
+
+  [CONFIG_KEYS.CMT_LOCAL_FALLBACK_API_URL](value: any) {
+    return value;
+  },
+
   [CONFIG_KEYS.CMT_AI_PROVIDER](value: any) {
     if (!value) value = 'openai';
 
@@ -459,7 +576,8 @@ export enum CMT_AI_PROVIDER_ENUM {
   GROQ = 'groq',
   MISTRAL = 'mistral',
   MLX = 'mlx',
-  DEEPSEEK = 'deepseek'
+  DEEPSEEK = 'deepseek',
+  LOCAL = 'local'
 }
 
 export type ConfigType = {
@@ -488,6 +606,18 @@ export type ConfigType = {
   [CONFIG_KEYS.CMT_REVIEW_CACHE_TTL]?: number;
   [CONFIG_KEYS.CMT_REVIEW_CACHE_DISABLED]: boolean;
   [CONFIG_KEYS.CMT_TEST_MOCK_TYPE]: string;
+  [CONFIG_KEYS.CMT_LOCAL_MODEL_PRESET]?: string;
+  [CONFIG_KEYS.CMT_LOCAL_RUNTIME]?: string;
+  [CONFIG_KEYS.CMT_LOCAL_CONTEXT_SIZE]?: number;
+  [CONFIG_KEYS.CMT_LOCAL_GPU_LAYERS]?: number;
+  [CONFIG_KEYS.CMT_LOCAL_DAEMON_PORT]?: number;
+  [CONFIG_KEYS.CMT_LOCAL_IDLE_TIMEOUT]?: number;
+  [CONFIG_KEYS.CMT_LOCAL_PREFER_DAEMON]?: boolean;
+  [CONFIG_KEYS.CMT_LOCAL_CLOUD_FALLBACK]?: boolean;
+  [CONFIG_KEYS.CMT_LOCAL_FALLBACK_PROVIDER]?: CMT_AI_PROVIDER_ENUM;
+  [CONFIG_KEYS.CMT_LOCAL_FALLBACK_MODEL]?: string;
+  [CONFIG_KEYS.CMT_LOCAL_FALLBACK_API_KEY]?: string;
+  [CONFIG_KEYS.CMT_LOCAL_FALLBACK_API_URL]?: string;
 };
 
 export const defaultConfigPath = pathJoin(homedir(), '.commit-ai');
@@ -537,7 +667,17 @@ export const DEFAULT_CONFIG = {
   CMT_CHUNK_CONCURRENCY: 4,
   CMT_SYNTHESIZE_CHUNKS: true,
   CMT_GITPUSH: true, // todo: deprecate
-  CMT_AUTO_UPDATE: false
+  CMT_AUTO_UPDATE: false,
+  CMT_LOCAL_MODEL_PRESET: 'qwen-0.5b',
+  CMT_LOCAL_RUNTIME: 'auto',
+  CMT_LOCAL_CONTEXT_SIZE: 4096,
+  CMT_LOCAL_GPU_LAYERS: -1,
+  CMT_LOCAL_DAEMON_PORT: 11435,
+  CMT_LOCAL_IDLE_TIMEOUT: 1800,
+  CMT_LOCAL_PREFER_DAEMON: true,
+  CMT_LOCAL_CLOUD_FALLBACK: true,
+  CMT_LOCAL_FALLBACK_PROVIDER: CMT_AI_PROVIDER_ENUM.OPENAI,
+  CMT_LOCAL_FALLBACK_MODEL: 'gpt-4o-mini'
 };
 
 const initGlobalConfig = (configPath: string = defaultConfigPath) => {
@@ -591,7 +731,30 @@ const getEnvConfig = (envPath: string) => {
     CMT_REVIEW_CACHE_TTL: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_TTL),
     CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH), // todo: deprecate
-    CMT_AUTO_UPDATE: parseConfigVarValue(process.env.CMT_AUTO_UPDATE)
+    CMT_AUTO_UPDATE: parseConfigVarValue(process.env.CMT_AUTO_UPDATE),
+    CMT_LOCAL_MODEL_PRESET: process.env.CMT_LOCAL_MODEL_PRESET,
+    CMT_LOCAL_RUNTIME: process.env.CMT_LOCAL_RUNTIME,
+    CMT_LOCAL_CONTEXT_SIZE: parseConfigVarValue(
+      process.env.CMT_LOCAL_CONTEXT_SIZE
+    ),
+    CMT_LOCAL_GPU_LAYERS: parseConfigVarValue(process.env.CMT_LOCAL_GPU_LAYERS),
+    CMT_LOCAL_DAEMON_PORT: parseConfigVarValue(
+      process.env.CMT_LOCAL_DAEMON_PORT
+    ),
+    CMT_LOCAL_IDLE_TIMEOUT: parseConfigVarValue(
+      process.env.CMT_LOCAL_IDLE_TIMEOUT
+    ),
+    CMT_LOCAL_PREFER_DAEMON: parseConfigVarValue(
+      process.env.CMT_LOCAL_PREFER_DAEMON
+    ),
+    CMT_LOCAL_CLOUD_FALLBACK: parseConfigVarValue(
+      process.env.CMT_LOCAL_CLOUD_FALLBACK
+    ),
+    CMT_LOCAL_FALLBACK_PROVIDER: process.env
+      .CMT_LOCAL_FALLBACK_PROVIDER as CMT_AI_PROVIDER_ENUM,
+    CMT_LOCAL_FALLBACK_MODEL: process.env.CMT_LOCAL_FALLBACK_MODEL,
+    CMT_LOCAL_FALLBACK_API_KEY: process.env.CMT_LOCAL_FALLBACK_API_KEY,
+    CMT_LOCAL_FALLBACK_API_URL: process.env.CMT_LOCAL_FALLBACK_API_URL
   };
 };
 
@@ -833,6 +996,66 @@ const CONFIG_HELP: Record<string, { description: string; example: string; defaul
       'Automatically install the latest CommitAI version when an update is available (checked on each cmt run)',
     example: 'true',
     default: 'false'
+  },
+  CMT_LOCAL_MODEL_PRESET: {
+    description: 'Local SLM preset (qwen-0.5b, qwen-1.5b, gemma-2b)',
+    example: 'qwen-0.5b',
+    default: 'qwen-0.5b'
+  },
+  CMT_LOCAL_RUNTIME: {
+    description: 'Local inference runtime (auto picks MLX on Apple Silicon, GGUF elsewhere)',
+    example: 'auto',
+    default: 'auto'
+  },
+  CMT_LOCAL_CONTEXT_SIZE: {
+    description: 'Context window size for local models',
+    example: '4096',
+    default: '4096'
+  },
+  CMT_LOCAL_GPU_LAYERS: {
+    description: 'GGUF GPU layer offload (-1 = all layers)',
+    example: '-1',
+    default: '-1'
+  },
+  CMT_LOCAL_DAEMON_PORT: {
+    description: 'Port for cmt local serve daemon',
+    example: '11435',
+    default: '11435'
+  },
+  CMT_LOCAL_IDLE_TIMEOUT: {
+    description: 'Daemon idle shutdown in seconds (0 = disabled)',
+    example: '1800',
+    default: '1800'
+  },
+  CMT_LOCAL_PREFER_DAEMON: {
+    description: 'Prefer warm local daemon over on-demand model load',
+    example: 'true',
+    default: 'true'
+  },
+  CMT_LOCAL_CLOUD_FALLBACK: {
+    description: 'Fall back to cloud provider when local inference fails',
+    example: 'true',
+    default: 'true'
+  },
+  CMT_LOCAL_FALLBACK_PROVIDER: {
+    description: 'Cloud provider used when local fallback triggers',
+    example: 'openai',
+    default: 'openai'
+  },
+  CMT_LOCAL_FALLBACK_MODEL: {
+    description: 'Cloud model used when local fallback triggers',
+    example: 'gpt-4o-mini',
+    default: 'gpt-4o-mini'
+  },
+  CMT_LOCAL_FALLBACK_API_KEY: {
+    description: 'Optional separate API key for cloud fallback',
+    example: 'sk-...',
+    default: 'uses CMT_API_KEY'
+  },
+  CMT_LOCAL_FALLBACK_API_URL: {
+    description: 'Optional separate API URL for cloud fallback',
+    example: 'https://api.openai.com/v1',
+    default: 'uses CMT_API_URL'
   }
 };
 

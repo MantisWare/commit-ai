@@ -7,7 +7,20 @@ import { homedir } from 'os';
 import { join as pathJoin } from 'path';
 import packageJSON from '../../package.json';
 import { COMMANDS } from './ENUMS';
-import { getConfig } from './config';
+import { CMT_AI_PROVIDER_ENUM, getConfig } from './config';
+import { isDaemonRunning } from '../local/daemon';
+import {
+  DEFAULT_LOCAL_PRESET,
+  getModelDisplayLabel,
+  isLocalModelPresetId,
+  resolvePreset
+} from '../local/modelPresets';
+import {
+  detectRuntime,
+  getRuntimeDisplayName,
+  resolveLocalRuntimeOverride
+} from '../local/runtime';
+import { LOCAL_SETUP_MARKER } from '../local/paths';
 import { printCommitAiBanner } from '../utils/banner';
 import { COMMITLINT_LLM_CONFIG_PATH } from '../modules/commitlint/constants';
 import { checkForUpdates } from '../utils/versionUpdate';
@@ -111,6 +124,47 @@ const runCheck = async (): Promise<CheckResult[]> => {
       : 'not configured (optional, for CMT_PROMPT_MODULE=@commitlint)'
   });
 
+  const runtime = detectRuntime(
+    resolveLocalRuntimeOverride(config.CMT_LOCAL_RUNTIME)
+  );
+  const presetId = isLocalModelPresetId(config.CMT_LOCAL_MODEL_PRESET)
+    ? config.CMT_LOCAL_MODEL_PRESET
+    : DEFAULT_LOCAL_PRESET;
+  const preset = resolvePreset(presetId);
+  const localSetupDone = existsSync(LOCAL_SETUP_MARKER);
+  const daemon = await isDaemonRunning(config.CMT_LOCAL_DAEMON_PORT ?? 11435);
+
+  results.push({
+    label: 'Local runtime',
+    status: 'pass',
+    details: `${getRuntimeDisplayName(runtime)} — ${getModelDisplayLabel(preset, runtime)}`
+  });
+
+  results.push({
+    label: 'Local setup',
+    status:
+      provider === CMT_AI_PROVIDER_ENUM.LOCAL
+        ? localSetupDone
+          ? 'pass'
+          : 'warn'
+        : 'warn',
+    details:
+      provider === CMT_AI_PROVIDER_ENUM.LOCAL
+        ? localSetupDone
+          ? 'configured'
+          : 'run cmt local setup'
+        : 'optional — cmt local setup'
+  });
+
+  results.push({
+    label: 'Local daemon',
+    status: daemon !== undefined ? 'pass' : 'warn',
+    details:
+      daemon !== undefined
+        ? `running on :${daemon.port}`
+        : 'not running — cmt local serve (recommended for git hooks)'
+  });
+
   const updateResult = await checkForUpdates();
   if (updateResult.latestVersion === undefined) {
     results.push({
@@ -198,6 +252,18 @@ export const checkCommand = command(
         { cmd: 'cmt config set CMT_SML=true', desc: 'Enable condensed per-file messages' },
         { cmd: 'cmt config set CMT_EMOJI=true', desc: 'Enable GitMoji in commit messages' },
         { cmd: 'cmt config help', desc: 'View all configuration options' },
+        { cmd: 'cmt local setup', desc: 'Set up built-in local SLM (GGUF/MLX)' },
+        {
+          cmd: 'cmt local serve --background',
+          desc: 'Start local model daemon (faster git hooks)'
+        },
+        { cmd: 'cmt local stop', desc: 'Stop the local model daemon' },
+        { cmd: 'cmt local status', desc: 'Show local runtime, model, and daemon state' },
+        { cmd: 'cmt local models list', desc: 'List available local SLM presets' },
+        {
+          cmd: 'cmt local models download [preset]',
+          desc: 'Download a local model preset (qwen-0.5b, etc.)'
+        },
         { cmd: 'cmt hook set', desc: 'Install Git hook for auto-generation' },
         { cmd: 'cmt update', desc: 'Check for and install CommitAI updates' },
         { cmd: 'cmt --help', desc: 'Show all available commands and flags' }

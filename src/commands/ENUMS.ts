@@ -7,5 +7,6 @@ export enum COMMANDS {
   pr = 'pr',
   changelog = 'changelog',
   review = 'review',
-  standards = 'standards'
+  standards = 'standards',
+  local = 'local'
 }

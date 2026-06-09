@@ -11,7 +11,7 @@ This is a living checklist of what CommitAI **already supports** and what we may
 ### CLI & UX
 
 - [x] `cmt` default command (generate commit message from staged diff)
-- [x] `cmt check` environment/version check command (prints banner + validates toolchain basics + Quick Start Guide with 10 essential commands)
+- [x] `cmt check` environment/version check command (prints banner + validates toolchain basics + Quick Start Guide with essential commands incl. full `cmt local` workflow)
 - [x] `cmt update` command to check for and install updates (`--check`, `--yes`)
 - [x] `CMT_AUTO_UPDATE` config to auto-install updates when running `cmt`
 - [x] Refresh console banner to match Commit-AI branding (cyan→purple gradient + "AI-Powered Git Commits" + author attribution)
@@ -37,6 +37,8 @@ This is a living checklist of what CommitAI **already supports** and what we may
 
 > **Auto-updated by Cursor:** Added `cmt update` and `CMT_AUTO_UPDATE` on 2026-06-02.
 
+> **Auto-updated by Cursor:** Expanded `cmt check` Quick Start Guide with all `cmt local` subcommands on 2026-06-09.
+
 > **Auto-updated by Cursor:** Batch generation uses per-batch timeouts, in-flight status updates, and rate-limit retry logging on 2026-06-02.
 
 ### Config & project setup
@@ -61,6 +63,15 @@ This is a living checklist of what CommitAI **already supports** and what we may
 - [x] MLX engine (`mlx`, local)
 - [x] Flowise engine (`flowise`)
 - [x] Test engine (`test`)
+- [x] Built-in local SLM provider (`local`, llama.cpp / node-llama-cpp + mlx-lm)
+- [x] Dual runtime — GGUF (Win/Linux) + MLX (Apple Silicon)
+- [x] `cmt local` commands (setup, serve, stop, status, models)
+- [x] Qwen2.5-0.5B default preset (smallest VRAM)
+- [x] Gemma 2 2B optional preset
+- [x] Animated warmup indicator with model name during local load
+- [x] Cloud fallback when local model fails (`CMT_LOCAL_CLOUD_FALLBACK`)
+
+> **Auto-updated by Cursor:** Added built-in local SLM provider with dual GGUF/MLX runtime, `cmt local` commands, warmup UX, and cloud fallback on 2026-06-09.
 
 ### Integrations
 

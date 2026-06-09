@@ -71,6 +71,46 @@ cmt
 
 Running `git add` is optional—`cmt` will automatically stage changes for you.
 
+### Built-in Local LLM (GGUF + MLX)
+
+CommitAI can run a small local model **without Ollama, LM Studio, or MLX setup**. It auto-selects the best runtime for your platform:
+
+| Platform | Runtime | Model format |
+|----------|---------|--------------|
+| macOS Apple Silicon | `mlx-lm` | MLX 4-bit weights |
+| Windows / Linux / macOS Intel | `node-llama-cpp` | GGUF Q4_K_M |
+
+**Quick start:**
+
+```sh
+cmt local setup
+cmt local serve --background   # optional — keeps model warm for git hooks
+cmt
+```
+
+Default preset: **Qwen2.5-0.5B-Instruct** (~0.5–0.8 GB VRAM). Other presets: `qwen-1.5b`, `gemma-2b`.
+
+```sh
+cmt local models list
+cmt local models download qwen-1.5b
+cmt local status
+cmt local stop
+```
+
+Configure via `~/.commit-ai` or `.env`:
+
+```env
+CMT_AI_PROVIDER=local
+CMT_LOCAL_MODEL_PRESET=qwen-0.5b
+CMT_LOCAL_RUNTIME=auto          # auto | mlx | gguf
+CMT_LOCAL_CLOUD_FALLBACK=true   # fall back to gpt-4o-mini if local fails
+CMT_LOCAL_FALLBACK_MODEL=gpt-4o-mini
+```
+
+While a local model loads, CommitAI shows an animated warmup indicator with the model name (e.g. `Warming up Qwen2.5-0.5B-Instruct (MLX 4-bit)…`).
+
+**Note:** The GitHub Action does not support `local` (no GPU in CI). Use a cloud provider for CI workflows.
+
 ### Running Locally with Ollama
 
 You can also run CommitAI with a local model through Ollama:
@@ -149,7 +189,7 @@ The check runs automatically after global installation, but you can run it anyti
 Add CommitAI configurations to a `.env` file in your repository:
 
 ```env
-CMT_AI_PROVIDER=<openai (default), anthropic, azure, ollama, gemini, flowise, mlx, deepseek>
+CMT_AI_PROVIDER=<openai (default), anthropic, azure, ollama, gemini, flowise, mlx, deepseek, local>
 CMT_API_KEY=<your OpenAI API token> # or another LLM provider API key
 CMT_API_URL=<optional proxy path to OpenAI API>
 CMT_TOKENS_MAX_INPUT=40960  # Maximum input tokens (optional, provider/model specific)

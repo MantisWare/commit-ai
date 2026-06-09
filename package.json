@@ -107,5 +107,8 @@
     "inquirer": "^9.1.4",
     "openai": "^4.57.0",
     "zod": "^3.23.8"
+  },
+  "optionalDependencies": {
+    "node-llama-cpp": "^3.18.1"
   }
 }

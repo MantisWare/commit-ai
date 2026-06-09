@@ -2,6 +2,7 @@ import { OpenAI } from 'openai';
 import { getConfig } from './commands/config';
 import { getMainCommitPrompt, getSynthesisPrompt } from './prompts';
 import { debug } from './utils/debug';
+import type { OnEngineStatus } from './local/types';
 import { getEngine } from './utils/engine';
 import { mergeDiffs } from './utils/mergeDiffs';
 import { runWithConcurrency } from './utils/runWithConcurrency';
@@ -72,6 +73,8 @@ export type OnGenerateCommitProgress = (
   progress: GenerateCommitProgress
 ) => void;
 
+export type OnEngineStatusCallback = OnEngineStatus;
+
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
@@ -113,12 +116,13 @@ const synthesizeChunkMessages = async (
   chunkMessages: string[],
   fullGitMojiSpec: boolean,
   context: string,
-  onProgress?: OnGenerateCommitProgress
+  onProgress?: OnGenerateCommitProgress,
+  onEngineStatus?: OnEngineStatusCallback
 ): Promise<string> => {
   onProgress?.({ phase: 'synthesizing' });
 
   try {
-    const engine = getEngine();
+    const engine = getEngine({ onStatus: onEngineStatus });
     const messages = getSynthesisPrompt(chunkMessages, fullGitMojiSpec, context);
     const synthesized = await engine.generateCommitMessage(messages);
 
@@ -140,7 +144,8 @@ const finalizeChunkMessages = async (
   chunkMessages: string[],
   fullGitMojiSpec: boolean,
   context: string,
-  onProgress?: OnGenerateCommitProgress
+  onProgress?: OnGenerateCommitProgress,
+  onEngineStatus?: OnEngineStatusCallback
 ): Promise<string> => {
   if (chunkMessages.length === 0) {
     throw new Error(GenerateCommitMessageErrorEnum.emptyMessage);
@@ -155,7 +160,8 @@ const finalizeChunkMessages = async (
       chunkMessages,
       fullGitMojiSpec,
       context,
-      onProgress
+      onProgress,
+      onEngineStatus
     );
   }
 
@@ -166,7 +172,8 @@ const runChunkTasks = async (
   commitMessageTasks: CommitMessageTask[],
   fullGitMojiSpec: boolean,
   context: string,
-  onProgress?: OnGenerateCommitProgress
+  onProgress?: OnGenerateCommitProgress,
+  onEngineStatus?: OnEngineStatusCallback
 ): Promise<string> => {
   const concurrency = getChunkConcurrency();
   const batchDelayMs = concurrency > 1 ? 750 : 0;
@@ -191,7 +198,8 @@ const runChunkTasks = async (
     chunkMessages,
     fullGitMojiSpec,
     context,
-    onProgress
+    onProgress,
+    onEngineStatus
   );
 };
 
@@ -199,7 +207,8 @@ export const generateCommitMessageByDiff = async (
   diff: string,
   fullGitMojiSpec: boolean = false,
   context: string = '',
-  onProgress?: OnGenerateCommitProgress
+  onProgress?: OnGenerateCommitProgress,
+  onEngineStatus?: OnEngineStatusCallback
 ): Promise<string> => {
   try {
     debug('Starting generateCommitMessageByDiff');
@@ -232,14 +241,16 @@ export const generateCommitMessageByDiff = async (
         MAX_REQUEST_TOKENS,
         fullGitMojiSpec,
         context,
-        onProgress
+        onProgress,
+        onEngineStatus
       );
 
       return runChunkTasks(
         commitMessageTasks,
         fullGitMojiSpec,
         context,
-        onProgress
+        onProgress,
+        onEngineStatus
       );
     }
 
@@ -251,7 +262,7 @@ export const generateCommitMessageByDiff = async (
     );
     debug('Got messages, initializing engine...');
 
-    const engine = getEngine();
+    const engine = getEngine({ onStatus: onEngineStatus });
     debug('Engine initialized, making API call...');
     const commitMessage = await engine.generateCommitMessage(messages);
     debug('Got response from API');
@@ -271,7 +282,8 @@ export const generateCommitMessageByDiff = async (
         fallbackMaxDiffLength,
         fullGitMojiSpec,
         context,
-        onProgress
+        onProgress,
+        onEngineStatus
       );
 
       if (commitMessageTasks.length > 0) {
@@ -279,7 +291,8 @@ export const generateCommitMessageByDiff = async (
           commitMessageTasks,
           fullGitMojiSpec,
           context,
-          onProgress
+          onProgress,
+          onEngineStatus
         );
       }
     }
@@ -293,7 +306,8 @@ function getMessagesPromisesByChangesInFile(
   separator: string,
   maxChangeLength: number,
   fullGitMojiSpec: boolean,
-  context: string
+  context: string,
+  onEngineStatus?: OnEngineStatusCallback
 ): CommitMessageTask[] {
   const hunkHeaderSeparator = '@@ ';
   const [fileHeader, ...fileDiffByLines] = fileDiff.split(hunkHeaderSeparator);
@@ -314,7 +328,7 @@ function getMessagesPromisesByChangesInFile(
     }
   }
 
-  const engine = getEngine();
+  const engine = getEngine({ onStatus: onEngineStatus });
   const commitMsgsFromFileLineDiffs: CommitMessageTask[] =
     lineDiffsWithHeader.map((lineDiff) => async () => {
       const messages = await generateCommitMessageChatCompletionPrompt(
@@ -378,7 +392,8 @@ const getCommitMsgsTasksFromFileDiffs = async (
   maxDiffLength: number,
   fullGitMojiSpec: boolean,
   context: string,
-  onProgress?: OnGenerateCommitProgress
+  onProgress?: OnGenerateCommitProgress,
+  onEngineStatus?: OnEngineStatusCallback
 ): Promise<CommitMessageTask[]> => {
   const separator = 'diff --git ';
 
@@ -418,12 +433,13 @@ const getCommitMsgsTasksFromFileDiffs = async (
         separator,
         maxDiffLength,
         fullGitMojiSpec,
-        context
+        context,
+        onEngineStatus
       );
 
       commitMessageTasks.push(...messagesPromises);
     } else {
-      const engine = getEngine();
+      const engine = getEngine({ onStatus: onEngineStatus });
       commitMessageTasks.push(async () => {
         const messages = await generateCommitMessageChatCompletionPrompt(
           separator + fileDiff,

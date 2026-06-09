@@ -18,6 +18,7 @@ await build({
   platform: 'node',
   format: 'cjs',
   outfile: './out/cli.cjs',
+  external: ['node-llama-cpp'],
   banner: {
     js: punycodeSuppressionBanner
   }
