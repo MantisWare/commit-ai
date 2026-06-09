@@ -3274,7 +3274,7 @@ var require_lib2 = __commonJS({
       return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
     }
     var Stream3 = _interopDefault(require("stream"));
-    var http3 = _interopDefault(require("http"));
+    var http4 = _interopDefault(require("http"));
     var Url = _interopDefault(require("url"));
     var whatwgUrl = _interopDefault(require_public_api());
     var https3 = _interopDefault(require("https"));
@@ -3918,7 +3918,7 @@ var require_lib2 = __commonJS({
       return headers;
     }
     var INTERNALS$1 = Symbol("Response internals");
-    var STATUS_CODES = http3.STATUS_CODES;
+    var STATUS_CODES = http4.STATUS_CODES;
     var Response6 = class {
       constructor() {
         let body = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : null;
@@ -4159,7 +4159,7 @@ var require_lib2 = __commonJS({
       return new fetch4.Promise(function(resolve, reject) {
         const request3 = new Request6(url2, opts);
         const options = getNodeRequestOptions(request3);
-        const send = (options.protocol === "https:" ? https3 : http3).request;
+        const send = (options.protocol === "https:" ? https3 : http4).request;
         const signal = request3.signal;
         let response = null;
         const abort = function abort2() {
@@ -21030,7 +21030,7 @@ var require_form_data = __commonJS({
     var CombinedStream = require_combined_stream();
     var util3 = require("util");
     var path5 = require("path");
-    var http3 = require("http");
+    var http4 = require("http");
     var https3 = require("https");
     var parseUrl = require("url").parse;
     var fs7 = require("fs");
@@ -21299,7 +21299,7 @@ var require_form_data = __commonJS({
       if (options.protocol == "https:") {
         request3 = https3.request(options);
       } else {
-        request3 = http3.request(options);
+        request3 = http4.request(options);
       }
       this.getLength(function(err, length) {
         if (err && err !== "Unknown stream") {
@@ -22060,7 +22060,7 @@ var require_follow_redirects = __commonJS({
   "node_modules/.pnpm/follow-redirects@1.15.6/node_modules/follow-redirects/index.js"(exports, module2) {
     var url2 = require("url");
     var URL2 = url2.URL;
-    var http3 = require("http");
+    var http4 = require("http");
     var https3 = require("https");
     var Writable = require("stream").Writable;
     var assert = require("assert");
@@ -22527,7 +22527,7 @@ var require_follow_redirects = __commonJS({
     function isURL(value) {
       return URL2 && value instanceof URL2;
     }
-    module2.exports = wrap({ http: http3, https: https3 });
+    module2.exports = wrap({ http: http4, https: https3 });
     module2.exports.wrap = wrap;
   }
 });
@@ -23492,7 +23492,7 @@ var require_helpers = __commonJS({
     };
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.req = exports.json = exports.toBuffer = void 0;
-    var http3 = __importStar2(require("http"));
+    var http4 = __importStar2(require("http"));
     var https3 = __importStar2(require("https"));
     async function toBuffer(stream4) {
       let length = 0;
@@ -23518,7 +23518,7 @@ var require_helpers = __commonJS({
     exports.json = json;
     function req(url2, opts = {}) {
       const href = typeof url2 === "string" ? url2 : url2.href;
-      const req2 = (href.startsWith("https:") ? https3 : http3).request(url2, opts);
+      const req2 = (href.startsWith("https:") ? https3 : http4).request(url2, opts);
       const promise = new Promise((resolve, reject) => {
         req2.once("response", resolve).once("error", reject).end();
       });
@@ -23573,11 +23573,11 @@ var require_dist = __commonJS({
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Agent = void 0;
     var net = __importStar2(require("net"));
-    var http3 = __importStar2(require("http"));
+    var http4 = __importStar2(require("http"));
     var https_1 = require("https");
     __exportStar2(require_helpers(), exports);
     var INTERNAL = Symbol("AgentBaseInternalState");
-    var Agent3 = class extends http3.Agent {
+    var Agent3 = class extends http4.Agent {
       constructor(opts) {
         super(opts);
         this[INTERNAL] = {};
@@ -23638,7 +23638,7 @@ var require_dist = __commonJS({
         const fakeSocket = this.incrementSockets(name);
         Promise.resolve().then(() => this.connect(req, connectOpts)).then((socket) => {
           this.decrementSockets(name, fakeSocket);
-          if (socket instanceof http3.Agent) {
+          if (socket instanceof http4.Agent) {
             return socket.addRequest(req, connectOpts);
           }
           this[INTERNAL].currentSocket = socket;
@@ -24063,6 +24063,21 @@ var require_state2 = __commonJS({
     exports.state = void 0;
     exports.state = {
       instrumenterImplementation: void 0
+    };
+  }
+});
+
+// src/local/importNodeLlamaCpp.ts
+var importNodeLlamaCpp_exports = {};
+__export(importNodeLlamaCpp_exports, {
+  importNodeLlamaCpp: () => importNodeLlamaCpp
+});
+var importNodeLlamaCpp;
+var init_importNodeLlamaCpp = __esm({
+  "src/local/importNodeLlamaCpp.ts"() {
+    importNodeLlamaCpp = async () => {
+      const moduleName = ["node-llama", "cpp"].join("-");
+      return import(moduleName);
     };
   }
 });
@@ -46521,7 +46536,7 @@ function G3(t2, e3) {
 // package.json
 var package_default = {
   name: "@mantisware/commit-ai",
-  version: "1.0.17",
+  version: "1.0.18",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
     "git",
@@ -46628,6 +46643,9 @@ var package_default = {
     inquirer: "^9.1.4",
     openai: "^4.57.0",
     zod: "^3.23.8"
+  },
+  optionalDependencies: {
+    "node-llama-cpp": "^3.18.1"
   }
 };
 
@@ -48880,9 +48898,9 @@ function create$(options) {
 var $4 = create$();
 
 // src/commands/commit.ts
-var import_fs6 = require("fs");
+var import_fs9 = require("fs");
 var import_os3 = require("os");
-var import_path6 = require("path");
+var import_path7 = require("path");
 
 // src/commands/config.ts
 var dotenv = __toESM(require_main());
@@ -49147,6 +49165,18 @@ var CONFIG_KEYS = /* @__PURE__ */ ((CONFIG_KEYS2) => {
   CONFIG_KEYS2["CMT_REVIEW_MIN_SCORE"] = "CMT_REVIEW_MIN_SCORE";
   CONFIG_KEYS2["CMT_GITPUSH"] = "CMT_GITPUSH";
   CONFIG_KEYS2["CMT_AUTO_UPDATE"] = "CMT_AUTO_UPDATE";
+  CONFIG_KEYS2["CMT_LOCAL_MODEL_PRESET"] = "CMT_LOCAL_MODEL_PRESET";
+  CONFIG_KEYS2["CMT_LOCAL_RUNTIME"] = "CMT_LOCAL_RUNTIME";
+  CONFIG_KEYS2["CMT_LOCAL_CONTEXT_SIZE"] = "CMT_LOCAL_CONTEXT_SIZE";
+  CONFIG_KEYS2["CMT_LOCAL_GPU_LAYERS"] = "CMT_LOCAL_GPU_LAYERS";
+  CONFIG_KEYS2["CMT_LOCAL_DAEMON_PORT"] = "CMT_LOCAL_DAEMON_PORT";
+  CONFIG_KEYS2["CMT_LOCAL_IDLE_TIMEOUT"] = "CMT_LOCAL_IDLE_TIMEOUT";
+  CONFIG_KEYS2["CMT_LOCAL_PREFER_DAEMON"] = "CMT_LOCAL_PREFER_DAEMON";
+  CONFIG_KEYS2["CMT_LOCAL_CLOUD_FALLBACK"] = "CMT_LOCAL_CLOUD_FALLBACK";
+  CONFIG_KEYS2["CMT_LOCAL_FALLBACK_PROVIDER"] = "CMT_LOCAL_FALLBACK_PROVIDER";
+  CONFIG_KEYS2["CMT_LOCAL_FALLBACK_MODEL"] = "CMT_LOCAL_FALLBACK_MODEL";
+  CONFIG_KEYS2["CMT_LOCAL_FALLBACK_API_KEY"] = "CMT_LOCAL_FALLBACK_API_KEY";
+  CONFIG_KEYS2["CMT_LOCAL_FALLBACK_API_URL"] = "CMT_LOCAL_FALLBACK_API_URL";
   return CONFIG_KEYS2;
 })(CONFIG_KEYS || {});
 var MODEL_LIST = {
@@ -49432,6 +49462,99 @@ var configValidators = {
     );
     return value;
   },
+  ["CMT_LOCAL_MODEL_PRESET" /* CMT_LOCAL_MODEL_PRESET */](value) {
+    validateConfig(
+      "CMT_LOCAL_MODEL_PRESET" /* CMT_LOCAL_MODEL_PRESET */,
+      ["qwen-0.5b", "qwen-1.5b", "gemma-2b"].includes(value),
+      "Must be one of: qwen-0.5b, qwen-1.5b, gemma-2b"
+    );
+    return value;
+  },
+  ["CMT_LOCAL_RUNTIME" /* CMT_LOCAL_RUNTIME */](value) {
+    validateConfig(
+      "CMT_LOCAL_RUNTIME" /* CMT_LOCAL_RUNTIME */,
+      ["auto", "mlx", "gguf"].includes(value),
+      "Must be one of: auto, mlx, gguf"
+    );
+    return value;
+  },
+  ["CMT_LOCAL_CONTEXT_SIZE" /* CMT_LOCAL_CONTEXT_SIZE */](value) {
+    const numValue = Number(value);
+    validateConfig(
+      "CMT_LOCAL_CONTEXT_SIZE" /* CMT_LOCAL_CONTEXT_SIZE */,
+      !isNaN(numValue) && numValue >= 512 && numValue <= 32768,
+      "Must be a number between 512 and 32768"
+    );
+    return numValue;
+  },
+  ["CMT_LOCAL_GPU_LAYERS" /* CMT_LOCAL_GPU_LAYERS */](value) {
+    const numValue = Number(value);
+    validateConfig(
+      "CMT_LOCAL_GPU_LAYERS" /* CMT_LOCAL_GPU_LAYERS */,
+      !isNaN(numValue) && numValue >= -1,
+      "Must be -1 (auto) or a non-negative number"
+    );
+    return numValue;
+  },
+  ["CMT_LOCAL_DAEMON_PORT" /* CMT_LOCAL_DAEMON_PORT */](value) {
+    const numValue = Number(value);
+    validateConfig(
+      "CMT_LOCAL_DAEMON_PORT" /* CMT_LOCAL_DAEMON_PORT */,
+      !isNaN(numValue) && numValue > 0 && numValue <= 65535,
+      "Must be a valid port number (1-65535)"
+    );
+    return numValue;
+  },
+  ["CMT_LOCAL_IDLE_TIMEOUT" /* CMT_LOCAL_IDLE_TIMEOUT */](value) {
+    const numValue = Number(value);
+    validateConfig(
+      "CMT_LOCAL_IDLE_TIMEOUT" /* CMT_LOCAL_IDLE_TIMEOUT */,
+      !isNaN(numValue) && numValue >= 0,
+      "Must be a non-negative number of seconds"
+    );
+    return numValue;
+  },
+  ["CMT_LOCAL_PREFER_DAEMON" /* CMT_LOCAL_PREFER_DAEMON */](value) {
+    validateConfig(
+      "CMT_LOCAL_PREFER_DAEMON" /* CMT_LOCAL_PREFER_DAEMON */,
+      typeof value === "boolean",
+      "Must be true or false"
+    );
+    return value;
+  },
+  ["CMT_LOCAL_CLOUD_FALLBACK" /* CMT_LOCAL_CLOUD_FALLBACK */](value) {
+    validateConfig(
+      "CMT_LOCAL_CLOUD_FALLBACK" /* CMT_LOCAL_CLOUD_FALLBACK */,
+      typeof value === "boolean",
+      "Must be true or false"
+    );
+    return value;
+  },
+  ["CMT_LOCAL_FALLBACK_PROVIDER" /* CMT_LOCAL_FALLBACK_PROVIDER */](value) {
+    const validProviders = Object.values(CMT_AI_PROVIDER_ENUM).filter(
+      (provider) => provider !== CMT_AI_PROVIDER_ENUM.LOCAL
+    );
+    validateConfig(
+      "CMT_LOCAL_FALLBACK_PROVIDER" /* CMT_LOCAL_FALLBACK_PROVIDER */,
+      validProviders.includes(value),
+      `Must be a supported cloud provider: ${validProviders.join(", ")}`
+    );
+    return value;
+  },
+  ["CMT_LOCAL_FALLBACK_MODEL" /* CMT_LOCAL_FALLBACK_MODEL */](value) {
+    validateConfig(
+      "CMT_LOCAL_FALLBACK_MODEL" /* CMT_LOCAL_FALLBACK_MODEL */,
+      typeof value === "string" && value.length > 0,
+      "Must be a non-empty string"
+    );
+    return value;
+  },
+  ["CMT_LOCAL_FALLBACK_API_KEY" /* CMT_LOCAL_FALLBACK_API_KEY */](value) {
+    return value;
+  },
+  ["CMT_LOCAL_FALLBACK_API_URL" /* CMT_LOCAL_FALLBACK_API_URL */](value) {
+    return value;
+  },
   ["CMT_AI_PROVIDER" /* CMT_AI_PROVIDER */](value) {
     if (!value)
       value = "openai";
@@ -49523,6 +49646,7 @@ var CMT_AI_PROVIDER_ENUM = /* @__PURE__ */ ((CMT_AI_PROVIDER_ENUM2) => {
   CMT_AI_PROVIDER_ENUM2["MISTRAL"] = "mistral";
   CMT_AI_PROVIDER_ENUM2["MLX"] = "mlx";
   CMT_AI_PROVIDER_ENUM2["DEEPSEEK"] = "deepseek";
+  CMT_AI_PROVIDER_ENUM2["LOCAL"] = "local";
   return CMT_AI_PROVIDER_ENUM2;
 })(CMT_AI_PROVIDER_ENUM || {});
 var defaultConfigPath = (0, import_path.join)((0, import_os.homedir)(), ".commit-ai");
@@ -49543,7 +49667,17 @@ var DEFAULT_CONFIG = {
   CMT_CHUNK_CONCURRENCY: 4,
   CMT_SYNTHESIZE_CHUNKS: true,
   CMT_GITPUSH: true,
-  CMT_AUTO_UPDATE: false
+  CMT_AUTO_UPDATE: false,
+  CMT_LOCAL_MODEL_PRESET: "qwen-0.5b",
+  CMT_LOCAL_RUNTIME: "auto",
+  CMT_LOCAL_CONTEXT_SIZE: 4096,
+  CMT_LOCAL_GPU_LAYERS: -1,
+  CMT_LOCAL_DAEMON_PORT: 11435,
+  CMT_LOCAL_IDLE_TIMEOUT: 1800,
+  CMT_LOCAL_PREFER_DAEMON: true,
+  CMT_LOCAL_CLOUD_FALLBACK: true,
+  CMT_LOCAL_FALLBACK_PROVIDER: "openai" /* OPENAI */,
+  CMT_LOCAL_FALLBACK_MODEL: "gpt-4o-mini"
 };
 var initGlobalConfig = (configPath = defaultConfigPath) => {
   (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(DEFAULT_CONFIG), "utf8");
@@ -49589,7 +49723,29 @@ var getEnvConfig = (envPath) => {
     CMT_REVIEW_CACHE_TTL: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_TTL),
     CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH),
-    CMT_AUTO_UPDATE: parseConfigVarValue(process.env.CMT_AUTO_UPDATE)
+    CMT_AUTO_UPDATE: parseConfigVarValue(process.env.CMT_AUTO_UPDATE),
+    CMT_LOCAL_MODEL_PRESET: process.env.CMT_LOCAL_MODEL_PRESET,
+    CMT_LOCAL_RUNTIME: process.env.CMT_LOCAL_RUNTIME,
+    CMT_LOCAL_CONTEXT_SIZE: parseConfigVarValue(
+      process.env.CMT_LOCAL_CONTEXT_SIZE
+    ),
+    CMT_LOCAL_GPU_LAYERS: parseConfigVarValue(process.env.CMT_LOCAL_GPU_LAYERS),
+    CMT_LOCAL_DAEMON_PORT: parseConfigVarValue(
+      process.env.CMT_LOCAL_DAEMON_PORT
+    ),
+    CMT_LOCAL_IDLE_TIMEOUT: parseConfigVarValue(
+      process.env.CMT_LOCAL_IDLE_TIMEOUT
+    ),
+    CMT_LOCAL_PREFER_DAEMON: parseConfigVarValue(
+      process.env.CMT_LOCAL_PREFER_DAEMON
+    ),
+    CMT_LOCAL_CLOUD_FALLBACK: parseConfigVarValue(
+      process.env.CMT_LOCAL_CLOUD_FALLBACK
+    ),
+    CMT_LOCAL_FALLBACK_PROVIDER: process.env.CMT_LOCAL_FALLBACK_PROVIDER,
+    CMT_LOCAL_FALLBACK_MODEL: process.env.CMT_LOCAL_FALLBACK_MODEL,
+    CMT_LOCAL_FALLBACK_API_KEY: process.env.CMT_LOCAL_FALLBACK_API_KEY,
+    CMT_LOCAL_FALLBACK_API_URL: process.env.CMT_LOCAL_FALLBACK_API_URL
   };
 };
 var setGlobalConfig = (config9, configPath = defaultConfigPath) => {
@@ -49794,6 +49950,66 @@ var CONFIG_HELP = {
     description: "Automatically install the latest CommitAI version when an update is available (checked on each cmt run)",
     example: "true",
     default: "false"
+  },
+  CMT_LOCAL_MODEL_PRESET: {
+    description: "Local SLM preset (qwen-0.5b, qwen-1.5b, gemma-2b)",
+    example: "qwen-0.5b",
+    default: "qwen-0.5b"
+  },
+  CMT_LOCAL_RUNTIME: {
+    description: "Local inference runtime (auto picks MLX on Apple Silicon, GGUF elsewhere)",
+    example: "auto",
+    default: "auto"
+  },
+  CMT_LOCAL_CONTEXT_SIZE: {
+    description: "Context window size for local models",
+    example: "4096",
+    default: "4096"
+  },
+  CMT_LOCAL_GPU_LAYERS: {
+    description: "GGUF GPU layer offload (-1 = all layers)",
+    example: "-1",
+    default: "-1"
+  },
+  CMT_LOCAL_DAEMON_PORT: {
+    description: "Port for cmt local serve daemon",
+    example: "11435",
+    default: "11435"
+  },
+  CMT_LOCAL_IDLE_TIMEOUT: {
+    description: "Daemon idle shutdown in seconds (0 = disabled)",
+    example: "1800",
+    default: "1800"
+  },
+  CMT_LOCAL_PREFER_DAEMON: {
+    description: "Prefer warm local daemon over on-demand model load",
+    example: "true",
+    default: "true"
+  },
+  CMT_LOCAL_CLOUD_FALLBACK: {
+    description: "Fall back to cloud provider when local inference fails",
+    example: "true",
+    default: "true"
+  },
+  CMT_LOCAL_FALLBACK_PROVIDER: {
+    description: "Cloud provider used when local fallback triggers",
+    example: "openai",
+    default: "openai"
+  },
+  CMT_LOCAL_FALLBACK_MODEL: {
+    description: "Cloud model used when local fallback triggers",
+    example: "gpt-4o-mini",
+    default: "gpt-4o-mini"
+  },
+  CMT_LOCAL_FALLBACK_API_KEY: {
+    description: "Optional separate API key for cloud fallback",
+    example: "sk-...",
+    default: "uses CMT_API_KEY"
+  },
+  CMT_LOCAL_FALLBACK_API_URL: {
+    description: "Optional separate API URL for cloud fallback",
+    example: "https://api.openai.com/v1",
+    default: "uses CMT_API_URL"
   }
 };
 var printConfigHelp = () => {
@@ -58957,6 +59173,29 @@ var AzureEngine = class {
   }
 };
 
+// src/engine/fallback.ts
+var FallbackEngine = class {
+  constructor(primary, fallback, options) {
+    this.primary = primary;
+    this.fallback = fallback;
+    this.config = primary.config;
+    this.client = primary.client;
+    this.options = options;
+  }
+  async generateCommitMessage(messages) {
+    try {
+      return await this.primary.generateCommitMessage(messages);
+    } catch (error) {
+      this.options.onStatus?.({
+        phase: "fallback_cloud",
+        modelLabel: this.options.fallbackModelLabel,
+        cause: error
+      });
+      return await this.fallback.generateCommitMessage(messages);
+    }
+  }
+};
+
 // src/engine/flowise.ts
 var FlowiseEngine = class {
   constructor(config9) {
@@ -59821,6 +60060,747 @@ var GeminiEngine = class {
       }
       throw err;
     }
+  }
+};
+
+// src/local/daemon.ts
+var import_fs5 = require("fs");
+
+// src/local/modelPresets.ts
+var LOCAL_MODEL_PRESET_IDS = [
+  "qwen-0.5b",
+  "qwen-1.5b",
+  "gemma-2b"
+];
+var LOCAL_MODEL_PRESETS = {
+  "qwen-0.5b": {
+    label: "Qwen2.5 0.5B Instruct",
+    vramEstimateMb: 600,
+    gguf: {
+      repo: "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      file: "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+      diskMb: 491,
+      quantLabel: "GGUF Q4_K_M"
+    },
+    mlx: {
+      repo: "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+      diskMb: 300,
+      quantLabel: "MLX 4-bit"
+    }
+  },
+  "qwen-1.5b": {
+    label: "Qwen2.5 1.5B Instruct",
+    vramEstimateMb: 1200,
+    gguf: {
+      repo: "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      file: "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+      diskMb: 1e3,
+      quantLabel: "GGUF Q4_K_M"
+    },
+    mlx: {
+      repo: "mlx-community/Qwen2.5-1.5B-Instruct-4bit",
+      diskMb: 869,
+      quantLabel: "MLX 4-bit"
+    }
+  },
+  "gemma-2b": {
+    label: "Gemma 2 2B Instruct",
+    vramEstimateMb: 1800,
+    gguf: {
+      repo: "tensorblock/gemma-2-2b-it-GGUF",
+      file: "gemma-2-2b-it-Q4_K_M.gguf",
+      diskMb: 1591,
+      quantLabel: "GGUF Q4_K_M"
+    },
+    mlx: {
+      repo: "mlx-community/gemma-2-2b-it-4bit",
+      diskMb: 1470,
+      quantLabel: "MLX 4-bit"
+    }
+  }
+};
+var DEFAULT_LOCAL_PRESET = "qwen-0.5b";
+var isLocalModelPresetId = (value) => {
+  if (value === void 0)
+    return false;
+  return LOCAL_MODEL_PRESET_IDS.includes(value);
+};
+var resolvePreset = (presetId) => {
+  const id = isLocalModelPresetId(presetId) ? presetId : DEFAULT_LOCAL_PRESET;
+  return LOCAL_MODEL_PRESETS[id];
+};
+var getModelDisplayLabel = (preset, runtime) => {
+  const source = runtime === "mlx" ? preset.mlx : preset.gguf;
+  return `${preset.label} (${source.quantLabel})`;
+};
+var getModelSourceForRuntime = (preset, runtime) => {
+  return runtime === "mlx" ? preset.mlx : preset.gguf;
+};
+
+// src/local/runtime.ts
+var detectRuntime = (override = "auto") => {
+  if (override === "mlx" || override === "gguf") {
+    return override;
+  }
+  if (process.platform === "darwin" && process.arch === "arm64") {
+    return "mlx";
+  }
+  return "gguf";
+};
+var getRuntimeDisplayName = (runtime) => {
+  return runtime === "mlx" ? "MLX" : "GGUF";
+};
+var resolveLocalRuntimeOverride = (value) => {
+  if (value === "mlx" || value === "gguf" || value === "auto") {
+    return value;
+  }
+  return "auto";
+};
+
+// src/local/paths.ts
+var import_fs3 = require("fs");
+var import_path3 = require("path");
+var LOCAL_DAEMON_FILE = (0, import_path3.join)(defaultConfigPath, "local-daemon.json");
+var LOCAL_DAEMON_LOG = (0, import_path3.join)(defaultConfigPath, "local-daemon.log");
+var LOCAL_MODELS_DIR = (0, import_path3.join)(defaultConfigPath, "models");
+var LOCAL_GGUF_DIR = (0, import_path3.join)(LOCAL_MODELS_DIR, "gguf");
+var LOCAL_MLX_DIR = (0, import_path3.join)(LOCAL_MODELS_DIR, "mlx");
+var LOCAL_SETUP_MARKER = (0, import_path3.join)(defaultConfigPath, "local-setup.json");
+var ensureLocalDirs = () => {
+  for (const dir of [LOCAL_MODELS_DIR, LOCAL_GGUF_DIR, LOCAL_MLX_DIR]) {
+    if ((0, import_fs3.existsSync)(dir) !== true) {
+      (0, import_fs3.mkdirSync)(dir, { recursive: true });
+    }
+  }
+};
+var getGgufModelPath = (fileName) => (0, import_path3.join)(LOCAL_GGUF_DIR, fileName);
+
+// src/local/chatCompletions.ts
+var stripThinkingTags = (content) => {
+  if (content.includes("<think>")) {
+    return content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+  }
+  return content;
+};
+var postChatCompletions = async (messages, options) => {
+  const url2 = `${options.baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
+  const params = {
+    model: options.model,
+    messages,
+    temperature: 0,
+    top_p: 0.1,
+    stream: false
+  };
+  if (options.maxTokensOutput !== void 0) {
+    params.max_tokens = options.maxTokensOutput;
+  }
+  if (options.repetitionPenalty !== void 0) {
+    params.repetition_penalty = options.repetitionPenalty;
+  }
+  const response = await axios_default.post(url2, params, {
+    headers: { "Content-Type": "application/json" },
+    timeout: options.timeoutMs ?? 12e4
+  });
+  const content = response.data?.choices?.[0]?.message?.content;
+  if (typeof content !== "string")
+    return void 0;
+  return stripThinkingTags(content);
+};
+var checkServerHealth = async (baseUrl, timeoutMs = 2e3) => {
+  try {
+    const url2 = `${baseUrl.replace(/\/$/, "")}/v1/models`;
+    await axios_default.get(url2, { timeout: timeoutMs });
+    return true;
+  } catch {
+    return false;
+  }
+};
+var waitForServerHealth = async (baseUrl, options = {}) => {
+  const timeoutMs = options.timeoutMs ?? 12e4;
+  const pollIntervalMs = options.pollIntervalMs ?? 500;
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    const healthy = await checkServerHealth(baseUrl, pollIntervalMs);
+    if (healthy === true)
+      return;
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+  }
+  throw new Error(`Local model server did not become ready at ${baseUrl}`);
+};
+
+// src/local/ggufDaemonServer.ts
+var import_http3 = __toESM(require("http"));
+
+// src/local/downloadModel.ts
+var import_fs4 = require("fs");
+var isGgufModelDownloaded = (preset) => {
+  return (0, import_fs4.existsSync)(getGgufModelPath(preset.gguf.file));
+};
+var downloadGgufModel = async (preset, onStatus) => {
+  ensureLocalDirs();
+  const targetPath = getGgufModelPath(preset.gguf.file);
+  if ((0, import_fs4.existsSync)(targetPath) === true) {
+    return targetPath;
+  }
+  onStatus?.({
+    phase: "downloading",
+    modelLabel: `${preset.label} (${preset.gguf.quantLabel})`,
+    runtime: "gguf"
+  });
+  try {
+    const { importNodeLlamaCpp: importNodeLlamaCpp2 } = await Promise.resolve().then(() => (init_importNodeLlamaCpp(), importNodeLlamaCpp_exports));
+    const nodeLlamaCpp = await importNodeLlamaCpp2();
+    const resolvedPath = await nodeLlamaCpp.resolveModelFile(
+      preset.gguf.file,
+      preset.gguf.repo
+    );
+    if ((0, import_fs4.existsSync)(resolvedPath) === true) {
+      return resolvedPath;
+    }
+  } catch {
+  }
+  await execa(
+    "huggingface-cli",
+    [
+      "download",
+      preset.gguf.repo,
+      preset.gguf.file,
+      "--local-dir",
+      LOCAL_GGUF_DIR,
+      "--local-dir-use-symlinks",
+      "False"
+    ],
+    { stdio: "inherit" }
+  );
+  return targetPath;
+};
+var prefetchMlxModel = async (preset, onStatus) => {
+  const source = getModelSourceForRuntime(preset, "mlx");
+  onStatus?.({
+    phase: "downloading",
+    modelLabel: `${preset.label} (${source.quantLabel})`,
+    runtime: "mlx"
+  });
+  await execa(
+    "python3",
+    [
+      "-m",
+      "mlx_lm",
+      "generate",
+      "--model",
+      source.repo,
+      "--prompt",
+      "test",
+      "--max-tokens",
+      "1"
+    ],
+    { stdio: "pipe" }
+  ).catch(() => {
+  });
+  return source.repo;
+};
+var downloadModelForRuntime = async (preset, runtime, onStatus) => {
+  if (runtime === "mlx") {
+    return prefetchMlxModel(preset, onStatus);
+  }
+  return downloadGgufModel(preset, onStatus);
+};
+
+// src/local/ggufDaemonServer.ts
+var loadedModel;
+var loadGgufModel = async (options) => {
+  if (loadedModel !== void 0) {
+    return loadedModel;
+  }
+  const modelPath = isGgufModelDownloaded(options.preset) ? getGgufModelPath(options.preset.gguf.file) : await downloadGgufModel(options.preset);
+  const { importNodeLlamaCpp: importNodeLlamaCpp2 } = await Promise.resolve().then(() => (init_importNodeLlamaCpp(), importNodeLlamaCpp_exports));
+  const { getLlama, LlamaChatSession } = await importNodeLlamaCpp2();
+  const llama = await getLlama();
+  const model = await llama.loadModel({
+    modelPath,
+    gpuLayers: options.gpuLayers
+  });
+  const context = await model.createContext({
+    contextSize: options.contextSize
+  });
+  const session = new LlamaChatSession({
+    contextSequence: context.getSequence()
+  });
+  loadedModel = {
+    session,
+    dispose: async () => {
+      await context.dispose();
+      await model.dispose();
+      loadedModel = void 0;
+    }
+  };
+  return loadedModel;
+};
+var parseBody = (req) => new Promise((resolve, reject) => {
+  const chunks = [];
+  req.on("data", (chunk) => chunks.push(chunk));
+  req.on("end", () => {
+    try {
+      const raw = Buffer.concat(chunks).toString("utf8");
+      resolve(raw.length > 0 ? JSON.parse(raw) : {});
+    } catch (error) {
+      reject(error);
+    }
+  });
+  req.on("error", reject);
+});
+var generateFromMessages = async (messages, maxTokensOutput, model) => {
+  const systemMessage = messages.find((m5) => m5.role === "system");
+  if (systemMessage !== void 0 && typeof systemMessage.content === "string") {
+    model.session.setChatHistory([
+      { type: "system", text: systemMessage.content }
+    ]);
+  }
+  const conversationMessages = messages.filter((m5) => m5.role !== "system");
+  const lastUserIndex = conversationMessages.map((m5) => m5.role).lastIndexOf("user");
+  if (lastUserIndex === -1) {
+    throw new Error("No user message found");
+  }
+  for (let index = 0; index < lastUserIndex; index += 1) {
+    const message = conversationMessages[index];
+    if (typeof message.content !== "string")
+      continue;
+    if (message.role === "user") {
+      await model.session.prompt(message.content, { maxTokens: 1 });
+    }
+  }
+  const lastUser = conversationMessages[lastUserIndex];
+  const prompt = typeof lastUser.content === "string" ? lastUser.content : "";
+  return model.session.prompt(prompt, {
+    maxTokens: maxTokensOutput,
+    temperature: 0,
+    topP: 0.1
+  });
+};
+var startGgufDaemonServer = async (options) => {
+  const model = await loadGgufModel(options);
+  let idleTimer;
+  const resetIdleTimer = (server2) => {
+    if (options.idleTimeoutSeconds <= 0)
+      return;
+    if (idleTimer !== void 0)
+      clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      server2.close();
+      void model.dispose();
+      process.exit(0);
+    }, options.idleTimeoutSeconds * 1e3);
+  };
+  const server = import_http3.default.createServer(async (req, res) => {
+    options.onActivity?.();
+    resetIdleTimer(server);
+    if (req.url === "/v1/models" && req.method === "GET") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          data: [{ id: options.preset.gguf.file, object: "model" }]
+        })
+      );
+      return;
+    }
+    if (req.url === "/v1/chat/completions" && req.method === "POST") {
+      try {
+        const body = await parseBody(req);
+        const messages = body.messages ?? [];
+        const content = await generateFromMessages(
+          messages,
+          options.maxTokensOutput,
+          model
+        );
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            choices: [{ message: { role: "assistant", content } }]
+          })
+        );
+      } catch (error) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: {
+              message: error instanceof Error ? error.message : "Inference failed"
+            }
+          })
+        );
+      }
+      return;
+    }
+    res.writeHead(404);
+    res.end();
+  });
+  await new Promise((resolve, reject) => {
+    server.listen(options.port, "127.0.0.1", () => resolve());
+    server.on("error", reject);
+  });
+  resetIdleTimer(server);
+  return server;
+};
+
+// src/local/mlxRuntime.ts
+var checkMlxLmInstalled = async () => {
+  try {
+    await execa("python3", ["-m", "mlx_lm", "--help"], { stdio: "pipe" });
+    return true;
+  } catch {
+    return false;
+  }
+};
+var installMlxLm = async () => {
+  await execa("python3", ["-m", "pip", "install", "mlx-lm"], {
+    stdio: "inherit"
+  });
+};
+var spawnEphemeralMlxServer = async (modelRepo, port) => {
+  return execa(
+    "python3",
+    ["-m", "mlx_lm.server", "--model", modelRepo, "--port", String(port)],
+    {
+      stdio: "pipe",
+      detached: false
+    }
+  );
+};
+var generateWithMlx = async (messages, options) => {
+  const modelLabel = getModelDisplayLabel(options.preset, "mlx");
+  const modelRepo = options.preset.mlx.repo;
+  const mlxInstalled = await checkMlxLmInstalled();
+  if (mlxInstalled !== true) {
+    throw new Error(
+      'mlx-lm is not installed. Run "cmt local setup" to install Python dependencies.'
+    );
+  }
+  options.onStatus?.({
+    phase: "loading_model",
+    modelLabel,
+    runtime: "mlx"
+  });
+  const ephemeralPort = 11436 + Math.floor(Math.random() * 1e3);
+  const baseUrl = `http://127.0.0.1:${ephemeralPort}`;
+  options.onStatus?.({
+    phase: "starting_daemon",
+    modelLabel,
+    runtime: "mlx",
+    port: ephemeralPort
+  });
+  const serverProcess = await spawnEphemeralMlxServer(modelRepo, ephemeralPort);
+  try {
+    await waitForServerHealth(baseUrl, { timeoutMs: 12e4 });
+    const result = await postChatCompletions(messages, {
+      baseUrl,
+      model: modelRepo,
+      maxTokensOutput: options.maxTokensOutput,
+      repetitionPenalty: 1.5
+    });
+    options.onStatus?.({ phase: "ready", modelLabel, runtime: "mlx" });
+    return result;
+  } finally {
+    serverProcess.kill("SIGTERM");
+  }
+};
+var generateWithMlxDaemon = async (messages, options) => {
+  return postChatCompletions(messages, {
+    baseUrl: options.baseUrl,
+    model: options.model,
+    maxTokensOutput: options.maxTokensOutput,
+    repetitionPenalty: 1.5
+  });
+};
+var spawnMlxDaemon = async (modelRepo, port, background = false) => {
+  return execa(
+    "python3",
+    ["-m", "mlx_lm.server", "--model", modelRepo, "--port", String(port)],
+    {
+      stdio: background ? "ignore" : "inherit",
+      detached: background
+    }
+  );
+};
+
+// src/local/daemon.ts
+var DEFAULT_DAEMON_PORT = 11435;
+var readDaemonInfo = () => {
+  if ((0, import_fs5.existsSync)(LOCAL_DAEMON_FILE) !== true)
+    return void 0;
+  try {
+    return JSON.parse(
+      (0, import_fs5.readFileSync)(LOCAL_DAEMON_FILE, "utf8")
+    );
+  } catch {
+    return void 0;
+  }
+};
+var writeDaemonInfo = (info) => {
+  ensureLocalDirs();
+  (0, import_fs5.writeFileSync)(LOCAL_DAEMON_FILE, JSON.stringify(info, null, 2), "utf8");
+};
+var clearDaemonInfo = () => {
+  if ((0, import_fs5.existsSync)(LOCAL_DAEMON_FILE) === true) {
+    (0, import_fs5.unlinkSync)(LOCAL_DAEMON_FILE);
+  }
+};
+var isProcessAlive = (pid) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+};
+var getDaemonBaseUrl = (port) => `http://127.0.0.1:${port}`;
+var isDaemonRunning = async (port = DEFAULT_DAEMON_PORT) => {
+  const info = readDaemonInfo();
+  if (info === void 0)
+    return void 0;
+  if (info.port !== port)
+    return void 0;
+  if (isProcessAlive(info.pid) !== true) {
+    clearDaemonInfo();
+    return void 0;
+  }
+  const healthy = await checkServerHealth(getDaemonBaseUrl(info.port));
+  if (healthy !== true)
+    return void 0;
+  return info;
+};
+var touchDaemonActivity = () => {
+  const info = readDaemonInfo();
+  if (info === void 0)
+    return;
+  writeDaemonInfo({
+    ...info,
+    lastActivityAt: new Date().toISOString()
+  });
+};
+var startDaemon = async (options) => {
+  const runtime = options.runtime ?? detectRuntime("auto");
+  const port = options.port ?? DEFAULT_DAEMON_PORT;
+  const preset = resolvePreset(options.presetId);
+  const existing = await isDaemonRunning(port);
+  if (existing !== void 0) {
+    return { info: existing };
+  }
+  const startedAt = new Date().toISOString();
+  if (runtime === "mlx") {
+    const serverProcess = await spawnMlxDaemon(
+      preset.mlx.repo,
+      port,
+      options.background === true
+    );
+    if (options.background === true && serverProcess.pid !== void 0) {
+      serverProcess.unref?.();
+    }
+    const initiallyHealthy = await checkServerHealth(
+      getDaemonBaseUrl(port),
+      5e3
+    );
+    if (initiallyHealthy !== true) {
+      await waitForDaemon(port);
+    }
+    const info2 = {
+      pid: serverProcess.pid ?? process.pid,
+      port,
+      runtime,
+      preset: options.presetId,
+      startedAt,
+      lastActivityAt: startedAt
+    };
+    writeDaemonInfo(info2);
+    return { info: info2, process: serverProcess };
+  }
+  if (options.background === true) {
+    throw new Error(
+      'GGUF background daemon must be started via "cmt local serve" in this process.'
+    );
+  }
+  const server = await startGgufDaemonServer({
+    preset,
+    port,
+    contextSize: options.contextSize ?? 4096,
+    gpuLayers: options.gpuLayers ?? -1,
+    maxTokensOutput: options.maxTokensOutput ?? 512,
+    idleTimeoutSeconds: options.idleTimeoutSeconds ?? 1800,
+    onActivity: touchDaemonActivity
+  });
+  const info = {
+    pid: process.pid,
+    port,
+    runtime: "gguf",
+    preset: options.presetId,
+    startedAt,
+    lastActivityAt: startedAt
+  };
+  writeDaemonInfo(info);
+  server.on("close", () => {
+    clearDaemonInfo();
+  });
+  return { info };
+};
+var waitForDaemon = async (port, timeoutMs = 12e4) => {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    const healthy = await checkServerHealth(getDaemonBaseUrl(port));
+    if (healthy === true)
+      return;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new Error(`Daemon failed to start on port ${port}`);
+};
+var stopDaemon = async () => {
+  const info = readDaemonInfo();
+  if (info === void 0)
+    return false;
+  if (isProcessAlive(info.pid) === true) {
+    try {
+      process.kill(info.pid, "SIGTERM");
+    } catch {
+    }
+  }
+  clearDaemonInfo();
+  return true;
+};
+var getDaemonModelId = (preset, runtime) => {
+  return runtime === "mlx" ? preset.mlx.repo : preset.gguf.file;
+};
+
+// src/local/ggufRuntime.ts
+init_importNodeLlamaCpp();
+var loadNodeLlamaCpp = async () => {
+  try {
+    return await importNodeLlamaCpp();
+  } catch (error) {
+    throw new Error(
+      `node-llama-cpp is not installed. Run "cmt local setup" or use CMT_LOCAL_RUNTIME=mlx on Apple Silicon. Cause: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+};
+var generateWithGguf = async (messages, options) => {
+  const modelLabel = getModelDisplayLabel(options.preset, "gguf");
+  options.onStatus?.({
+    phase: "loading_model",
+    modelLabel,
+    runtime: "gguf"
+  });
+  const modelPath = isGgufModelDownloaded(options.preset) ? getGgufModelPath(options.preset.gguf.file) : await downloadGgufModel(options.preset, options.onStatus);
+  const { getLlama, LlamaChatSession } = await loadNodeLlamaCpp();
+  const llama = await getLlama();
+  const model = await llama.loadModel({
+    modelPath,
+    gpuLayers: options.gpuLayers
+  });
+  const context = await model.createContext({
+    contextSize: options.contextSize
+  });
+  const session = new LlamaChatSession({
+    contextSequence: context.getSequence()
+  });
+  const systemMessage = messages.find((m5) => m5.role === "system");
+  if (systemMessage !== void 0 && typeof systemMessage.content === "string") {
+    session.setChatHistory([
+      { type: "system", text: systemMessage.content }
+    ]);
+  }
+  const conversationMessages = messages.filter((m5) => m5.role !== "system");
+  const lastUserIndex = conversationMessages.map((m5) => m5.role).lastIndexOf("user");
+  if (lastUserIndex === -1) {
+    throw new Error("No user message found for local GGUF inference");
+  }
+  for (let index = 0; index < lastUserIndex; index += 1) {
+    const message = conversationMessages[index];
+    if (typeof message.content !== "string")
+      continue;
+    if (message.role === "user") {
+      await session.prompt(message.content, { maxTokens: 1 });
+    }
+  }
+  const lastUser = conversationMessages[lastUserIndex];
+  const prompt = typeof lastUser.content === "string" ? lastUser.content : "";
+  const response = await session.prompt(prompt, {
+    maxTokens: options.maxTokensOutput,
+    temperature: 0,
+    topP: 0.1
+  });
+  options.onStatus?.({ phase: "ready", modelLabel, runtime: "gguf" });
+  await context.dispose();
+  await model.dispose();
+  return response.trim() || void 0;
+};
+var generateWithGgufDaemon = async (messages, options) => {
+  return postChatCompletions(messages, {
+    baseUrl: options.baseUrl,
+    model: options.model,
+    maxTokensOutput: options.maxTokensOutput
+  });
+};
+
+// src/engine/local.ts
+var LocalEngine = class {
+  constructor(config9) {
+    this.config = config9;
+    this.client = axios_default;
+  }
+  async generateCommitMessage(messages) {
+    const appConfig = getConfig();
+    const presetId = isLocalModelPresetId(appConfig.CMT_LOCAL_MODEL_PRESET) ? appConfig.CMT_LOCAL_MODEL_PRESET : DEFAULT_LOCAL_PRESET;
+    const preset = resolvePreset(presetId);
+    const runtime = detectRuntime(
+      resolveLocalRuntimeOverride(appConfig.CMT_LOCAL_RUNTIME)
+    );
+    const modelLabel = getModelDisplayLabel(preset, runtime);
+    const onStatus = this.config.onStatus;
+    const daemonPort = appConfig.CMT_LOCAL_DAEMON_PORT ?? DEFAULT_DAEMON_PORT;
+    const preferDaemon = appConfig.CMT_LOCAL_PREFER_DAEMON !== false;
+    const contextSize = appConfig.CMT_LOCAL_CONTEXT_SIZE ?? 4096;
+    const gpuLayers = appConfig.CMT_LOCAL_GPU_LAYERS ?? -1;
+    const maxTokensOutput = this.config.maxTokensOutput ?? appConfig.CMT_TOKENS_MAX_OUTPUT ?? 512;
+    onStatus?.({
+      phase: "checking_runtime",
+      modelLabel,
+      runtime
+    });
+    if (preferDaemon === true) {
+      const daemonInfo = await isDaemonRunning(daemonPort);
+      if (daemonInfo !== void 0) {
+        onStatus?.({
+          phase: "connecting_daemon",
+          modelLabel,
+          runtime: daemonInfo.runtime,
+          port: daemonInfo.port
+        });
+        touchDaemonActivity();
+        const baseUrl = getDaemonBaseUrl(daemonInfo.port);
+        const modelId = getDaemonModelId(preset, daemonInfo.runtime);
+        const result = daemonInfo.runtime === "mlx" ? await generateWithMlxDaemon(messages, {
+          baseUrl,
+          model: modelId,
+          maxTokensOutput
+        }) : await generateWithGgufDaemon(messages, {
+          baseUrl,
+          model: modelId,
+          maxTokensOutput
+        });
+        onStatus?.({ phase: "ready", modelLabel, runtime: daemonInfo.runtime });
+        return result;
+      }
+    }
+    if (runtime === "mlx") {
+      return generateWithMlx(messages, {
+        preset,
+        maxTokensOutput,
+        onStatus
+      });
+    }
+    return generateWithGguf(messages, {
+      preset,
+      contextSize,
+      gpuLayers,
+      maxTokensOutput,
+      onStatus
+    });
   }
 };
 
@@ -64286,40 +65266,89 @@ var DeepseekEngine = class {
 };
 
 // src/utils/engine.ts
-function getEngine() {
-  const config9 = getConfig();
-  const provider = config9.CMT_AI_PROVIDER;
-  const DEFAULT_CONFIG2 = {
-    model: config9.CMT_MODEL,
-    maxTokensOutput: config9.CMT_TOKENS_MAX_OUTPUT,
-    maxTokensInput: config9.CMT_TOKENS_MAX_INPUT,
-    baseURL: config9.CMT_API_URL,
-    apiKey: config9.CMT_API_KEY
-  };
+var buildEngineConfig = (config9, onStatus) => ({
+  model: config9.CMT_MODEL ?? "",
+  maxTokensOutput: config9.CMT_TOKENS_MAX_OUTPUT ?? 512,
+  maxTokensInput: config9.CMT_TOKENS_MAX_INPUT ?? 4096,
+  baseURL: config9.CMT_API_URL ?? "",
+  apiKey: config9.CMT_API_KEY ?? "",
+  onStatus
+});
+var createProviderEngine = (provider, engineConfig, config9) => {
   switch (provider) {
     case "ollama" /* OLLAMA */:
-      return new OllamaEngine(DEFAULT_CONFIG2);
+      return new OllamaEngine(engineConfig);
     case "anthropic" /* ANTHROPIC */:
-      return new AnthropicEngine(DEFAULT_CONFIG2);
+      return new AnthropicEngine(engineConfig);
     case "test" /* TEST */:
       return new TestAi(config9.CMT_TEST_MOCK_TYPE);
     case "gemini" /* GEMINI */:
-      return new GeminiEngine(DEFAULT_CONFIG2);
+      return new GeminiEngine(engineConfig);
     case "azure" /* AZURE */:
-      return new AzureEngine(DEFAULT_CONFIG2);
+      return new AzureEngine(engineConfig);
     case "flowise" /* FLOWISE */:
-      return new FlowiseEngine(DEFAULT_CONFIG2);
+      return new FlowiseEngine(engineConfig);
     case "groq" /* GROQ */:
-      return new GroqEngine(DEFAULT_CONFIG2);
+      return new GroqEngine(engineConfig);
     case "mistral" /* MISTRAL */:
-      return new MistralAiEngine(DEFAULT_CONFIG2);
+      return new MistralAiEngine(engineConfig);
     case "mlx" /* MLX */:
-      return new MLXEngine(DEFAULT_CONFIG2);
+      return new MLXEngine(engineConfig);
     case "deepseek" /* DEEPSEEK */:
-      return new DeepseekEngine(DEFAULT_CONFIG2);
+      return new DeepseekEngine(engineConfig);
+    case "local" /* LOCAL */:
+      return new LocalEngine(engineConfig);
     default:
-      return new OpenAiEngine(DEFAULT_CONFIG2);
+      return new OpenAiEngine(engineConfig);
   }
+};
+var createFallbackEngine = (config9, onStatus) => {
+  const fallbackProvider = config9.CMT_LOCAL_FALLBACK_PROVIDER ?? "openai" /* OPENAI */;
+  const fallbackModel = config9.CMT_LOCAL_FALLBACK_MODEL ?? "gpt-4o-mini";
+  const fallbackConfig = {
+    model: fallbackModel,
+    maxTokensOutput: config9.CMT_TOKENS_MAX_OUTPUT ?? 512,
+    maxTokensInput: config9.CMT_TOKENS_MAX_INPUT ?? 4096,
+    baseURL: config9.CMT_LOCAL_FALLBACK_API_URL ?? config9.CMT_API_URL ?? "",
+    apiKey: config9.CMT_LOCAL_FALLBACK_API_KEY ?? config9.CMT_API_KEY ?? "",
+    onStatus
+  };
+  return createProviderEngine(
+    fallbackProvider,
+    fallbackConfig,
+    config9
+  );
+};
+var canUseCloudFallback = (config9) => {
+  if (config9.CMT_LOCAL_CLOUD_FALLBACK === false)
+    return false;
+  const apiKey = config9.CMT_LOCAL_FALLBACK_API_KEY ?? config9.CMT_API_KEY ?? "";
+  return apiKey.length > 0;
+};
+function getEngine(options = {}) {
+  const config9 = getConfig();
+  const provider = config9.CMT_AI_PROVIDER;
+  const engineConfig = buildEngineConfig(config9, options.onStatus);
+  if (provider === "local" /* LOCAL */) {
+    const localEngine = new LocalEngine(engineConfig);
+    if (canUseCloudFallback(config9) === true) {
+      const fallbackModel = config9.CMT_LOCAL_FALLBACK_MODEL ?? "gpt-4o-mini";
+      return new FallbackEngine(
+        localEngine,
+        createFallbackEngine(config9, options.onStatus),
+        {
+          onStatus: options.onStatus,
+          fallbackModelLabel: fallbackModel
+        }
+      );
+    }
+    return localEngine;
+  }
+  return createProviderEngine(
+    provider ?? "openai" /* OPENAI */,
+    engineConfig,
+    config9
+  );
 }
 
 // src/modules/commitlint/constants.ts
@@ -64476,11 +65505,11 @@ var commitlintPrompts = {
 
 // src/modules/commitlint/pwd-commitlint.ts
 var import_promises = __toESM(require("fs/promises"));
-var import_path3 = __toESM(require("path"));
+var import_path4 = __toESM(require("path"));
 var findModulePath = (moduleName) => {
   const searchPaths = [
-    import_path3.default.join("node_modules", moduleName),
-    import_path3.default.join("node_modules", ".pnpm")
+    import_path4.default.join("node_modules", moduleName),
+    import_path4.default.join("node_modules", ".pnpm")
   ];
   for (const basePath of searchPaths) {
     try {
@@ -65005,10 +66034,10 @@ var collectNonEmptyMessages = (messages) => messages.filter(
   (msg) => msg !== null && msg !== void 0 && msg.trim() !== ""
 );
 var joinChunkMessages = (messages) => messages.join("\n\n");
-var synthesizeChunkMessages = async (chunkMessages, fullGitMojiSpec, context, onProgress) => {
+var synthesizeChunkMessages = async (chunkMessages, fullGitMojiSpec, context, onProgress, onEngineStatus) => {
   onProgress?.({ phase: "synthesizing" });
   try {
-    const engine = getEngine();
+    const engine = getEngine({ onStatus: onEngineStatus });
     const messages = getSynthesisPrompt(chunkMessages, fullGitMojiSpec, context);
     const synthesized = await engine.generateCommitMessage(messages);
     if (synthesized !== null && synthesized !== void 0 && synthesized.trim() !== "") {
@@ -65019,7 +66048,7 @@ var synthesizeChunkMessages = async (chunkMessages, fullGitMojiSpec, context, on
   }
   return joinChunkMessages(chunkMessages);
 };
-var finalizeChunkMessages = async (chunkMessages, fullGitMojiSpec, context, onProgress) => {
+var finalizeChunkMessages = async (chunkMessages, fullGitMojiSpec, context, onProgress, onEngineStatus) => {
   if (chunkMessages.length === 0) {
     throw new Error("EMPTY_MESSAGE" /* emptyMessage */);
   }
@@ -65031,12 +66060,13 @@ var finalizeChunkMessages = async (chunkMessages, fullGitMojiSpec, context, onPr
       chunkMessages,
       fullGitMojiSpec,
       context,
-      onProgress
+      onProgress,
+      onEngineStatus
     );
   }
   return joinChunkMessages(chunkMessages);
 };
-var runChunkTasks = async (commitMessageTasks, fullGitMojiSpec, context, onProgress) => {
+var runChunkTasks = async (commitMessageTasks, fullGitMojiSpec, context, onProgress, onEngineStatus) => {
   const concurrency = getChunkConcurrency();
   const batchDelayMs = concurrency > 1 ? 750 : 0;
   onProgress?.({
@@ -65057,10 +66087,11 @@ var runChunkTasks = async (commitMessageTasks, fullGitMojiSpec, context, onProgr
     chunkMessages,
     fullGitMojiSpec,
     context,
-    onProgress
+    onProgress,
+    onEngineStatus
   );
 };
-var generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context = "", onProgress) => {
+var generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context = "", onProgress, onEngineStatus) => {
   try {
     debug3("Starting generateCommitMessageByDiff");
     debug3("Getting main commit prompt...");
@@ -65084,13 +66115,15 @@ var generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context 
         MAX_REQUEST_TOKENS,
         fullGitMojiSpec,
         context,
-        onProgress
+        onProgress,
+        onEngineStatus
       );
       return runChunkTasks(
         commitMessageTasks,
         fullGitMojiSpec,
         context,
-        onProgress
+        onProgress,
+        onEngineStatus
       );
     }
     debug3("Generating chat completion prompt...");
@@ -65100,7 +66133,7 @@ var generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context 
       context
     );
     debug3("Got messages, initializing engine...");
-    const engine = getEngine();
+    const engine = getEngine({ onStatus: onEngineStatus });
     debug3("Engine initialized, making API call...");
     const commitMessage = await engine.generateCommitMessage(messages);
     debug3("Got response from API");
@@ -65118,21 +66151,23 @@ var generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context 
         fallbackMaxDiffLength,
         fullGitMojiSpec,
         context,
-        onProgress
+        onProgress,
+        onEngineStatus
       );
       if (commitMessageTasks.length > 0) {
         return runChunkTasks(
           commitMessageTasks,
           fullGitMojiSpec,
           context,
-          onProgress
+          onProgress,
+          onEngineStatus
         );
       }
     }
     throw error;
   }
 };
-function getMessagesPromisesByChangesInFile(fileDiff, separator, maxChangeLength, fullGitMojiSpec, context) {
+function getMessagesPromisesByChangesInFile(fileDiff, separator, maxChangeLength, fullGitMojiSpec, context, onEngineStatus) {
   const hunkHeaderSeparator = "@@ ";
   const [fileHeader, ...fileDiffByLines] = fileDiff.split(hunkHeaderSeparator);
   const mergedChanges = mergeDiffs(
@@ -65149,7 +66184,7 @@ function getMessagesPromisesByChangesInFile(fileDiff, separator, maxChangeLength
       lineDiffsWithHeader.push(totalChange);
     }
   }
-  const engine = getEngine();
+  const engine = getEngine({ onStatus: onEngineStatus });
   const commitMsgsFromFileLineDiffs = lineDiffsWithHeader.map((lineDiff) => async () => {
     const messages = await generateCommitMessageChatCompletionPrompt(
       separator + lineDiff,
@@ -65185,7 +66220,7 @@ function splitDiff(diff, maxChangeLength) {
   }
   return splitDiffs;
 }
-var getCommitMsgsTasksFromFileDiffs = async (diff, maxDiffLength, fullGitMojiSpec, context, onProgress) => {
+var getCommitMsgsTasksFromFileDiffs = async (diff, maxDiffLength, fullGitMojiSpec, context, onProgress, onEngineStatus) => {
   const separator = "diff --git ";
   const diffByFiles = diff.split(separator).slice(1);
   const totalFiles = diffByFiles.length;
@@ -65214,11 +66249,12 @@ var getCommitMsgsTasksFromFileDiffs = async (diff, maxDiffLength, fullGitMojiSpe
         separator,
         maxDiffLength,
         fullGitMojiSpec,
-        context
+        context,
+        onEngineStatus
       );
       commitMessageTasks.push(...messagesPromises);
     } else {
-      const engine = getEngine();
+      const engine = getEngine({ onStatus: onEngineStatus });
       commitMessageTasks.push(async () => {
         const messages = await generateCommitMessageChatCompletionPrompt(
           separator + fileDiff,
@@ -65230,6 +66266,135 @@ var getCommitMsgsTasksFromFileDiffs = async (diff, maxDiffLength, fullGitMojiSpe
     }
   }
   return commitMessageTasks;
+};
+
+// src/local/statusLabels.ts
+var formatEngineStatusLabel = (status) => {
+  const model = status.modelLabel ?? "local model";
+  const runtimeName = status.runtime !== void 0 ? getRuntimeDisplayName(status.runtime) : "local";
+  switch (status.phase) {
+    case "checking_runtime":
+      return `Checking local runtime (${runtimeName})\u2026`;
+    case "downloading":
+      return `Downloading ${model}\u2026`;
+    case "loading_model":
+      return `Warming up \u{1F525} ${model}\u2026`;
+    case "starting_daemon":
+      return `Starting local server \u2014 ${model}\u2026`;
+    case "connecting_daemon": {
+      const portSuffix = status.port !== void 0 ? `:${status.port}` : "";
+      return `Connecting to local daemon on ${portSuffix}\u2026`;
+    }
+    case "ready":
+      return "Local model ready";
+    case "fallback_cloud": {
+      const causeMessage = formatCause(status.cause);
+      const suffix = causeMessage !== void 0 ? ` (${causeMessage})` : "";
+      return `\u26A0 Falling back to ${model}${suffix}\u2026`;
+    }
+    default:
+      return `Warming up ${model}\u2026`;
+  }
+};
+var formatCause = (cause) => {
+  if (cause instanceof Error) {
+    return cause.message;
+  }
+  if (typeof cause === "string") {
+    return cause;
+  }
+  return void 0;
+};
+
+// src/utils/warmupIndicator.ts
+var SPINNER_FRAMES = ["\u280B", "\u2819", "\u2839", "\u2838", "\u283C", "\u2834", "\u2826", "\u2827", "\u2807", "\u280F"];
+var DEFAULT_INTERVAL_MS = 80;
+var LINE_WIDTH = 100;
+var padRight = (input, width) => {
+  if (input.length >= width)
+    return input;
+  return input + " ".repeat(width - input.length);
+};
+var startWarmupIndicator = (stream4 = process.stderr) => {
+  const isTty = stream4.isTTY === true;
+  if (isTty !== true) {
+    let lastPhase;
+    return {
+      update: (status) => {
+        if (status.phase === "ready")
+          return;
+        const label = formatEngineStatusLabel(status);
+        if (label !== lastPhase) {
+          stream4.write(`${label}
+`);
+          lastPhase = label;
+        }
+      },
+      stop: () => void 0
+    };
+  }
+  const startedAt = Date.now();
+  let frameIndex = 0;
+  let currentStatus = { phase: "checking_runtime" };
+  let timer;
+  const tick = () => {
+    if (currentStatus.phase === "ready")
+      return;
+    const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1e3);
+    const frame = SPINNER_FRAMES[frameIndex % SPINNER_FRAMES.length];
+    frameIndex += 1;
+    const label = formatEngineStatusLabel(currentStatus);
+    const line = `${frame} ${label} (${elapsedSeconds}s elapsed)\u2026`;
+    stream4.write(`\r${padRight(line, LINE_WIDTH)}`);
+  };
+  timer = setInterval(tick, DEFAULT_INTERVAL_MS);
+  tick();
+  return {
+    update: (status) => {
+      currentStatus = status;
+      if (status.phase === "ready") {
+        if (timer !== void 0) {
+          clearInterval(timer);
+          timer = void 0;
+        }
+        stream4.write(`\r${" ".repeat(LINE_WIDTH)}\r`);
+        return;
+      }
+      tick();
+    },
+    stop: () => {
+      if (timer !== void 0) {
+        clearInterval(timer);
+        timer = void 0;
+      }
+      stream4.write(`\r${" ".repeat(LINE_WIDTH)}\r`);
+    }
+  };
+};
+
+// src/utils/engineStatusUi.ts
+var createEngineStatusUi = (updateLabel) => {
+  const warmup = startWarmupIndicator();
+  const onEngineStatus = (status) => {
+    if (status.phase === "ready") {
+      warmup.stop();
+      return;
+    }
+    if (status.phase === "fallback_cloud") {
+      warmup.update(status);
+      return;
+    }
+    warmup.update(status);
+    if (updateLabel !== void 0) {
+      updateLabel(formatEngineStatusLabel(status));
+    }
+  };
+  return {
+    onEngineStatus,
+    stop: () => {
+      warmup.stop();
+    }
+  };
 };
 
 // src/utils/commitGuardrails.ts
@@ -65346,15 +66511,15 @@ var formatCommitProgressLabel = (baseLabel, progress) => {
 };
 
 // src/utils/heartbeat.ts
-var DEFAULT_INTERVAL_MS = 1e3;
-var padRight = (input, width) => {
+var DEFAULT_INTERVAL_MS2 = 1e3;
+var padRight2 = (input, width) => {
   if (input.length >= width)
     return input;
   return input + " ".repeat(width - input.length);
 };
 var startElapsedHeartbeat = ({
   label,
-  intervalMs = DEFAULT_INTERVAL_MS,
+  intervalMs = DEFAULT_INTERVAL_MS2,
   enabled: enabled2,
   stream: stream4
 }) => {
@@ -65374,7 +66539,7 @@ var startElapsedHeartbeat = ({
     const elapsedMs = Date.now() - startedAt;
     const elapsedSeconds = Math.floor(elapsedMs / 1e3);
     const line = `${currentLabel} (${elapsedSeconds}s elapsed)\u2026`;
-    output.write(`\r${padRight(line, lineWidth)}`);
+    output.write(`\r${padRight2(line, lineWidth)}`);
   };
   tick();
   const timer = setInterval(tick, intervalMs);
@@ -65391,7 +66556,7 @@ var startElapsedHeartbeat = ({
 };
 
 // src/utils/git.ts
-var import_fs3 = require("fs");
+var import_fs6 = require("fs");
 var import_ignore = __toESM(require_ignore());
 var isDefaultExcludedFromAIDiff = (file) => {
   const excludedExtensions = [".svg", ".png", ".jpg", ".jpeg", ".webp", ".gif"];
@@ -65411,7 +66576,7 @@ var assertGitRepo = async () => {
 var getCommitAIIgnore = () => {
   const ig = (0, import_ignore.default)();
   try {
-    ig.add((0, import_fs3.readFileSync)(".commit-aiignore").toString().split("\n"));
+    ig.add((0, import_fs6.readFileSync)(".commit-aiignore").toString().split("\n"));
   } catch (e3) {
   }
   return ig;
@@ -65419,7 +66584,7 @@ var getCommitAIIgnore = () => {
 var getCommitAIReviewIgnore = () => {
   const ig = (0, import_ignore.default)();
   try {
-    ig.add((0, import_fs3.readFileSync)(".commit-ai-review-ignore").toString().split("\n"));
+    ig.add((0, import_fs6.readFileSync)(".commit-ai-review-ignore").toString().split("\n"));
   } catch (e3) {
   }
   return ig;
@@ -65559,8 +66724,8 @@ var trytm = async (promise) => {
 };
 
 // src/commands/standards.ts
-var import_fs4 = require("fs");
-var import_path4 = require("path");
+var import_fs7 = require("fs");
+var import_path5 = require("path");
 var STANDARDS_FILE = ".commit-ai-standards";
 var POPULAR_STANDARDS = {
   "react": {
@@ -66433,21 +67598,21 @@ var POPULAR_STANDARDS = {
   }
 };
 function getStandardsFilePath() {
-  return (0, import_path4.join)(process.cwd(), STANDARDS_FILE);
+  return (0, import_path5.join)(process.cwd(), STANDARDS_FILE);
 }
 function standardsFileExists() {
-  return (0, import_fs4.existsSync)(getStandardsFilePath());
+  return (0, import_fs7.existsSync)(getStandardsFilePath());
 }
 function getStandards() {
   const filePath = getStandardsFilePath();
-  if (!(0, import_fs4.existsSync)(filePath)) {
+  if (!(0, import_fs7.existsSync)(filePath)) {
     return null;
   }
-  return (0, import_fs4.readFileSync)(filePath, "utf-8");
+  return (0, import_fs7.readFileSync)(filePath, "utf-8");
 }
 function writeStandards(content) {
   const filePath = getStandardsFilePath();
-  (0, import_fs4.writeFileSync)(filePath, content, "utf-8");
+  (0, import_fs7.writeFileSync)(filePath, content, "utf-8");
 }
 var standardsSetCommand = G3(
   {
@@ -66595,11 +67760,11 @@ var standardsCommand = G3(
 
 // src/utils/reviewCache.ts
 var import_crypto4 = require("crypto");
-var import_fs5 = require("fs");
-var import_path5 = require("path");
+var import_fs8 = require("fs");
+var import_path6 = require("path");
 var import_os2 = require("os");
-var CACHE_DIR = (0, import_path5.join)((0, import_os2.homedir)(), ".commit-ai-cache");
-var CACHE_FILE = (0, import_path5.join)(CACHE_DIR, "review-cache.json");
+var CACHE_DIR = (0, import_path6.join)((0, import_os2.homedir)(), ".commit-ai-cache");
+var CACHE_FILE = (0, import_path6.join)(CACHE_DIR, "review-cache.json");
 var CACHE_VERSION = 1;
 var DEFAULT_CACHE_TTL_HOURS = 24;
 function generateHash(content) {
@@ -66610,17 +67775,17 @@ function getCacheTTL() {
   return ttlHours * 60 * 60 * 1e3;
 }
 function ensureCacheDirectory() {
-  if (!(0, import_fs5.existsSync)(CACHE_DIR)) {
-    (0, import_fs5.mkdirSync)(CACHE_DIR, { recursive: true });
+  if (!(0, import_fs8.existsSync)(CACHE_DIR)) {
+    (0, import_fs8.mkdirSync)(CACHE_DIR, { recursive: true });
   }
 }
 function loadCache() {
   ensureCacheDirectory();
-  if (!(0, import_fs5.existsSync)(CACHE_FILE)) {
+  if (!(0, import_fs8.existsSync)(CACHE_FILE)) {
     return { version: CACHE_VERSION, entries: {} };
   }
   try {
-    const content = (0, import_fs5.readFileSync)(CACHE_FILE, "utf-8");
+    const content = (0, import_fs8.readFileSync)(CACHE_FILE, "utf-8");
     const cache = JSON.parse(content);
     if (cache.version !== CACHE_VERSION) {
       return { version: CACHE_VERSION, entries: {} };
@@ -66633,7 +67798,7 @@ function loadCache() {
 function saveCache(cache) {
   ensureCacheDirectory();
   try {
-    (0, import_fs5.writeFileSync)(CACHE_FILE, JSON.stringify(cache, null, 2), "utf-8");
+    (0, import_fs8.writeFileSync)(CACHE_FILE, JSON.stringify(cache, null, 2), "utf-8");
   } catch (error) {
     console.error("Warning: Failed to save review cache:", error);
   }
@@ -66702,7 +67867,7 @@ function getCacheStats() {
   const totalEntries = Object.keys(cache.entries).length;
   const validEntries = Object.keys(cleanedCache.entries).length;
   let cacheSize = "0 KB";
-  if ((0, import_fs5.existsSync)(CACHE_FILE)) {
+  if ((0, import_fs8.existsSync)(CACHE_FILE)) {
     try {
       const stats = require("fs").statSync(CACHE_FILE);
       cacheSize = `${(stats.size / 1024).toFixed(2)} KB`;
@@ -67042,12 +68207,14 @@ var getGitRemotes = async () => {
 };
 var runWithHeartbeat = async (label, action) => {
   const { stop, updateLabel } = startElapsedHeartbeat({ label });
+  const statusUi = createEngineStatusUi(updateLabel);
   const onProgress = (progress) => {
     updateLabel(formatCommitProgressLabel(label, progress));
   };
   try {
-    return await action(onProgress);
+    return await action(onProgress, statusUi.onEngineStatus);
   } finally {
+    statusUi.stop();
     stop();
   }
 };
@@ -67076,7 +68243,13 @@ var resolveCommitMessageAndArgs = (commitMessage, extraArgs2) => {
 };
 var createCommitMessageFromDiff = async (diff, fullGitMojiSpec, context) => runWithHeartbeat(
   "Cooking up the commit message \u{1F373}\u{1F3B6}",
-  async (onProgress) => generateCommitMessageByDiff(diff, fullGitMojiSpec, context, onProgress)
+  async (onProgress, onEngineStatus) => generateCommitMessageByDiff(
+    diff,
+    fullGitMojiSpec,
+    context,
+    onProgress,
+    onEngineStatus
+  )
 );
 var performGitCommit = async (message, commitArgs) => {
   const committingChangesSpinner = le();
@@ -67146,9 +68319,9 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
 ).join("\n\n");
 var openInEditor = async (message) => {
   const editor = process.env.EDITOR || process.env.VISUAL || "vi";
-  const tmpFile = (0, import_path6.join)((0, import_os3.tmpdir)(), `COMMIT_EDITMSG_${Date.now()}`);
+  const tmpFile = (0, import_path7.join)((0, import_os3.tmpdir)(), `COMMIT_EDITMSG_${Date.now()}`);
   try {
-    (0, import_fs6.writeFileSync)(tmpFile, message, "utf-8");
+    (0, import_fs9.writeFileSync)(tmpFile, message, "utf-8");
     await execa(editor, [tmpFile], {
       stdio: "inherit",
       shell: true
@@ -67157,7 +68330,7 @@ var openInEditor = async (message) => {
     return stdout.trim();
   } finally {
     try {
-      (0, import_fs6.unlinkSync)(tmpFile);
+      (0, import_fs9.unlinkSync)(tmpFile);
     } catch (e3) {
     }
   }
@@ -67433,7 +68606,13 @@ var getLogMessagesFromGitDiff = async (diff, fullGitMojiSpec = false, context = 
     console.log();
     const commitMessage = await runWithHeartbeat(
       "Cooking up the log \u{1F373}\u{1F3B6}",
-      async (onProgress) => generateCommitMessageByDiff(diff, fullGitMojiSpec, context, onProgress)
+      async (onProgress, onEngineStatus) => generateCommitMessageByDiff(
+        diff,
+        fullGitMojiSpec,
+        context,
+        onProgress,
+        onEngineStatus
+      )
     );
     ce(
       `Generated log:
@@ -67685,9 +68864,9 @@ var commitLog = async (branch = "master", fullGitMojiSpec = false) => {
 };
 
 // src/commands/check.ts
-var import_fs7 = require("fs");
+var import_fs10 = require("fs");
 var import_os4 = require("os");
-var import_path7 = require("path");
+var import_path8 = require("path");
 
 // src/utils/banner.ts
 var printCommitAiBanner = ({ version } = {}) => {
@@ -67810,17 +68989,17 @@ var runCheck = async () => {
       details: "not inside a Git work tree (run inside a repo for full functionality)"
     });
   }
-  const globalConfigPath = (0, import_path7.join)((0, import_os4.homedir)(), ".commit-ai");
+  const globalConfigPath = (0, import_path8.join)((0, import_os4.homedir)(), ".commit-ai");
   results.push({
     label: "Global config",
-    status: (0, import_fs7.existsSync)(globalConfigPath) ? "pass" : "warn",
-    details: (0, import_fs7.existsSync)(globalConfigPath) ? "~/.commit-ai" : "not found"
+    status: (0, import_fs10.existsSync)(globalConfigPath) ? "pass" : "warn",
+    details: (0, import_fs10.existsSync)(globalConfigPath) ? "~/.commit-ai" : "not found"
   });
-  const envPath = (0, import_path7.join)(process.cwd(), ".env");
+  const envPath = (0, import_path8.join)(process.cwd(), ".env");
   results.push({
     label: "Repo .env",
-    status: (0, import_fs7.existsSync)(envPath) ? "pass" : "warn",
-    details: (0, import_fs7.existsSync)(envPath) ? "found" : "not found (optional)"
+    status: (0, import_fs10.existsSync)(envPath) ? "pass" : "warn",
+    details: (0, import_fs10.existsSync)(envPath) ? "found" : "not found (optional)"
   });
   const config9 = getConfig();
   const provider = config9.CMT_AI_PROVIDER;
@@ -67841,11 +69020,33 @@ var runCheck = async () => {
     status: apiKey !== void 0 && apiKey !== "" ? "pass" : "warn",
     details: apiKey !== void 0 && apiKey !== "" ? "set" : "not set (required for hosted providers)"
   });
-  const commitlintConfigExists = (0, import_fs7.existsSync)(COMMITLINT_LLM_CONFIG_PATH);
+  const commitlintConfigExists = (0, import_fs10.existsSync)(COMMITLINT_LLM_CONFIG_PATH);
   results.push({
     label: "Commitlint prompts",
     status: commitlintConfigExists ? "pass" : "warn",
     details: commitlintConfigExists ? ".commit-ai-commitlint found" : "not configured (optional, for CMT_PROMPT_MODULE=@commitlint)"
+  });
+  const runtime = detectRuntime(
+    resolveLocalRuntimeOverride(config9.CMT_LOCAL_RUNTIME)
+  );
+  const presetId = isLocalModelPresetId(config9.CMT_LOCAL_MODEL_PRESET) ? config9.CMT_LOCAL_MODEL_PRESET : DEFAULT_LOCAL_PRESET;
+  const preset = resolvePreset(presetId);
+  const localSetupDone = (0, import_fs10.existsSync)(LOCAL_SETUP_MARKER);
+  const daemon = await isDaemonRunning(config9.CMT_LOCAL_DAEMON_PORT ?? 11435);
+  results.push({
+    label: "Local runtime",
+    status: "pass",
+    details: `${getRuntimeDisplayName(runtime)} \u2014 ${getModelDisplayLabel(preset, runtime)}`
+  });
+  results.push({
+    label: "Local setup",
+    status: provider === "local" /* LOCAL */ ? localSetupDone ? "pass" : "warn" : "warn",
+    details: provider === "local" /* LOCAL */ ? localSetupDone ? "configured" : "run cmt local setup" : "optional \u2014 cmt local setup"
+  });
+  results.push({
+    label: "Local daemon",
+    status: daemon !== void 0 ? "pass" : "warn",
+    details: daemon !== void 0 ? `running on :${daemon.port}` : "not running \u2014 cmt local serve (recommended for git hooks)"
   });
   const updateResult = await checkForUpdates();
   if (updateResult.latestVersion === void 0) {
@@ -67918,6 +69119,18 @@ var checkCommand = G3(
         { cmd: "cmt config set CMT_SML=true", desc: "Enable condensed per-file messages" },
         { cmd: "cmt config set CMT_EMOJI=true", desc: "Enable GitMoji in commit messages" },
         { cmd: "cmt config help", desc: "View all configuration options" },
+        { cmd: "cmt local setup", desc: "Set up built-in local SLM (GGUF/MLX)" },
+        {
+          cmd: "cmt local serve --background",
+          desc: "Start local model daemon (faster git hooks)"
+        },
+        { cmd: "cmt local stop", desc: "Stop the local model daemon" },
+        { cmd: "cmt local status", desc: "Show local runtime, model, and daemon state" },
+        { cmd: "cmt local models list", desc: "List available local SLM presets" },
+        {
+          cmd: "cmt local models download [preset]",
+          desc: "Download a local model preset (qwen-0.5b, etc.)"
+        },
         { cmd: "cmt hook set", desc: "Install Git hook for auto-generation" },
         { cmd: "cmt update", desc: "Check for and install CommitAI updates" },
         { cmd: "cmt --help", desc: "Show all available commands and flags" }
@@ -67981,15 +69194,15 @@ var commitlintConfigCommand = G3(
 );
 
 // src/commands/githook.ts
-var import_fs8 = require("fs");
+var import_fs11 = require("fs");
 var import_promises3 = __toESM(require("fs/promises"));
-var import_path8 = __toESM(require("path"));
+var import_path9 = __toESM(require("path"));
 var HOOK_NAME = "prepare-commit-msg";
-var DEFAULT_SYMLINK_URL = import_path8.default.join(".git", "hooks", HOOK_NAME);
+var DEFAULT_SYMLINK_URL = import_path9.default.join(".git", "hooks", HOOK_NAME);
 var getHooksPath = async () => {
   try {
     const hooksPath = await getCoreHooksPath();
-    return import_path8.default.join(hooksPath, HOOK_NAME);
+    return import_path9.default.join(hooksPath, HOOK_NAME);
   } catch (error) {
     return DEFAULT_SYMLINK_URL;
   }
@@ -68000,7 +69213,7 @@ var isHookCalled = async () => {
 };
 var isHookExists = async () => {
   const hooksPath = await getHooksPath();
-  return (0, import_fs8.existsSync)(hooksPath);
+  return (0, import_fs11.existsSync)(hooksPath);
 };
 var hookCommand = G3(
   {
@@ -68032,7 +69245,7 @@ var hookCommand = G3(
             `Different ${HOOK_NAME} is already set. Remove it before setting commit-ai as '${HOOK_NAME}' hook.`
           );
         }
-        await import_promises3.default.mkdir(import_path8.default.dirname(SYMLINK_URL), { recursive: true });
+        await import_promises3.default.mkdir(import_path9.default.dirname(SYMLINK_URL), { recursive: true });
         await import_promises3.default.symlink(HOOK_URL, SYMLINK_URL, "file");
         await import_promises3.default.chmod(SYMLINK_URL, 493);
         return ce(`${source_default.green("\u2714")} Hook set`);
@@ -68091,7 +69304,8 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
       return;
     ae("commit-ai");
     const config9 = getConfig();
-    if (!config9.CMT_API_KEY) {
+    const isLocalProvider = config9.CMT_AI_PROVIDER === "local" /* LOCAL */;
+    if ((config9.CMT_API_KEY === void 0 || config9.CMT_API_KEY === "") && isLocalProvider !== true) {
       ce(
         "No CMT_API_KEY is set. Set your key via `cmt config set CMT_API_KEY=<value>. For more info see https://github.com/MantisWare/commit-ai"
       );
@@ -68110,6 +69324,7 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
     );
     const baseLabel = "Generating commit message";
     const { stop, updateLabel } = startElapsedHeartbeat({ label: baseLabel });
+    const statusUi = createEngineStatusUi(updateLabel);
     let commitMessage;
     try {
       commitMessage = await generateCommitMessageByDiff(
@@ -68118,9 +69333,11 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
         "",
         (progress) => {
           updateLabel(formatCommitProgressLabel(baseLabel, progress));
-        }
+        },
+        statusUi.onEngineStatus
       );
     } finally {
+      statusUi.stop();
       stop();
     }
     const fileContent = await import_promises4.default.readFile(messageFilePath);
@@ -68135,7 +69352,7 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
 };
 
 // src/commands/pr.ts
-var import_fs9 = require("fs");
+var import_fs12 = require("fs");
 var config8 = getConfig();
 var PR_DESCRIPTION_PROMPT = (baseBranch) => `You are an expert at writing clear, comprehensive pull request descriptions.
 
@@ -68327,7 +69544,7 @@ var prCommand = G3(
       );
       const description = await generatePRDescription(baseBranch);
       if (output) {
-        (0, import_fs9.writeFileSync)(output, description, "utf-8");
+        (0, import_fs12.writeFileSync)(output, description, "utf-8");
         ce(source_default.green(`\u2713 PR description saved to ${output}`));
       } else {
         console.log("\n" + source_default.bold("\u2550".repeat(80)));
@@ -68383,7 +69600,7 @@ var changelogCommand = G3(
         toRef
       );
       if (output) {
-        (0, import_fs9.writeFileSync)(output, changelog + "\n", "utf-8");
+        (0, import_fs12.writeFileSync)(output, changelog + "\n", "utf-8");
         ce(source_default.green(`\u2713 Changelog saved to ${output}`));
       } else {
         console.log("\n" + source_default.bold("\u2550".repeat(80)));
@@ -68463,6 +69680,294 @@ Run: cmt update`
   }
 );
 
+// src/commands/local.ts
+var import_fs13 = require("fs");
+var runSetup = async () => {
+  const config9 = getConfig();
+  const runtime = detectRuntime(
+    resolveLocalRuntimeOverride(config9.CMT_LOCAL_RUNTIME)
+  );
+  const presetId = isLocalModelPresetId(config9.CMT_LOCAL_MODEL_PRESET) ? config9.CMT_LOCAL_MODEL_PRESET : DEFAULT_LOCAL_PRESET;
+  const preset = resolvePreset(presetId);
+  const modelLabel = getModelDisplayLabel(preset, runtime);
+  ae(`Setting up local model: ${modelLabel}`);
+  ensureLocalDirs();
+  if (runtime === "mlx") {
+    const spin = le();
+    spin.start("Checking mlx-lm installation\u2026");
+    const installed = await checkMlxLmInstalled();
+    if (installed !== true) {
+      spin.message("Installing mlx-lm via pip\u2026");
+      await installMlxLm();
+    }
+    spin.stop("mlx-lm ready");
+  } else {
+    const spin = le();
+    spin.start("Checking node-llama-cpp\u2026");
+    try {
+      const { importNodeLlamaCpp: importNodeLlamaCpp2 } = await Promise.resolve().then(() => (init_importNodeLlamaCpp(), importNodeLlamaCpp_exports));
+      await importNodeLlamaCpp2();
+      spin.stop("node-llama-cpp ready");
+    } catch (error) {
+      spin.stop("node-llama-cpp not installed");
+      throw new Error(
+        `node-llama-cpp is required for GGUF runtime. Install with: pnpm add node-llama-cpp. ${error instanceof Error ? error.message : ""}`
+      );
+    }
+  }
+  const downloadSpin = le();
+  downloadSpin.start(`Warming up ${preset.label} \u2014 downloading if needed\u2026`);
+  await downloadModelForRuntime(preset, runtime);
+  downloadSpin.stop(`Model ready: ${modelLabel}`);
+  const testSpin = le();
+  testSpin.start(`Running smoke test with ${modelLabel}\u2026`);
+  const engine = new LocalEngine({
+    apiKey: "",
+    model: presetId,
+    maxTokensInput: config9.CMT_LOCAL_CONTEXT_SIZE ?? 4096,
+    maxTokensOutput: 128,
+    baseURL: ""
+  });
+  const testMessages = [
+    {
+      role: "system",
+      content: "You write git commit messages."
+    },
+    {
+      role: "user",
+      content: "diff --git a/test.ts b/test.ts\n+const x = 1;"
+    }
+  ];
+  await engine.generateCommitMessage(testMessages);
+  testSpin.stop("Smoke test passed");
+  (0, import_fs13.writeFileSync)(
+    LOCAL_SETUP_MARKER,
+    JSON.stringify(
+      {
+        runtime,
+        preset: presetId,
+        completedAt: new Date().toISOString()
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+  const currentConfig = getGlobalConfig();
+  setGlobalConfig({
+    ...currentConfig,
+    CMT_AI_PROVIDER: "local",
+    CMT_LOCAL_MODEL_PRESET: presetId
+  });
+  ce(
+    `${source_default.green("\u2714")} Local LLM setup complete. Run ${source_default.cyan("cmt local serve")} for faster git hooks.`
+  );
+};
+var runServe = async (background) => {
+  const config9 = getConfig();
+  const runtime = detectRuntime(
+    resolveLocalRuntimeOverride(config9.CMT_LOCAL_RUNTIME)
+  );
+  const presetId = isLocalModelPresetId(config9.CMT_LOCAL_MODEL_PRESET) ? config9.CMT_LOCAL_MODEL_PRESET : DEFAULT_LOCAL_PRESET;
+  const preset = resolvePreset(presetId);
+  const modelLabel = getModelDisplayLabel(preset, runtime);
+  const port = config9.CMT_LOCAL_DAEMON_PORT ?? DEFAULT_DAEMON_PORT;
+  const spin = le();
+  spin.start(`Starting local server \u2014 ${modelLabel}\u2026`);
+  const { info } = await startDaemon({
+    presetId,
+    runtime,
+    port,
+    contextSize: config9.CMT_LOCAL_CONTEXT_SIZE ?? 4096,
+    gpuLayers: config9.CMT_LOCAL_GPU_LAYERS ?? -1,
+    maxTokensOutput: config9.CMT_TOKENS_MAX_OUTPUT ?? 512,
+    idleTimeoutSeconds: config9.CMT_LOCAL_IDLE_TIMEOUT ?? 1800,
+    background
+  });
+  spin.stop(
+    `Local daemon running on :${info.port} (${getRuntimeDisplayName(info.runtime)})`
+  );
+  if (background !== true && info.runtime === "gguf") {
+    ce(
+      `${source_default.green("\u2714")} GGUF daemon listening on http://127.0.0.1:${info.port} \u2014 press Ctrl+C to stop`
+    );
+    await new Promise(() => void 0);
+  } else {
+    ce(`${source_default.green("\u2714")} Daemon started (pid ${info.pid})`);
+  }
+};
+var runStatus = async () => {
+  const config9 = getConfig();
+  const runtime = detectRuntime(
+    resolveLocalRuntimeOverride(config9.CMT_LOCAL_RUNTIME)
+  );
+  const presetId = isLocalModelPresetId(config9.CMT_LOCAL_MODEL_PRESET) ? config9.CMT_LOCAL_MODEL_PRESET : DEFAULT_LOCAL_PRESET;
+  const preset = resolvePreset(presetId);
+  const port = config9.CMT_LOCAL_DAEMON_PORT ?? DEFAULT_DAEMON_PORT;
+  const daemon = await isDaemonRunning(port);
+  ae("Local LLM status");
+  console.log(source_default.cyan("Runtime:"), getRuntimeDisplayName(runtime));
+  console.log(source_default.cyan("Preset:"), `${preset.label} (${presetId})`);
+  console.log(source_default.cyan("Model:"), getModelDisplayLabel(preset, runtime));
+  console.log(
+    source_default.cyan("VRAM estimate:"),
+    `~${preset.vramEstimateMb} MB (4K context)`
+  );
+  console.log(
+    source_default.cyan("GGUF downloaded:"),
+    isGgufModelDownloaded(preset) ? "yes" : "no"
+  );
+  console.log(
+    source_default.cyan("Setup marker:"),
+    (0, import_fs13.existsSync)(LOCAL_SETUP_MARKER) ? "yes" : "no \u2014 run cmt local setup"
+  );
+  if (daemon !== void 0) {
+    console.log(
+      source_default.green("Daemon:"),
+      `running (pid ${daemon.pid}, port ${daemon.port}, ${daemon.runtime})`
+    );
+  } else {
+    console.log(
+      source_default.yellow("Daemon:"),
+      "not running \u2014 run cmt local serve for faster commits"
+    );
+  }
+  ce("");
+};
+var runModelsList = () => {
+  ae("Available local model presets");
+  for (const presetId of LOCAL_MODEL_PRESET_IDS) {
+    const preset = LOCAL_MODEL_PRESETS[presetId];
+    console.log(
+      source_default.bold(presetId),
+      `\u2014 ${preset.label} (~${preset.vramEstimateMb} MB VRAM)`
+    );
+    console.log(`  GGUF: ${preset.gguf.repo} (${preset.gguf.diskMb} MB)`);
+    console.log(`  MLX:  ${preset.mlx.repo} (${preset.mlx.diskMb} MB)`);
+  }
+  ce("");
+};
+var runModelsDownload = async (presetArg, runtimeArg) => {
+  const config9 = getConfig();
+  const presetId = isLocalModelPresetId(presetArg) ? presetArg : isLocalModelPresetId(config9.CMT_LOCAL_MODEL_PRESET) ? config9.CMT_LOCAL_MODEL_PRESET : DEFAULT_LOCAL_PRESET;
+  const runtime = runtimeArg === "mlx" || runtimeArg === "gguf" ? runtimeArg : detectRuntime(resolveLocalRuntimeOverride(config9.CMT_LOCAL_RUNTIME));
+  const preset = resolvePreset(presetId);
+  const spin = le();
+  spin.start(`Downloading ${getModelDisplayLabel(preset, runtime)}\u2026`);
+  await downloadModelForRuntime(preset, runtime);
+  spin.stop("Download complete");
+  ce(`${source_default.green("\u2714")} Model ready`);
+};
+var localSetupCommand = G3(
+  {
+    name: "setup",
+    help: { description: "Install deps, download model, and configure local provider" }
+  },
+  async () => {
+    await runSetup();
+  }
+);
+var localServeCommand = G3(
+  {
+    name: "serve",
+    flags: {
+      background: {
+        type: Boolean,
+        description: "Start daemon in background",
+        default: false
+      }
+    },
+    help: { description: "Start the local model daemon" }
+  },
+  async (argv) => {
+    await runServe(argv.flags.background === true);
+  }
+);
+var localStopCommand = G3(
+  {
+    name: "stop",
+    help: { description: "Stop the local model daemon" }
+  },
+  async () => {
+    const stopped = await stopDaemon();
+    ce(
+      stopped ? `${source_default.green("\u2714")} Local daemon stopped` : `${source_default.yellow("!")} No local daemon was running`
+    );
+  }
+);
+var localStatusCommand = G3(
+  {
+    name: "status",
+    help: { description: "Show local model and daemon status" }
+  },
+  async () => {
+    await runStatus();
+  }
+);
+var localModelsListCommand = G3(
+  {
+    name: "list",
+    help: { description: "List available local model presets" }
+  },
+  () => {
+    runModelsList();
+  }
+);
+var localModelsDownloadCommand = G3(
+  {
+    name: "download",
+    parameters: ["[preset]"],
+    flags: {
+      runtime: {
+        type: String,
+        description: "Runtime for download: mlx or gguf"
+      }
+    },
+    help: { description: "Download a local model preset" }
+  },
+  async (argv) => {
+    await runModelsDownload(argv._.preset, argv.flags.runtime);
+  }
+);
+var localModelsCommand = G3(
+  {
+    name: "models",
+    commands: [localModelsListCommand, localModelsDownloadCommand],
+    help: { description: "Manage local model presets" }
+  },
+  () => {
+    console.log(source_default.bold.cyan("\nLocal model commands:\n"));
+    console.log(source_default.gray("  cmt local models list"));
+    console.log(source_default.gray("  cmt local models download [preset] [--runtime mlx|gguf]"));
+    console.log("");
+  }
+);
+var localCommand = G3(
+  {
+    name: "local",
+    commands: [
+      localSetupCommand,
+      localServeCommand,
+      localStopCommand,
+      localStatusCommand,
+      localModelsCommand
+    ],
+    help: {
+      description: "Manage built-in local SLM (setup, serve, stop, status, models)"
+    }
+  },
+  () => {
+    console.log(source_default.bold.cyan("\nBuilt-in Local LLM:\n"));
+    console.log(source_default.gray("  cmt local setup"));
+    console.log(source_default.gray("  cmt local serve [--background]"));
+    console.log(source_default.gray("  cmt local stop"));
+    console.log(source_default.gray("  cmt local status"));
+    console.log(source_default.gray("  cmt local models list"));
+    console.log(source_default.gray("  cmt local models download [preset]"));
+    console.log("");
+  }
+);
+
 // src/utils/checkIsLatestVersion.ts
 var checkIsLatestVersion = async (options = {}) => {
   if (options.skipCheck ?? process.env.CMT_SKIP_VERSION_CHECK === "true") {
@@ -68508,9 +70013,9 @@ Current version: ${result.currentVersion}. Latest version: ${result.latestVersio
 };
 
 // src/migrations/_run.ts
-var import_fs10 = __toESM(require("fs"));
+var import_fs14 = __toESM(require("fs"));
 var import_os5 = require("os");
-var import_path9 = require("path");
+var import_path10 = require("path");
 
 // src/migrations/00_use_single_api_key_and_url.ts
 function use_single_api_key_and_url_default() {
@@ -68605,18 +70110,18 @@ var migrations = [
 ];
 
 // src/migrations/_run.ts
-var migrationsFile = (0, import_path9.join)((0, import_os5.homedir)(), ".commit-ai_migrations");
+var migrationsFile = (0, import_path10.join)((0, import_os5.homedir)(), ".commit-ai_migrations");
 var getCompletedMigrations = () => {
-  if (!import_fs10.default.existsSync(migrationsFile)) {
+  if (!import_fs14.default.existsSync(migrationsFile)) {
     return [];
   }
-  const data = import_fs10.default.readFileSync(migrationsFile, "utf-8");
+  const data = import_fs14.default.readFileSync(migrationsFile, "utf-8");
   return data ? JSON.parse(data) : [];
 };
 var saveCompletedMigration = (migrationName) => {
   const completedMigrations = getCompletedMigrations();
   completedMigrations.push(migrationName);
-  import_fs10.default.writeFileSync(
+  import_fs14.default.writeFileSync(
     migrationsFile,
     JSON.stringify(completedMigrations, null, 2)
   );
@@ -68662,7 +70167,7 @@ Z2(
     version: package_default.version,
     name: "commit-ai",
     alias: "cmt",
-    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand, prCommand, changelogCommand, reviewCommand, standardsCommand, updateCommand],
+    commands: [checkCommand, configCommand, hookCommand, commitlintConfigCommand, prCommand, changelogCommand, reviewCommand, standardsCommand, updateCommand, localCommand],
     flags: {
       fgm: Boolean,
       context: {
