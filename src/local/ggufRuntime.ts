@@ -5,6 +5,7 @@ import { downloadGgufModel, isGgufModelDownloaded } from './downloadModel';
 import { getGgufModelPath } from './paths';
 import type { OnEngineStatus } from './types';
 import { postChatCompletions } from './chatCompletions';
+import { importNodeLlamaCpp } from './importNodeLlamaCpp';
 
 export interface GgufGenerateOptions {
   preset: LocalModelPreset;
@@ -16,7 +17,7 @@ export interface GgufGenerateOptions {
 
 const loadNodeLlamaCpp = async () => {
   try {
-    return await import('node-llama-cpp');
+    return await importNodeLlamaCpp();
   } catch (error) {
     throw new Error(
       `node-llama-cpp is not installed. Run "cmt local setup" or use CMT_LOCAL_RUNTIME=mlx on Apple Silicon. Cause: ${error instanceof Error ? error.message : String(error)}`

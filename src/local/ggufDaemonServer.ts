@@ -40,7 +40,8 @@ const loadGgufModel = async (
     ? getGgufModelPath(options.preset.gguf.file)
     : await downloadGgufModel(options.preset);
 
-  const { getLlama, LlamaChatSession } = await import('node-llama-cpp');
+  const { importNodeLlamaCpp } = await import('./importNodeLlamaCpp');
+  const { getLlama, LlamaChatSession } = await importNodeLlamaCpp();
   const llama = await getLlama();
   const model = await llama.loadModel({
     modelPath,

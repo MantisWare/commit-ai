@@ -28,7 +28,8 @@ export const downloadGgufModel = async (
   });
 
   try {
-    const nodeLlamaCpp = await import('node-llama-cpp');
+    const { importNodeLlamaCpp } = await import('./importNodeLlamaCpp');
+    const nodeLlamaCpp = await importNodeLlamaCpp();
     const resolvedPath = await nodeLlamaCpp.resolveModelFile(
       preset.gguf.file,
       preset.gguf.repo

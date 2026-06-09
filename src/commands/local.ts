@@ -1,6 +1,6 @@
 import { intro, outro, spinner } from '@clack/prompts';
 import chalk from 'chalk';
-import { command, flag } from 'cleye';
+import { command } from 'cleye';
 import { existsSync, writeFileSync } from 'fs';
 import { OpenAI } from 'openai';
 import {
@@ -67,7 +67,8 @@ const runSetup = async (): Promise<void> => {
     const spin = spinner();
     spin.start('Checking node-llama-cpp…');
     try {
-      await import('node-llama-cpp');
+      const { importNodeLlamaCpp } = await import('../local/importNodeLlamaCpp');
+      await importNodeLlamaCpp();
       spin.stop('node-llama-cpp ready');
     } catch (error) {
       spin.stop('node-llama-cpp not installed');
@@ -265,11 +266,11 @@ const localServeCommand = command(
   {
     name: 'serve',
     flags: {
-      background: flag({
+      background: {
         type: Boolean,
         description: 'Start daemon in background',
         default: false
-      })
+      }
     },
     help: { description: 'Start the local model daemon' }
   },
@@ -318,10 +319,10 @@ const localModelsDownloadCommand = command(
     name: 'download',
     parameters: ['[preset]'],
     flags: {
-      runtime: flag({
+      runtime: {
         type: String,
         description: 'Runtime for download: mlx or gguf'
-      })
+      }
     },
     help: { description: 'Download a local model preset' }
   },
