@@ -24,9 +24,14 @@ export const checkMlxLmInstalled = async (): Promise<boolean> => {
 };
 
 export const installMlxLm = async (): Promise<void> => {
-  await execa('python3', ['-m', 'pip', 'install', 'mlx-lm'], {
-    stdio: 'inherit'
-  });
+  const installArgs = ['-m', 'pip', 'install', '--user', 'mlx-lm'];
+  try {
+    await execa('python3', installArgs, { stdio: 'inherit' });
+  } catch (error) {
+    throw new Error(
+      `Failed to install mlx-lm. Try manually: python3 -m pip install --user mlx-lm. ${error instanceof Error ? error.message : ''}`
+    );
+  }
 };
 
 const spawnEphemeralMlxServer = async (

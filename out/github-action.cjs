@@ -79733,13 +79733,15 @@ var resolveLocalRuntimeOverride = (value) => {
 
 // src/local/paths.ts
 var import_fs3 = require("fs");
+var import_os2 = require("os");
 var import_path3 = require("path");
-var LOCAL_DAEMON_FILE = (0, import_path3.join)(defaultConfigPath, "local-daemon.json");
-var LOCAL_DAEMON_LOG = (0, import_path3.join)(defaultConfigPath, "local-daemon.log");
-var LOCAL_MODELS_DIR = (0, import_path3.join)(defaultConfigPath, "models");
+var LOCAL_DATA_DIR = (0, import_path3.join)((0, import_os2.homedir)(), ".commit-ai-local");
+var LOCAL_DAEMON_FILE = (0, import_path3.join)(LOCAL_DATA_DIR, "local-daemon.json");
+var LOCAL_DAEMON_LOG = (0, import_path3.join)(LOCAL_DATA_DIR, "local-daemon.log");
+var LOCAL_MODELS_DIR = (0, import_path3.join)(LOCAL_DATA_DIR, "models");
 var LOCAL_GGUF_DIR = (0, import_path3.join)(LOCAL_MODELS_DIR, "gguf");
 var LOCAL_MLX_DIR = (0, import_path3.join)(LOCAL_MODELS_DIR, "mlx");
-var LOCAL_SETUP_MARKER = (0, import_path3.join)(defaultConfigPath, "local-setup.json");
+var LOCAL_SETUP_MARKER = (0, import_path3.join)(LOCAL_DATA_DIR, "local-setup.json");
 var ensureLocalDirs = () => {
   for (const dir of [LOCAL_MODELS_DIR, LOCAL_GGUF_DIR, LOCAL_MLX_DIR]) {
     if ((0, import_fs3.existsSync)(dir) !== true) {

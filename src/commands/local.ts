@@ -59,10 +59,14 @@ const runSetup = async (): Promise<void> => {
     spin.start('Checking mlx-lm installation…');
     const installed = await checkMlxLmInstalled();
     if (installed !== true) {
-      spin.message('Installing mlx-lm via pip…');
+      spin.stop('mlx-lm not found');
+      const installSpin = spinner();
+      installSpin.start('Installing mlx-lm via pip…');
       await installMlxLm();
+      installSpin.stop('mlx-lm ready');
+    } else {
+      spin.stop('mlx-lm ready');
     }
-    spin.stop('mlx-lm ready');
   } else {
     const spin = spinner();
     spin.start('Checking node-llama-cpp…');
@@ -252,122 +256,103 @@ const runModelsDownload = async (
   outro(`${chalk.green('✔')} Model ready`);
 };
 
-const localSetupCommand = command(
-  {
-    name: 'setup',
-    help: { description: 'Install deps, download model, and configure local provider' }
-  },
-  async () => {
-    await runSetup();
-  }
-);
+const LOCAL_MODES = ['setup', 'serve', 'stop', 'status', 'models'] as const;
+type LocalMode = (typeof LOCAL_MODES)[number];
 
-const localServeCommand = command(
+const isLocalMode = (value: string | undefined): value is LocalMode =>
+  value !== undefined && LOCAL_MODES.includes(value as LocalMode);
+
+const showLocalHelp = (): void => {
+  console.log(chalk.bold.cyan('\nBuilt-in Local LLM:\n'));
+  console.log(chalk.gray('  cmt local setup'));
+  console.log(chalk.gray('  cmt local serve [--background]'));
+  console.log(chalk.gray('  cmt local stop'));
+  console.log(chalk.gray('  cmt local status'));
+  console.log(chalk.gray('  cmt local models list'));
+  console.log(chalk.gray('  cmt local models download [preset]'));
+  console.log('');
+};
+
+const showModelsHelp = (): void => {
+  console.log(chalk.bold.cyan('\nLocal model commands:\n'));
+  console.log(chalk.gray('  cmt local models list'));
+  console.log(chalk.gray('  cmt local models download [preset] [--runtime mlx|gguf]'));
+  console.log('');
+};
+
+export const localCommand = command(
   {
-    name: 'serve',
+    name: 'local',
+    parameters: ['[setup/serve/stop/status/models]', '[action]', '[preset]'],
     flags: {
       background: {
         type: Boolean,
         description: 'Start daemon in background',
         default: false
-      }
-    },
-    help: { description: 'Start the local model daemon' }
-  },
-  async (argv) => {
-    await runServe(argv.flags.background === true);
-  }
-);
-
-const localStopCommand = command(
-  {
-    name: 'stop',
-    help: { description: 'Stop the local model daemon' }
-  },
-  async () => {
-    const stopped = await stopDaemon();
-    outro(
-      stopped
-        ? `${chalk.green('✔')} Local daemon stopped`
-        : `${chalk.yellow('!')} No local daemon was running`
-    );
-  }
-);
-
-const localStatusCommand = command(
-  {
-    name: 'status',
-    help: { description: 'Show local model and daemon status' }
-  },
-  async () => {
-    await runStatus();
-  }
-);
-
-const localModelsListCommand = command(
-  {
-    name: 'list',
-    help: { description: 'List available local model presets' }
-  },
-  () => {
-    runModelsList();
-  }
-);
-
-const localModelsDownloadCommand = command(
-  {
-    name: 'download',
-    parameters: ['[preset]'],
-    flags: {
+      },
       runtime: {
         type: String,
         description: 'Runtime for download: mlx or gguf'
       }
     },
-    help: { description: 'Download a local model preset' }
-  },
-  async (argv) => {
-    await runModelsDownload(argv._.preset, argv.flags.runtime);
-  }
-);
-
-const localModelsCommand = command(
-  {
-    name: 'models',
-    commands: [localModelsListCommand, localModelsDownloadCommand],
-    help: { description: 'Manage local model presets' }
-  },
-  () => {
-    console.log(chalk.bold.cyan('\nLocal model commands:\n'));
-    console.log(chalk.gray('  cmt local models list'));
-    console.log(chalk.gray('  cmt local models download [preset] [--runtime mlx|gguf]'));
-    console.log('');
-  }
-);
-
-export const localCommand = command(
-  {
-    name: 'local',
-    commands: [
-      localSetupCommand,
-      localServeCommand,
-      localStopCommand,
-      localStatusCommand,
-      localModelsCommand
-    ],
     help: {
       description:
         'Manage built-in local SLM (setup, serve, stop, status, models)'
     }
   },
-  () => {
-    console.log(chalk.bold.cyan('\nBuilt-in Local LLM:\n'));
-    console.log(chalk.gray('  cmt local setup'));
-    console.log(chalk.gray('  cmt local serve [--background]'));
-    console.log(chalk.gray('  cmt local stop'));
-    console.log(chalk.gray('  cmt local status'));
-    console.log(chalk.gray('  cmt local models list'));
-    console.log(chalk.gray('  cmt local models download [preset]'));
-    console.log('');
+  async (argv) => {
+    const mode = argv._.setupServeStopStatusModels;
+    const action = argv._.action;
+    const preset = argv._.preset;
+
+    if (mode === undefined) {
+      showLocalHelp();
+      return;
+    }
+
+    if (isLocalMode(mode) !== true) {
+      showLocalHelp();
+      throw new Error(`Unknown local command: ${mode}`);
+    }
+
+    switch (mode) {
+      case 'setup':
+        await runSetup();
+        return;
+      case 'serve':
+        await runServe(argv.flags.background === true);
+        return;
+      case 'stop': {
+        const stopped = await stopDaemon();
+        outro(
+          stopped
+            ? `${chalk.green('✔')} Local daemon stopped`
+            : `${chalk.yellow('!')} No local daemon was running`
+        );
+        return;
+      }
+      case 'status':
+        await runStatus();
+        return;
+      case 'models':
+        if (action === undefined) {
+          showModelsHelp();
+          return;
+        }
+        if (action === 'list') {
+          runModelsList();
+          return;
+        }
+        if (action === 'download') {
+          await runModelsDownload(preset, argv.flags.runtime);
+          return;
+        }
+        showModelsHelp();
+        throw new Error(`Unknown models command: ${action}`);
+      default: {
+        const _exhaustive: never = mode;
+        throw new Error(`Unhandled local command: ${_exhaustive}`);
+      }
+    }
   }
 );

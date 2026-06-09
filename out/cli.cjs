@@ -48899,7 +48899,7 @@ var $4 = create$();
 
 // src/commands/commit.ts
 var import_fs9 = require("fs");
-var import_os3 = require("os");
+var import_os4 = require("os");
 var import_path7 = require("path");
 
 // src/commands/config.ts
@@ -60159,13 +60159,15 @@ var resolveLocalRuntimeOverride = (value) => {
 
 // src/local/paths.ts
 var import_fs3 = require("fs");
+var import_os2 = require("os");
 var import_path3 = require("path");
-var LOCAL_DAEMON_FILE = (0, import_path3.join)(defaultConfigPath, "local-daemon.json");
-var LOCAL_DAEMON_LOG = (0, import_path3.join)(defaultConfigPath, "local-daemon.log");
-var LOCAL_MODELS_DIR = (0, import_path3.join)(defaultConfigPath, "models");
+var LOCAL_DATA_DIR = (0, import_path3.join)((0, import_os2.homedir)(), ".commit-ai-local");
+var LOCAL_DAEMON_FILE = (0, import_path3.join)(LOCAL_DATA_DIR, "local-daemon.json");
+var LOCAL_DAEMON_LOG = (0, import_path3.join)(LOCAL_DATA_DIR, "local-daemon.log");
+var LOCAL_MODELS_DIR = (0, import_path3.join)(LOCAL_DATA_DIR, "models");
 var LOCAL_GGUF_DIR = (0, import_path3.join)(LOCAL_MODELS_DIR, "gguf");
 var LOCAL_MLX_DIR = (0, import_path3.join)(LOCAL_MODELS_DIR, "mlx");
-var LOCAL_SETUP_MARKER = (0, import_path3.join)(defaultConfigPath, "local-setup.json");
+var LOCAL_SETUP_MARKER = (0, import_path3.join)(LOCAL_DATA_DIR, "local-setup.json");
 var ensureLocalDirs = () => {
   for (const dir of [LOCAL_MODELS_DIR, LOCAL_GGUF_DIR, LOCAL_MLX_DIR]) {
     if ((0, import_fs3.existsSync)(dir) !== true) {
@@ -60451,9 +60453,14 @@ var checkMlxLmInstalled = async () => {
   }
 };
 var installMlxLm = async () => {
-  await execa("python3", ["-m", "pip", "install", "mlx-lm"], {
-    stdio: "inherit"
-  });
+  const installArgs = ["-m", "pip", "install", "--user", "mlx-lm"];
+  try {
+    await execa("python3", installArgs, { stdio: "inherit" });
+  } catch (error) {
+    throw new Error(
+      `Failed to install mlx-lm. Try manually: python3 -m pip install --user mlx-lm. ${error instanceof Error ? error.message : ""}`
+    );
+  }
 };
 var spawnEphemeralMlxServer = async (modelRepo, port) => {
   return execa(
@@ -67762,8 +67769,8 @@ var standardsCommand = G3(
 var import_crypto4 = require("crypto");
 var import_fs8 = require("fs");
 var import_path6 = require("path");
-var import_os2 = require("os");
-var CACHE_DIR = (0, import_path6.join)((0, import_os2.homedir)(), ".commit-ai-cache");
+var import_os3 = require("os");
+var CACHE_DIR = (0, import_path6.join)((0, import_os3.homedir)(), ".commit-ai-cache");
 var CACHE_FILE = (0, import_path6.join)(CACHE_DIR, "review-cache.json");
 var CACHE_VERSION = 1;
 var DEFAULT_CACHE_TTL_HOURS = 24;
@@ -68319,7 +68326,7 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
 ).join("\n\n");
 var openInEditor = async (message) => {
   const editor = process.env.EDITOR || process.env.VISUAL || "vi";
-  const tmpFile = (0, import_path7.join)((0, import_os3.tmpdir)(), `COMMIT_EDITMSG_${Date.now()}`);
+  const tmpFile = (0, import_path7.join)((0, import_os4.tmpdir)(), `COMMIT_EDITMSG_${Date.now()}`);
   try {
     (0, import_fs9.writeFileSync)(tmpFile, message, "utf-8");
     await execa(editor, [tmpFile], {
@@ -68865,7 +68872,7 @@ var commitLog = async (branch = "master", fullGitMojiSpec = false) => {
 
 // src/commands/check.ts
 var import_fs10 = require("fs");
-var import_os4 = require("os");
+var import_os5 = require("os");
 var import_path8 = require("path");
 
 // src/utils/banner.ts
@@ -68989,7 +68996,7 @@ var runCheck = async () => {
       details: "not inside a Git work tree (run inside a repo for full functionality)"
     });
   }
-  const globalConfigPath = (0, import_path8.join)((0, import_os4.homedir)(), ".commit-ai");
+  const globalConfigPath = (0, import_path8.join)((0, import_os5.homedir)(), ".commit-ai");
   results.push({
     label: "Global config",
     status: (0, import_fs10.existsSync)(globalConfigPath) ? "pass" : "warn",
@@ -69697,10 +69704,14 @@ var runSetup = async () => {
     spin.start("Checking mlx-lm installation\u2026");
     const installed = await checkMlxLmInstalled();
     if (installed !== true) {
-      spin.message("Installing mlx-lm via pip\u2026");
+      spin.stop("mlx-lm not found");
+      const installSpin = le();
+      installSpin.start("Installing mlx-lm via pip\u2026");
       await installMlxLm();
+      installSpin.stop("mlx-lm ready");
+    } else {
+      spin.stop("mlx-lm ready");
     }
-    spin.stop("mlx-lm ready");
   } else {
     const spin = le();
     spin.start("Checking node-llama-cpp\u2026");
@@ -69858,113 +69869,92 @@ var runModelsDownload = async (presetArg, runtimeArg) => {
   spin.stop("Download complete");
   ce(`${source_default.green("\u2714")} Model ready`);
 };
-var localSetupCommand = G3(
+var LOCAL_MODES = ["setup", "serve", "stop", "status", "models"];
+var isLocalMode = (value) => value !== void 0 && LOCAL_MODES.includes(value);
+var showLocalHelp = () => {
+  console.log(source_default.bold.cyan("\nBuilt-in Local LLM:\n"));
+  console.log(source_default.gray("  cmt local setup"));
+  console.log(source_default.gray("  cmt local serve [--background]"));
+  console.log(source_default.gray("  cmt local stop"));
+  console.log(source_default.gray("  cmt local status"));
+  console.log(source_default.gray("  cmt local models list"));
+  console.log(source_default.gray("  cmt local models download [preset]"));
+  console.log("");
+};
+var showModelsHelp = () => {
+  console.log(source_default.bold.cyan("\nLocal model commands:\n"));
+  console.log(source_default.gray("  cmt local models list"));
+  console.log(source_default.gray("  cmt local models download [preset] [--runtime mlx|gguf]"));
+  console.log("");
+};
+var localCommand = G3(
   {
-    name: "setup",
-    help: { description: "Install deps, download model, and configure local provider" }
-  },
-  async () => {
-    await runSetup();
-  }
-);
-var localServeCommand = G3(
-  {
-    name: "serve",
+    name: "local",
+    parameters: ["[setup/serve/stop/status/models]", "[action]", "[preset]"],
     flags: {
       background: {
         type: Boolean,
         description: "Start daemon in background",
         default: false
-      }
-    },
-    help: { description: "Start the local model daemon" }
-  },
-  async (argv) => {
-    await runServe(argv.flags.background === true);
-  }
-);
-var localStopCommand = G3(
-  {
-    name: "stop",
-    help: { description: "Stop the local model daemon" }
-  },
-  async () => {
-    const stopped = await stopDaemon();
-    ce(
-      stopped ? `${source_default.green("\u2714")} Local daemon stopped` : `${source_default.yellow("!")} No local daemon was running`
-    );
-  }
-);
-var localStatusCommand = G3(
-  {
-    name: "status",
-    help: { description: "Show local model and daemon status" }
-  },
-  async () => {
-    await runStatus();
-  }
-);
-var localModelsListCommand = G3(
-  {
-    name: "list",
-    help: { description: "List available local model presets" }
-  },
-  () => {
-    runModelsList();
-  }
-);
-var localModelsDownloadCommand = G3(
-  {
-    name: "download",
-    parameters: ["[preset]"],
-    flags: {
+      },
       runtime: {
         type: String,
         description: "Runtime for download: mlx or gguf"
       }
     },
-    help: { description: "Download a local model preset" }
-  },
-  async (argv) => {
-    await runModelsDownload(argv._.preset, argv.flags.runtime);
-  }
-);
-var localModelsCommand = G3(
-  {
-    name: "models",
-    commands: [localModelsListCommand, localModelsDownloadCommand],
-    help: { description: "Manage local model presets" }
-  },
-  () => {
-    console.log(source_default.bold.cyan("\nLocal model commands:\n"));
-    console.log(source_default.gray("  cmt local models list"));
-    console.log(source_default.gray("  cmt local models download [preset] [--runtime mlx|gguf]"));
-    console.log("");
-  }
-);
-var localCommand = G3(
-  {
-    name: "local",
-    commands: [
-      localSetupCommand,
-      localServeCommand,
-      localStopCommand,
-      localStatusCommand,
-      localModelsCommand
-    ],
     help: {
       description: "Manage built-in local SLM (setup, serve, stop, status, models)"
     }
   },
-  () => {
-    console.log(source_default.bold.cyan("\nBuilt-in Local LLM:\n"));
-    console.log(source_default.gray("  cmt local setup"));
-    console.log(source_default.gray("  cmt local serve [--background]"));
-    console.log(source_default.gray("  cmt local stop"));
-    console.log(source_default.gray("  cmt local status"));
-    console.log(source_default.gray("  cmt local models list"));
-    console.log(source_default.gray("  cmt local models download [preset]"));
-    console.log("");
+  async (argv) => {
+    const mode = argv._.setupServeStopStatusModels;
+    const action = argv._.action;
+    const preset = argv._.preset;
+    if (mode === void 0) {
+      showLocalHelp();
+      return;
+    }
+    if (isLocalMode(mode) !== true) {
+      showLocalHelp();
+      throw new Error(`Unknown local command: ${mode}`);
+    }
+    switch (mode) {
+      case "setup":
+        await runSetup();
+        return;
+      case "serve":
+        await runServe(argv.flags.background === true);
+        return;
+      case "stop": {
+        const stopped = await stopDaemon();
+        ce(
+          stopped ? `${source_default.green("\u2714")} Local daemon stopped` : `${source_default.yellow("!")} No local daemon was running`
+        );
+        return;
+      }
+      case "status":
+        await runStatus();
+        return;
+      case "models":
+        if (action === void 0) {
+          showModelsHelp();
+          return;
+        }
+        if (action === "list") {
+          runModelsList();
+          return;
+        }
+        if (action === "download") {
+          await runModelsDownload(preset, argv.flags.runtime);
+          return;
+        }
+        showModelsHelp();
+        throw new Error(`Unknown models command: ${action}`);
+      default: {
+        const _exhaustive = mode;
+        throw new Error(`Unhandled local command: ${_exhaustive}`);
+      }
+    }
   }
 );
 
@@ -70014,7 +70004,7 @@ Current version: ${result.currentVersion}. Latest version: ${result.latestVersio
 
 // src/migrations/_run.ts
 var import_fs14 = __toESM(require("fs"));
-var import_os5 = require("os");
+var import_os6 = require("os");
 var import_path10 = require("path");
 
 // src/migrations/00_use_single_api_key_and_url.ts
@@ -70110,7 +70100,7 @@ var migrations = [
 ];
 
 // src/migrations/_run.ts
-var migrationsFile = (0, import_path10.join)((0, import_os5.homedir)(), ".commit-ai_migrations");
+var migrationsFile = (0, import_path10.join)((0, import_os6.homedir)(), ".commit-ai_migrations");
 var getCompletedMigrations = () => {
   if (!import_fs14.default.existsSync(migrationsFile)) {
     return [];
