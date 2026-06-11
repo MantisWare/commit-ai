@@ -136,6 +136,13 @@ export const gitResetStaged = async (): Promise<void> => {
   await execa('git', ['reset']);
 };
 
+/**
+ * Unstage specific files while keeping their working tree changes.
+ */
+export const gitResetFiles = async (files: string[]): Promise<void> => {
+  await execa('git', ['reset', '--', ...files]);
+};
+
 export const getFilesIncludedInAIDiff = (files: string[]): string[] =>
   files.filter((file) => isDefaultExcludedFromAIDiff(file) === false);
 

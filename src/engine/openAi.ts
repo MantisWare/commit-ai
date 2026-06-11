@@ -14,9 +14,13 @@ export class OpenAiEngine implements AiEngine {
     this.config = config;
 
     const clientConfig = {
-      apiKey: config.apiKey,
+      // openai v5+ throws on a missing/empty apiKey at construction time;
+      // v4 allowed it and let the server reject instead. Keyless setups
+      // (local OpenAI-compatible endpoints, auth-injecting proxies) rely on
+      // the old behavior, so substitute a placeholder the server can ignore.
+      apiKey: config.apiKey !== '' ? config.apiKey : 'sk-no-key-configured',
       timeout: 120000, // 120 second timeout
-      maxRetries: 2
+      maxRetries: 5 // retried with exponential backoff on connection errors, 408/409/429 and 5xx
     };
 
     if (!config.baseURL) {

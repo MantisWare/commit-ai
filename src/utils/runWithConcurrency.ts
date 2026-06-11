@@ -1,6 +1,27 @@
-const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) return error.message;
+import { applyClassicTlsGroupsFallback } from './tlsFallback';
+
+const MAX_CAUSE_DEPTH = 5;
+
+// Walks the `cause` chain because SDK errors (e.g. openai APIConnectionError)
+// expose a generic message while the actual ECONNRESET sits in `error.cause`.
+const collectErrorText = (error: unknown, depth: number = 0): string => {
+  if (error === null || error === undefined || depth > MAX_CAUSE_DEPTH) {
+    return '';
+  }
   if (typeof error === 'string') return error;
+
+  if (error instanceof Error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    const causeText = collectErrorText(
+      (error as Error & { cause?: unknown }).cause,
+      depth + 1
+    );
+
+    return [error.message, typeof code === 'string' ? code : '', causeText]
+      .filter((part) => part !== '')
+      .join(' ');
+  }
+
   try {
     return JSON.stringify(error);
   } catch {
@@ -8,12 +29,35 @@ const getErrorMessage = (error: unknown): string => {
   }
 };
 
+const getErrorMessage = (error: unknown): string => collectErrorText(error);
+
 export const isRateLimitError = (error: unknown): boolean => {
   const message = getErrorMessage(error).toLowerCase();
   return (
     message.includes('429') ||
     message.includes('rate limit') ||
     message.includes('too many requests')
+  );
+};
+
+const TRANSIENT_NETWORK_ERROR_PATTERNS = [
+  'econnreset',
+  'econnrefused',
+  'epipe',
+  'enotfound',
+  'eai_again',
+  'etimedout',
+  'econnaborted',
+  'socket hang up',
+  'connection error',
+  'network error',
+  'fetch failed'
+];
+
+export const isTransientNetworkError = (error: unknown): boolean => {
+  const message = getErrorMessage(error).toLowerCase();
+  return TRANSIENT_NETWORK_ERROR_PATTERNS.some((pattern) =>
+    message.includes(pattern)
   );
 };
 
@@ -46,6 +90,19 @@ const delay = (ms: number): Promise<void> =>
 const jitterMs = (baseMs: number, spreadMs: number): number =>
   baseMs + Math.floor(Math.random() * spreadMs);
 
+const getRetryDelayMs = (error: unknown, attempt: number): number | null => {
+  if (isRateLimitError(error)) {
+    return attempt === 1 ? jitterMs(5000, 2000) : jitterMs(60000, 5000);
+  }
+
+  if (isTransientNetworkError(error)) {
+    applyClassicTlsGroupsFallback();
+    return jitterMs(2000 * attempt, 1000);
+  }
+
+  return null;
+};
+
 const runTaskWithRetries = async <T>(
   taskIndex: number,
   task: TaskRunner<T>,
@@ -58,15 +115,16 @@ const runTaskWithRetries = async <T>(
     try {
       return await task();
     } catch (error) {
-      if (isRateLimitError(error) && retries < maxRetries) {
-        retries += 1;
-        const sleepMs =
-          retries === 1 ? jitterMs(5000, 2000) : jitterMs(60000, 5000);
-        onRetry?.(taskIndex, retries, sleepMs, error);
-        await delay(sleepMs);
-        continue;
+      const sleepMs =
+        retries < maxRetries ? getRetryDelayMs(error, retries + 1) : null;
+
+      if (sleepMs === null) {
+        throw error;
       }
-      throw error;
+
+      retries += 1;
+      onRetry?.(taskIndex, retries, sleepMs, error);
+      await delay(sleepMs);
     }
   }
 };

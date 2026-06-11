@@ -14,7 +14,9 @@ export class DeepseekEngine implements AiEngine {
 
   constructor(config: DeepseekConfig) {
     this.config = config;
-    this.client = new OpenAI({ apiKey: '' }); // Placeholder client to satisfy interface
+    // Placeholder client to satisfy the interface; requests go through axios.
+    // openai v5+ throws on an empty apiKey, so pass a dummy value.
+    this.client = new OpenAI({ apiKey: 'unused-placeholder' });
   }
 
   public generateCommitMessage = async (

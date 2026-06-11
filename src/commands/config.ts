@@ -28,6 +28,7 @@ export enum CONFIG_KEYS {
   CMT_DEBUG = 'CMT_DEBUG',
   CMT_MAX_FILES = 'CMT_MAX_FILES',
   CMT_MAX_DIFF_BYTES = 'CMT_MAX_DIFF_BYTES',
+  CMT_LARGE_FILE_DIFF_BYTES = 'CMT_LARGE_FILE_DIFF_BYTES',
   CMT_CHUNK_CONCURRENCY = 'CMT_CHUNK_CONCURRENCY',
   CMT_SYNTHESIZE_CHUNKS = 'CMT_SYNTHESIZE_CHUNKS',
   CMT_SML = 'CMT_SML',
@@ -335,6 +336,16 @@ export const configValidators = {
     return value;
   },
 
+  [CONFIG_KEYS.CMT_LARGE_FILE_DIFF_BYTES](value: any) {
+    value = parseInt(value);
+    validateConfig(
+      CONFIG_KEYS.CMT_LARGE_FILE_DIFF_BYTES,
+      !isNaN(value) && value >= 0,
+      'Must be a non-negative number in bytes (0 disables the large-file prompt)'
+    );
+    return value;
+  },
+
   [CONFIG_KEYS.CMT_CHUNK_CONCURRENCY](value: any) {
     value = parseInt(value, 10);
     validateConfig(
@@ -599,6 +610,7 @@ export type ConfigType = {
   [CONFIG_KEYS.CMT_DEBUG]: boolean;
   [CONFIG_KEYS.CMT_MAX_FILES]?: number;
   [CONFIG_KEYS.CMT_MAX_DIFF_BYTES]?: number;
+  [CONFIG_KEYS.CMT_LARGE_FILE_DIFF_BYTES]?: number;
   [CONFIG_KEYS.CMT_CHUNK_CONCURRENCY]?: number;
   [CONFIG_KEYS.CMT_SYNTHESIZE_CHUNKS]?: boolean;
   [CONFIG_KEYS.CMT_SML]: boolean;
@@ -720,6 +732,9 @@ const getEnvConfig = (envPath: string) => {
     CMT_DEBUG: parseConfigVarValue(process.env.CMT_DEBUG),
     CMT_MAX_FILES: parseConfigVarValue(process.env.CMT_MAX_FILES),
     CMT_MAX_DIFF_BYTES: parseConfigVarValue(process.env.CMT_MAX_DIFF_BYTES),
+    CMT_LARGE_FILE_DIFF_BYTES: parseConfigVarValue(
+      process.env.CMT_LARGE_FILE_DIFF_BYTES
+    ),
     CMT_CHUNK_CONCURRENCY: parseConfigVarValue(
       process.env.CMT_CHUNK_CONCURRENCY
     ),
@@ -958,6 +973,12 @@ const CONFIG_HELP: Record<string, { description: string; example: string; defaul
     description: 'Maximum diff size in bytes',
     example: '102400',
     default: 'unlimited'
+  },
+  CMT_LARGE_FILE_DIFF_BYTES: {
+    description:
+      'Per-file diff size (bytes) above which you are asked whether to include the file in the commit (0 disables the prompt)',
+    example: '1048576',
+    default: '1048576 (1 MB)'
   },
   CMT_CHUNK_CONCURRENCY: {
     description:

@@ -22,7 +22,7 @@ export class AnthropicEngine implements AiEngine {
     this.client = new AnthropicClient({
       apiKey: this.config.apiKey,
       timeout: 120000, // 120 second timeout
-      maxRetries: 2
+      maxRetries: 5 // retried with exponential backoff on connection errors, 408/409/429 and 5xx
     });
   }
 

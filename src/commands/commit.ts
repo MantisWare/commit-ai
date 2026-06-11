@@ -37,9 +37,15 @@ import {
   getDiffBetweenBranches,
   getStagedFiles,
   gitAdd,
+  gitResetFiles,
   gitResetStaged,
   filterDiffForReview
 } from '../utils/git';
+import {
+  DEFAULT_LARGE_FILE_DIFF_BYTES,
+  findLargeFileDiffs,
+  formatByteSize
+} from '../utils/largeFileDiffs';
 import { runWithConcurrency } from '../utils/runWithConcurrency';
 import { withTimeout } from '../utils/timeout';
 import { trytm } from '../utils/trytm';
@@ -283,6 +289,76 @@ export interface CommitOptions {
   runReview?: boolean;
 }
 
+/**
+ * Asks whether files with unusually large diffs (usually generated or
+ * minified artifacts) should be part of this commit. Declining unstages
+ * them while keeping working tree changes. Skipped with --yes or when
+ * CMT_LARGE_FILE_DIFF_BYTES=0.
+ */
+const confirmLargeFileInclusion = async (
+  stagedFiles: string[],
+  skipPrompt: boolean
+): Promise<string[]> => {
+  const threshold =
+    config.CMT_LARGE_FILE_DIFF_BYTES ?? DEFAULT_LARGE_FILE_DIFF_BYTES;
+  if (threshold <= 0 || skipPrompt) {
+    return stagedFiles;
+  }
+
+  const diff = await getDiffContent({ files: stagedFiles, staged: true });
+  const largeFiles = findLargeFileDiffs(diff, threshold);
+  if (largeFiles.length === 0) {
+    return stagedFiles;
+  }
+
+  const fileList = largeFiles
+    .map(({ file, bytes }) => `  ${file} (${formatByteSize(bytes)})`)
+    .join('\n');
+
+  console.log(
+    chalk.yellow(
+      `\nThese staged files have unusually large diffs (over ${formatByteSize(
+        threshold
+      )}) — typically generated or minified output:\n${fileList}\n`
+    )
+  );
+
+  const includeLargeFiles = await confirm({
+    message: `Include ${
+      largeFiles.length === 1 ? 'this file' : `these ${largeFiles.length} files`
+    } in the commit?`,
+    initialValue: false
+  });
+
+  if (isCancel(includeLargeFiles)) process.exit(1);
+
+  if (includeLargeFiles === true) {
+    return stagedFiles;
+  }
+
+  const excluded = new Set(largeFiles.map(({ file }) => file));
+  await gitResetFiles([...excluded]);
+
+  console.log(
+    chalk.dim(
+      `Unstaged ${excluded.size} large ${
+        excluded.size === 1 ? 'file' : 'files'
+      } — changes remain in your working tree.`
+    )
+  );
+
+  const remaining = stagedFiles.filter((file) => excluded.has(file) === false);
+
+  if (remaining.length === 0) {
+    outro(
+      chalk.yellow('No staged files left after excluding large files.')
+    );
+    process.exit(0);
+  }
+
+  return remaining;
+};
+
 const runCommitReviewIfNeeded = async (
   diff: string,
   runReview: boolean
@@ -444,8 +520,6 @@ const commitStagedFilesInBatches = async (
     );
   }
 
-  await gitResetStaged();
-
   const batchConcurrency = getBatchGenerationConcurrency();
 
   console.log(
@@ -581,6 +655,10 @@ const commitStagedFilesInBatches = async (
     outro(chalk.yellow('Commits aborted.'));
     process.exit(0);
   }
+
+  // Unstage only once we are actually committing: doing this earlier wiped
+  // the user's staging area on dry runs and aborted confirmations.
+  await gitResetStaged();
 
   for (let batchIndex = 0; batchIndex < plannedCommits.length; batchIndex++) {
     const batch = plannedCommits[batchIndex];
@@ -799,6 +877,11 @@ export const commit = async (
       .join('\n')}`
   );
 
+  const filesToCommit = await confirmLargeFileInclusion(
+    stagedFiles,
+    skipCommitConfirmation
+  );
+
   const commitSizeLimits = getCommitSizeLimits();
   const batchOptions: CommitOptions = {
     context,
@@ -811,9 +894,9 @@ export const commit = async (
     runReview
   };
 
-  if (exceedsMaxStagedFiles(stagedFiles.length, commitSizeLimits)) {
+  if (exceedsMaxStagedFiles(filesToCommit.length, commitSizeLimits)) {
     await commitStagedFilesInBatches(
-      stagedFiles,
+      filesToCommit,
       commitSizeLimits,
       extraArgs,
       batchOptions
@@ -823,7 +906,7 @@ export const commit = async (
 
   console.log(); // Add spacing before "cooking up" message
 
-  const [diff, diffError] = await trytm(getDiff({ files: stagedFiles }));
+  const [diff, diffError] = await trytm(getDiff({ files: filesToCommit }));
   if (diffError) {
     outro(`${chalk.red('✖')} ${diffError}`);
     process.exit(1);
@@ -840,9 +923,9 @@ export const commit = async (
 
   const diffByteLength = Buffer.byteLength(diff ?? '', 'utf8');
 
-  if (needsCommitBatching(stagedFiles.length, diffByteLength, commitSizeLimits)) {
+  if (needsCommitBatching(filesToCommit.length, diffByteLength, commitSizeLimits)) {
     await commitStagedFilesInBatches(
-      stagedFiles,
+      filesToCommit,
       commitSizeLimits,
       extraArgs,
       batchOptions
@@ -851,7 +934,7 @@ export const commit = async (
   }
 
   try {
-    assertCommitSizeGuardrails(stagedFiles.length, diffByteLength);
+    assertCommitSizeGuardrails(filesToCommit.length, diffByteLength);
   } catch (guardrailError) {
     outro(`${chalk.red('✖')} ${(guardrailError as Error).message}`);
     process.exit(1);

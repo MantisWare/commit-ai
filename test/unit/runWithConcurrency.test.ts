@@ -1,7 +1,19 @@
 import {
   isRateLimitError,
+  isTransientNetworkError,
   runWithConcurrency
 } from '../../src/utils/runWithConcurrency';
+
+const createConnectionResetError = (): Error => {
+  const cause = Object.assign(
+    new Error(
+      'request to https://api.openai.com/v1/chat/completions failed, reason: read ECONNRESET'
+    ),
+    { code: 'ECONNRESET' }
+  );
+
+  return Object.assign(new Error('Connection error.'), { cause });
+};
 
 describe('runWithConcurrency', () => {
   it('preserves task result order', async () => {
@@ -76,6 +88,52 @@ describe('runWithConcurrency', () => {
     expect(attempts).toBe(2);
   });
 
+  it(
+    'retries transient connection errors',
+    async () => {
+      let attempts = 0;
+
+      const results = await runWithConcurrency({
+        tasks: [
+          async () => {
+            attempts += 1;
+            if (attempts === 1) {
+              throw createConnectionResetError();
+            }
+            return 'ok';
+          }
+        ],
+        concurrency: 1,
+        batchDelayMs: 0,
+        maxRetries: 2
+      });
+
+      expect(results).toEqual(['ok']);
+      expect(attempts).toBe(2);
+    },
+    15000
+  );
+
+  it('does not retry non-transient errors', async () => {
+    let attempts = 0;
+
+    await expect(
+      runWithConcurrency({
+        tasks: [
+          async () => {
+            attempts += 1;
+            throw new Error('Incorrect API key provided');
+          }
+        ],
+        concurrency: 1,
+        batchDelayMs: 0,
+        maxRetries: 2
+      })
+    ).rejects.toThrow('Incorrect API key provided');
+
+    expect(attempts).toBe(1);
+  });
+
   it('returns empty array for no tasks', async () => {
     const results = await runWithConcurrency({
       tasks: [],
@@ -91,5 +149,24 @@ describe('isRateLimitError', () => {
     expect(isRateLimitError(new Error('429 Too Many Requests'))).toBe(true);
     expect(isRateLimitError(new Error('rate limit exceeded'))).toBe(true);
     expect(isRateLimitError(new Error('network timeout'))).toBe(false);
+  });
+});
+
+describe('isTransientNetworkError', () => {
+  it('detects ECONNRESET nested in the cause chain', () => {
+    expect(isTransientNetworkError(createConnectionResetError())).toBe(true);
+  });
+
+  it('detects connection errors by message', () => {
+    expect(isTransientNetworkError(new Error('Connection error.'))).toBe(true);
+    expect(isTransientNetworkError(new Error('fetch failed'))).toBe(true);
+    expect(isTransientNetworkError(new Error('socket hang up'))).toBe(true);
+  });
+
+  it('ignores unrelated errors', () => {
+    expect(isTransientNetworkError(new Error('Incorrect API key'))).toBe(
+      false
+    );
+    expect(isTransientNetworkError(new Error('TOO_MUCH_TOKENS'))).toBe(false);
   });
 });

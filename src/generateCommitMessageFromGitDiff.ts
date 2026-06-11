@@ -4,9 +4,14 @@ import { getMainCommitPrompt, getSynthesisPrompt } from './prompts';
 import { debug } from './utils/debug';
 import type { OnEngineStatus } from './local/types';
 import { getEngine } from './utils/engine';
+import { capOversizedFileDiffs } from './utils/capOversizedFileDiffs';
 import { mergeDiffs } from './utils/mergeDiffs';
-import { runWithConcurrency } from './utils/runWithConcurrency';
+import {
+  isTransientNetworkError,
+  runWithConcurrency
+} from './utils/runWithConcurrency';
 import { sanitizeSpecialTokens } from './utils/sanitizeSpecialTokens';
+import { applyClassicTlsGroupsFallback } from './utils/tlsFallback';
 import { tokenCount } from './utils/tokenCount';
 import { yieldToEventLoop } from './utils/yieldToEventLoop';
 
@@ -85,18 +90,14 @@ const getErrorMessage = (error: unknown): string => {
   }
 };
 
-const isTimeoutLikeError = (error: unknown): boolean => {
+const isRecoverableRequestError = (error: unknown): boolean => {
   const message = getErrorMessage(error).toLowerCase();
-  const patterns = [
-    'timeout',
-    'timed out',
-    'etimedout',
-    'econnaborted',
-    'aborterror',
-    'socket hang up'
-  ];
+  const timeoutPatterns = ['timeout', 'timed out', 'aborterror'];
 
-  return patterns.some((p) => message.includes(p));
+  return (
+    timeoutPatterns.some((p) => message.includes(p)) ||
+    isTransientNetworkError(error)
+  );
 };
 
 type CommitMessageTask = () => Promise<string | null | undefined>;
@@ -204,12 +205,17 @@ const runChunkTasks = async (
 };
 
 export const generateCommitMessageByDiff = async (
-  diff: string,
+  rawDiff: string,
   fullGitMojiSpec: boolean = false,
   context: string = '',
   onProgress?: OnGenerateCommitProgress,
   onEngineStatus?: OnEngineStatusCallback
 ): Promise<string> => {
+  // Must happen before any token counting: huge generated/minified file
+  // diffs make synchronous tokenization block the event loop (frozen
+  // heartbeat/timeouts) and would fan out into hundreds of API calls.
+  const diff = capOversizedFileDiffs(rawDiff);
+
   try {
     debug('Starting generateCommitMessageByDiff');
     debug('Getting main commit prompt...');
@@ -272,7 +278,11 @@ export const generateCommitMessageByDiff = async (
 
     return commitMessage;
   } catch (error) {
-    if (isTimeoutLikeError(error)) {
+    if (isRecoverableRequestError(error)) {
+      // Stale or blocked TLS sockets (e.g. ECONNRESET caused by middleboxes
+      // rejecting post-quantum ClientHellos) are remedied before retrying.
+      applyClassicTlsGroupsFallback();
+
       const fallbackMaxDiffLength = Math.max(
         200,
         Math.floor(MAX_TOKENS_INPUT / 6)
@@ -347,23 +357,32 @@ function splitDiff(diff: string, maxChangeLength: number) {
   const lines = diff.split('\n');
   const splitDiffs = [] as string[];
   let currentDiff = '';
+  let currentDiffTokens = 0;
 
   if (maxChangeLength <= 0) {
     throw new Error(getOutputTokensErrorMessage());
   }
 
   for (let line of lines) {
-    while (tokenCount(line) > maxChangeLength) {
-      const subLine = line.substring(0, maxChangeLength);
+    // Slice very long lines by characters: a chunk of N chars never exceeds
+    // ~N tokens, and this avoids re-tokenizing the entire remaining line on
+    // every iteration (which is quadratic and froze the CLI on multi-MB
+    // single-line diffs of minified files).
+    while (line.length > maxChangeLength) {
+      splitDiffs.push(line.substring(0, maxChangeLength));
       line = line.substring(maxChangeLength);
-      splitDiffs.push(subLine);
     }
 
-    if (tokenCount(currentDiff) + tokenCount('\n' + line) > maxChangeLength) {
-      splitDiffs.push(currentDiff);
+    const lineTokens = tokenCount('\n' + line);
+    if (currentDiffTokens + lineTokens > maxChangeLength) {
+      if (currentDiff !== '') {
+        splitDiffs.push(currentDiff);
+      }
       currentDiff = line;
+      currentDiffTokens = tokenCount(line);
     } else {
       currentDiff += '\n' + line;
+      currentDiffTokens += lineTokens;
     }
   }
 
