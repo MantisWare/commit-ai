@@ -44517,7 +44517,7 @@ function G3(t2, e3) {
 // package.json
 var package_default = {
   name: "@mantisware/commit-ai",
-  version: "1.0.24",
+  version: "1.0.25",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
     "git",
@@ -67608,11 +67608,12 @@ var getStagedFiles = async () => {
     "--name-only",
     "--cached",
     "--relative",
+    "-z",
     gitDir
   ]);
   if (!files)
     return [];
-  const filesList = files.split("\n");
+  const filesList = files.split("\0").filter((file) => file !== "");
   const ig = getCommitAIIgnore();
   const allowedFiles = filesList.filter((file) => !ig.ignores(file));
   if (!allowedFiles)
@@ -67620,14 +67621,19 @@ var getStagedFiles = async () => {
   return allowedFiles.sort();
 };
 var getChangedFiles = async () => {
-  const { stdout: modified } = await execa("git", ["ls-files", "--modified"]);
+  const { stdout: modified } = await execa("git", [
+    "ls-files",
+    "--modified",
+    "-z"
+  ]);
   const { stdout: others } = await execa("git", [
     "ls-files",
     "--others",
-    "--exclude-standard"
+    "--exclude-standard",
+    "-z"
   ]);
-  const files = [...modified.split("\n"), ...others.split("\n")].filter(
-    (file) => !!file
+  const files = [...modified.split("\0"), ...others.split("\0")].filter(
+    (file) => file !== ""
   );
   return files.sort();
 };
