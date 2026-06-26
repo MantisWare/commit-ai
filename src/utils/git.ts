@@ -81,12 +81,15 @@ export const getStagedFiles = async (): Promise<string[]> => {
     '--name-only',
     '--cached',
     '--relative',
+    '-z',
     gitDir
   ]);
 
   if (!files) return [];
 
-  const filesList = files.split('\n');
+  // `-z` yields NUL-separated, unquoted paths, so filenames containing
+  // spaces or non-ASCII characters are preserved verbatim.
+  const filesList = files.split('\0').filter((file) => file !== '');
 
   const ig = getCommitAIIgnore();
   const allowedFiles = filesList.filter((file) => !ig.ignores(file));
@@ -101,15 +104,22 @@ export const getStagedFiles = async (): Promise<string[]> => {
  * @returns {Promise<string[]>} An array of changed files
  */
 export const getChangedFiles = async (): Promise<string[]> => {
-  const { stdout: modified } = await execa('git', ['ls-files', '--modified']);
+  const { stdout: modified } = await execa('git', [
+    'ls-files',
+    '--modified',
+    '-z'
+  ]);
   const { stdout: others } = await execa('git', [
     'ls-files',
     '--others',
-    '--exclude-standard'
+    '--exclude-standard',
+    '-z'
   ]);
 
-  const files = [...modified.split('\n'), ...others.split('\n')].filter(
-    (file) => !!file
+  // `-z` yields NUL-separated, unquoted paths, so filenames containing
+  // spaces or non-ASCII characters are preserved verbatim.
+  const files = [...modified.split('\0'), ...others.split('\0')].filter(
+    (file) => file !== ''
   );
 
   return files.sort();
