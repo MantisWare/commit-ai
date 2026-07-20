@@ -70,8 +70,11 @@ This is a living checklist of what CommitAI **already supports** and what we may
 - [x] Gemma 2 2B optional preset
 - [x] Animated warmup indicator with model name during local load
 - [x] Cloud fallback when local model fails (`CMT_LOCAL_CLOUD_FALLBACK`)
+- [x] Install `mlx-lm` into an isolated venv (fixes PEP 668 externally-managed-environment error)
 
 > **Auto-updated by Cursor:** Added built-in local SLM provider with dual GGUF/MLX runtime, `cmt local` commands, warmup UX, and cloud fallback on 2026-06-09.
+>
+> **Auto-updated by Cursor:** `cmt local setup` now installs `mlx-lm` into a dedicated virtual environment (`~/.commit-ai-local/venv`) instead of the system Python, resolving the Homebrew PEP 668 "externally-managed-environment" failure on 2026-07-20.
 
 ### Integrations
 

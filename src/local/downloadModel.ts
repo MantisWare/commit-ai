@@ -2,7 +2,12 @@ import { existsSync } from 'fs';
 import { execa } from 'execa';
 import type { LocalModelPreset } from './modelPresets';
 import type { LocalRuntime } from './runtime';
-import { getGgufModelPath, ensureLocalDirs, LOCAL_GGUF_DIR } from './paths';
+import {
+  getGgufModelPath,
+  ensureLocalDirs,
+  getLocalPython,
+  LOCAL_GGUF_DIR
+} from './paths';
 import { getModelSourceForRuntime } from './modelPresets';
 import type { OnEngineStatus } from './types';
 
@@ -72,7 +77,7 @@ export const prefetchMlxModel = async (
   });
 
   await execa(
-    'python3',
+    getLocalPython(),
     [
       '-m',
       'mlx_lm',

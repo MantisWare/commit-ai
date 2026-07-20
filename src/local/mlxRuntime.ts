@@ -1,8 +1,14 @@
+import { existsSync } from 'fs';
 import { execa } from 'execa';
 import { OpenAI } from 'openai';
 import type { LocalModelPreset } from './modelPresets';
 import { getModelDisplayLabel } from './modelPresets';
 import type { OnEngineStatus } from './types';
+import {
+  getLocalPython,
+  getVenvPythonPath,
+  LOCAL_VENV_DIR
+} from './paths';
 import {
   postChatCompletions,
   waitForServerHealth
@@ -16,20 +22,46 @@ export interface MlxGenerateOptions {
 
 export const checkMlxLmInstalled = async (): Promise<boolean> => {
   try {
-    await execa('python3', ['-m', 'mlx_lm', '--help'], { stdio: 'pipe' });
+    await execa(getLocalPython(), ['-m', 'mlx_lm', '--help'], { stdio: 'pipe' });
     return true;
   } catch {
     return false;
   }
 };
 
+/**
+ * Installs mlx-lm into a dedicated virtual environment under the local data
+ * dir. This sidesteps PEP 668 ("externally-managed-environment") on Homebrew
+ * and system Python, and never touches the user's global site-packages.
+ */
 export const installMlxLm = async (): Promise<void> => {
-  const installArgs = ['-m', 'pip', 'install', '--user', 'mlx-lm'];
+  const venvPython = getVenvPythonPath();
+
   try {
-    await execa('python3', installArgs, { stdio: 'inherit' });
+    if (existsSync(venvPython) !== true) {
+      await execa('python3', ['-m', 'venv', LOCAL_VENV_DIR], {
+        stdio: 'inherit'
+      });
+    }
+
+    await execa(venvPython, ['-m', 'pip', 'install', '--upgrade', 'pip'], {
+      stdio: 'inherit'
+    });
+    await execa(venvPython, ['-m', 'pip', 'install', 'mlx-lm'], {
+      stdio: 'inherit'
+    });
   } catch (error) {
+    const detail = error instanceof Error ? error.message : '';
     throw new Error(
-      `Failed to install mlx-lm. Try manually: python3 -m pip install --user mlx-lm. ${error instanceof Error ? error.message : ''}`
+      [
+        `Failed to install mlx-lm into ${LOCAL_VENV_DIR}.`,
+        'Try manually:',
+        `  python3 -m venv "${LOCAL_VENV_DIR}"`,
+        `  "${venvPython}" -m pip install mlx-lm`,
+        detail
+      ]
+        .filter((line) => line !== '')
+        .join('\n')
     );
   }
 };
@@ -39,7 +71,7 @@ const spawnEphemeralMlxServer = async (
   port: number
 ): Promise<ReturnType<typeof execa>> => {
   return execa(
-    'python3',
+    getLocalPython(),
     ['-m', 'mlx_lm.server', '--model', modelRepo, '--port', String(port)],
     {
       stdio: 'pipe',
@@ -119,7 +151,7 @@ export const spawnMlxDaemon = async (
   background = false
 ): Promise<ReturnType<typeof execa>> => {
   return execa(
-    'python3',
+    getLocalPython(),
     ['-m', 'mlx_lm.server', '--model', modelRepo, '--port', String(port)],
     {
       stdio: background ? 'ignore' : 'inherit',

@@ -61,7 +61,7 @@ const runSetup = async (): Promise<void> => {
     if (installed !== true) {
       spin.stop('mlx-lm not found');
       const installSpin = spinner();
-      installSpin.start('Installing mlx-lm via pip…');
+      installSpin.start('Installing mlx-lm in an isolated environment…');
       await installMlxLm();
       installSpin.stop('mlx-lm ready');
     } else {
