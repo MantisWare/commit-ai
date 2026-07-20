@@ -4,11 +4,13 @@ import { command } from 'cleye';
 
 import packageJSON from '../../package.json';
 import { printCommitAiBanner } from '../utils/banner';
+import { refreshShellAfterUpdate } from '../utils/refreshShell';
 import {
   checkForUpdates,
   getUpdateCommand,
   runUpdate
 } from '../utils/versionUpdate';
+import { getConfig } from './config';
 import { COMMANDS } from './ENUMS';
 
 export const updateCommand = command(
@@ -25,6 +27,12 @@ export const updateCommand = command(
         alias: 'y',
         description: 'Install update without confirmation',
         default: false
+      },
+      reload: {
+        type: Boolean,
+        description:
+          'Reload the shell after updating so the new version is used immediately (use --no-reload to disable)',
+        default: true
       }
     },
     help: {
@@ -71,6 +79,13 @@ export const updateCommand = command(
     try {
       await runUpdate();
       outro(chalk.green(`CommitAI updated to ${result.latestVersion}.`));
+
+      const config = getConfig();
+      const shouldReload =
+        flags.reload !== false &&
+        config.CMT_RELOAD_SHELL_AFTER_UPDATE !== false;
+
+      await refreshShellAfterUpdate({ reload: shouldReload });
       process.exit(0);
     } catch {
       outro(

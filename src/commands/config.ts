@@ -35,6 +35,7 @@ export enum CONFIG_KEYS {
   CMT_REVIEW_MIN_SCORE = 'CMT_REVIEW_MIN_SCORE',
   CMT_GITPUSH = 'CMT_GITPUSH', // todo: deprecate
   CMT_AUTO_UPDATE = 'CMT_AUTO_UPDATE',
+  CMT_RELOAD_SHELL_AFTER_UPDATE = 'CMT_RELOAD_SHELL_AFTER_UPDATE',
   CMT_LOCAL_MODEL_PRESET = 'CMT_LOCAL_MODEL_PRESET',
   CMT_LOCAL_RUNTIME = 'CMT_LOCAL_RUNTIME',
   CMT_LOCAL_CONTEXT_SIZE = 'CMT_LOCAL_CONTEXT_SIZE',
@@ -384,6 +385,15 @@ export const configValidators = {
     return value;
   },
 
+  [CONFIG_KEYS.CMT_RELOAD_SHELL_AFTER_UPDATE](value: any) {
+    validateConfig(
+      CONFIG_KEYS.CMT_RELOAD_SHELL_AFTER_UPDATE,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
+  },
+
   [CONFIG_KEYS.CMT_LOCAL_MODEL_PRESET](value: any) {
     validateConfig(
       CONFIG_KEYS.CMT_LOCAL_MODEL_PRESET,
@@ -606,6 +616,7 @@ export type ConfigType = {
   [CONFIG_KEYS.CMT_AI_PROVIDER]: CMT_AI_PROVIDER_ENUM;
   [CONFIG_KEYS.CMT_GITPUSH]: boolean;
   [CONFIG_KEYS.CMT_AUTO_UPDATE]: boolean;
+  [CONFIG_KEYS.CMT_RELOAD_SHELL_AFTER_UPDATE]: boolean;
   [CONFIG_KEYS.CMT_ONE_LINE_COMMIT]: boolean;
   [CONFIG_KEYS.CMT_DEBUG]: boolean;
   [CONFIG_KEYS.CMT_MAX_FILES]?: number;
@@ -680,6 +691,7 @@ export const DEFAULT_CONFIG = {
   CMT_SYNTHESIZE_CHUNKS: true,
   CMT_GITPUSH: true, // todo: deprecate
   CMT_AUTO_UPDATE: false,
+  CMT_RELOAD_SHELL_AFTER_UPDATE: true,
   CMT_LOCAL_MODEL_PRESET: 'qwen-0.5b',
   CMT_LOCAL_RUNTIME: 'auto',
   CMT_LOCAL_CONTEXT_SIZE: 4096,
@@ -747,6 +759,9 @@ const getEnvConfig = (envPath: string) => {
     CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH), // todo: deprecate
     CMT_AUTO_UPDATE: parseConfigVarValue(process.env.CMT_AUTO_UPDATE),
+    CMT_RELOAD_SHELL_AFTER_UPDATE: parseConfigVarValue(
+      process.env.CMT_RELOAD_SHELL_AFTER_UPDATE
+    ),
     CMT_LOCAL_MODEL_PRESET: process.env.CMT_LOCAL_MODEL_PRESET,
     CMT_LOCAL_RUNTIME: process.env.CMT_LOCAL_RUNTIME,
     CMT_LOCAL_CONTEXT_SIZE: parseConfigVarValue(
@@ -1017,6 +1032,12 @@ const CONFIG_HELP: Record<string, { description: string; example: string; defaul
       'Automatically install the latest CommitAI version when an update is available (checked on each cmt run)',
     example: 'true',
     default: 'false'
+  },
+  CMT_RELOAD_SHELL_AFTER_UPDATE: {
+    description:
+      'After running `cmt update`, reload the shell in place so the new version is used without manually refreshing the terminal',
+    example: 'false',
+    default: 'true'
   },
   CMT_LOCAL_MODEL_PRESET: {
     description: 'Local SLM preset (qwen-0.5b, qwen-1.5b, gemma-2b)',

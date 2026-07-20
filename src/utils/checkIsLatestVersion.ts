@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { outro } from '@clack/prompts';
 
 import { getConfig } from '../commands/config';
+import { printShellRefreshHint } from './refreshShell';
 import {
   checkForUpdates,
   getUpdateCommand,
@@ -43,6 +44,7 @@ export const checkIsLatestVersion = async (
       );
       await runUpdate();
       outro(chalk.green(`CommitAI updated to ${result.latestVersion}.`));
+      printShellRefreshHint();
     } catch {
       outro(
         chalk.yellow(

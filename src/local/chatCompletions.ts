@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { OpenAI } from 'openai';
+import { sanitizeLocalOutput } from './sanitizeOutput';
 
 export interface ChatCompletionOptions {
   baseUrl: string;
@@ -8,15 +9,6 @@ export interface ChatCompletionOptions {
   timeoutMs?: number;
   repetitionPenalty?: number;
 }
-
-const stripThinkingTags = (content: string): string => {
-  if (content.includes('<think>')) {
-    return content
-      .replace(/<think>[\s\S]*?<\/think>/g, '')
-      .trim();
-  }
-  return content;
-};
 
 export const postChatCompletions = async (
   messages: Array<OpenAI.Chat.Completions.ChatCompletionMessageParam>,
@@ -46,7 +38,7 @@ export const postChatCompletions = async (
 
   const content = response.data?.choices?.[0]?.message?.content;
   if (typeof content !== 'string') return undefined;
-  return stripThinkingTags(content);
+  return sanitizeLocalOutput(content);
 };
 
 export const checkServerHealth = async (

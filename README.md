@@ -36,11 +36,17 @@ CommitAI lets you automate meaningful commit messages effortlessly using the CLI
    # Check for updates and install interactively
    cmt update
 
+   # Update without reloading the shell afterwards
+   cmt update --no-reload
+
    # Check only (no install)
    cmt update --check
 
    # Enable automatic updates on each cmt run
    cmt config set CMT_AUTO_UPDATE=true
+
+   # Disable the automatic shell reload after `cmt update`
+   cmt config set CMT_RELOAD_SHELL_AFTER_UPDATE=false
 
    # Or update manually with your package manager
    # Using npm
@@ -49,6 +55,8 @@ CommitAI lets you automate meaningful commit messages effortlessly using the CLI
    # Using pnpm
    pnpm update -g @mantisware/commit-ai
    ```
+
+   After a successful `cmt update`, CommitAI reloads your shell in place so the new version is picked up immediately, with no need to manually refresh the terminal. Pass `--no-reload` (or set `CMT_RELOAD_SHELL_AFTER_UPDATE=false`) to keep your current shell. In non-interactive sessions (e.g. CI) it prints a one-line hint (`rehash` / `hash -r`) instead.
 
 2. Obtain an API key from [OpenAI](https://platform.openai.com/account/api-keys) or another supported LLM provider. Ensure your OpenAI account has an active payment method for API access.
 

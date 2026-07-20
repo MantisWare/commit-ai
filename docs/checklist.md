@@ -72,12 +72,15 @@ This is a living checklist of what CommitAI **already supports** and what we may
 - [x] Cloud fallback when local model fails (`CMT_LOCAL_CLOUD_FALLBACK`)
 - [x] Install `mlx-lm` into an isolated venv (fixes PEP 668 externally-managed-environment error)
 - [x] Fix MLX server spawn hang (return live subprocess handle instead of awaiting the never-exiting process)
+- [x] Sanitize local SLM output — collapse degenerate repetition loops (repeated phrases/lines) from small models
 
 > **Auto-updated by Cursor:** Added built-in local SLM provider with dual GGUF/MLX runtime, `cmt local` commands, warmup UX, and cloud fallback on 2026-06-09.
 >
 > **Auto-updated by Cursor:** `cmt local setup` now installs `mlx-lm` into a dedicated virtual environment (`~/.commit-ai-local/venv`) instead of the system Python, resolving the Homebrew PEP 668 "externally-managed-environment" failure on 2026-07-20.
 >
 > **Auto-updated by Cursor:** Fixed indefinite hang in the MLX smoke test / daemon startup — `spawnEphemeralMlxServer` and `spawnMlxDaemon` were `async` functions returning the execa subprocess, so awaiting them blocked until the (never-exiting) server process terminated. They now return the live subprocess handle synchronously on 2026-07-20.
+>
+> **Auto-updated by Cursor:** Added `sanitizeLocalOutput` post-processing (`src/local/sanitizeOutput.ts`) wired into the MLX/GGUF output paths to collapse small-model repetition loops (repeated n-grams and duplicate lines) that were bloating commit messages, on 2026-07-20.
 
 ### Integrations
 

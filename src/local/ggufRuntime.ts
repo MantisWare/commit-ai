@@ -5,6 +5,7 @@ import { downloadGgufModel, isGgufModelDownloaded } from './downloadModel';
 import { getGgufModelPath } from './paths';
 import type { OnEngineStatus } from './types';
 import { postChatCompletions } from './chatCompletions';
+import { sanitizeLocalOutput } from './sanitizeOutput';
 import { importNodeLlamaCpp } from './importNodeLlamaCpp';
 
 export interface GgufGenerateOptions {
@@ -96,7 +97,7 @@ export const generateWithGguf = async (
   await context.dispose();
   await model.dispose();
 
-  return response.trim() || undefined;
+  return sanitizeLocalOutput(response);
 };
 
 export const generateWithGgufDaemon = async (
