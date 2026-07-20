@@ -44517,7 +44517,7 @@ function G3(t2, e3) {
 // package.json
 var package_default = {
   name: "@mantisware/commit-ai",
-  version: "1.0.27",
+  version: "1.0.28",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
     "git",
@@ -58486,7 +58486,7 @@ var installMlxLm = async () => {
     );
   }
 };
-var spawnEphemeralMlxServer = async (modelRepo, port) => {
+var spawnEphemeralMlxServer = (modelRepo, port) => {
   return execa(
     getLocalPython(),
     ["-m", "mlx_lm.server", "--model", modelRepo, "--port", String(port)],
@@ -58518,7 +58518,8 @@ var generateWithMlx = async (messages, options) => {
     runtime: "mlx",
     port: ephemeralPort
   });
-  const serverProcess = await spawnEphemeralMlxServer(modelRepo, ephemeralPort);
+  const serverProcess = spawnEphemeralMlxServer(modelRepo, ephemeralPort);
+  serverProcess.catch(() => void 0);
   try {
     await waitForServerHealth(baseUrl, { timeoutMs: 12e4 });
     const result = await postChatCompletions(messages, {
@@ -58541,7 +58542,7 @@ var generateWithMlxDaemon = async (messages, options) => {
     repetitionPenalty: 1.5
   });
 };
-var spawnMlxDaemon = async (modelRepo, port, background = false) => {
+var spawnMlxDaemon = (modelRepo, port, background = false) => {
   return execa(
     getLocalPython(),
     ["-m", "mlx_lm.server", "--model", modelRepo, "--port", String(port)],
@@ -58617,11 +58618,12 @@ var startDaemon = async (options) => {
   }
   const startedAt = new Date().toISOString();
   if (runtime === "mlx") {
-    const serverProcess = await spawnMlxDaemon(
+    const serverProcess = spawnMlxDaemon(
       preset.mlx.repo,
       port,
       options.background === true
     );
+    serverProcess.catch(() => void 0);
     if (options.background === true && serverProcess.pid !== void 0) {
       serverProcess.unref?.();
     }

@@ -79006,7 +79006,7 @@ var checkMlxLmInstalled = async () => {
     return false;
   }
 };
-var spawnEphemeralMlxServer = async (modelRepo, port) => {
+var spawnEphemeralMlxServer = (modelRepo, port) => {
   return execa(
     getLocalPython(),
     ["-m", "mlx_lm.server", "--model", modelRepo, "--port", String(port)],
@@ -79038,7 +79038,8 @@ var generateWithMlx = async (messages, options) => {
     runtime: "mlx",
     port: ephemeralPort
   });
-  const serverProcess = await spawnEphemeralMlxServer(modelRepo, ephemeralPort);
+  const serverProcess = spawnEphemeralMlxServer(modelRepo, ephemeralPort);
+  serverProcess.catch(() => void 0);
   try {
     await waitForServerHealth(baseUrl, { timeoutMs: 12e4 });
     const result = await postChatCompletions(messages, {
