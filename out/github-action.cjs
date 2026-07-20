@@ -77741,6 +77741,12 @@ var LOCAL_MODELS_DIR = (0, import_path3.join)(LOCAL_DATA_DIR, "models");
 var LOCAL_GGUF_DIR = (0, import_path3.join)(LOCAL_MODELS_DIR, "gguf");
 var LOCAL_MLX_DIR = (0, import_path3.join)(LOCAL_MODELS_DIR, "mlx");
 var LOCAL_SETUP_MARKER = (0, import_path3.join)(LOCAL_DATA_DIR, "local-setup.json");
+var LOCAL_VENV_DIR = (0, import_path3.join)(LOCAL_DATA_DIR, "venv");
+var getVenvPythonPath = () => process.platform === "win32" ? (0, import_path3.join)(LOCAL_VENV_DIR, "Scripts", "python.exe") : (0, import_path3.join)(LOCAL_VENV_DIR, "bin", "python3");
+var getLocalPython = () => {
+  const venvPython = getVenvPythonPath();
+  return (0, import_fs3.existsSync)(venvPython) === true ? venvPython : "python3";
+};
 var ensureLocalDirs = () => {
   for (const dir of [LOCAL_MODELS_DIR, LOCAL_GGUF_DIR, LOCAL_MLX_DIR]) {
     if ((0, import_fs3.existsSync)(dir) !== true) {
@@ -78994,7 +79000,7 @@ var downloadGgufModel = async (preset, onStatus) => {
 // src/local/mlxRuntime.ts
 var checkMlxLmInstalled = async () => {
   try {
-    await execa("python3", ["-m", "mlx_lm", "--help"], { stdio: "pipe" });
+    await execa(getLocalPython(), ["-m", "mlx_lm", "--help"], { stdio: "pipe" });
     return true;
   } catch {
     return false;
@@ -79002,7 +79008,7 @@ var checkMlxLmInstalled = async () => {
 };
 var spawnEphemeralMlxServer = async (modelRepo, port) => {
   return execa(
-    "python3",
+    getLocalPython(),
     ["-m", "mlx_lm.server", "--model", modelRepo, "--port", String(port)],
     {
       stdio: "pipe",

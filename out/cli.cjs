@@ -44517,7 +44517,7 @@ function G3(t2, e3) {
 // package.json
 var package_default = {
   name: "@mantisware/commit-ai",
-  version: "1.0.26",
+  version: "1.0.27",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
     "git",
@@ -46880,7 +46880,7 @@ function create$(options) {
 var $4 = create$();
 
 // src/commands/commit.ts
-var import_fs9 = require("fs");
+var import_fs10 = require("fs");
 var import_os4 = require("os");
 var import_path67 = require("path");
 
@@ -58064,7 +58064,7 @@ var GeminiEngine = class {
 };
 
 // src/local/daemon.ts
-var import_fs5 = require("fs");
+var import_fs6 = require("fs");
 
 // src/local/modelPresets.ts
 var LOCAL_MODEL_PRESET_IDS = [
@@ -58168,6 +58168,12 @@ var LOCAL_MODELS_DIR = (0, import_path3.join)(LOCAL_DATA_DIR, "models");
 var LOCAL_GGUF_DIR = (0, import_path3.join)(LOCAL_MODELS_DIR, "gguf");
 var LOCAL_MLX_DIR = (0, import_path3.join)(LOCAL_MODELS_DIR, "mlx");
 var LOCAL_SETUP_MARKER = (0, import_path3.join)(LOCAL_DATA_DIR, "local-setup.json");
+var LOCAL_VENV_DIR = (0, import_path3.join)(LOCAL_DATA_DIR, "venv");
+var getVenvPythonPath = () => process.platform === "win32" ? (0, import_path3.join)(LOCAL_VENV_DIR, "Scripts", "python.exe") : (0, import_path3.join)(LOCAL_VENV_DIR, "bin", "python3");
+var getLocalPython = () => {
+  const venvPython = getVenvPythonPath();
+  return (0, import_fs3.existsSync)(venvPython) === true ? venvPython : "python3";
+};
 var ensureLocalDirs = () => {
   for (const dir of [LOCAL_MODELS_DIR, LOCAL_GGUF_DIR, LOCAL_MLX_DIR]) {
     if ((0, import_fs3.existsSync)(dir) !== true) {
@@ -58284,7 +58290,7 @@ var prefetchMlxModel = async (preset, onStatus) => {
     runtime: "mlx"
   });
   await execa(
-    "python3",
+    getLocalPython(),
     [
       "-m",
       "mlx_lm",
@@ -58444,27 +58450,45 @@ var startGgufDaemonServer = async (options) => {
 };
 
 // src/local/mlxRuntime.ts
+var import_fs5 = require("fs");
 var checkMlxLmInstalled = async () => {
   try {
-    await execa("python3", ["-m", "mlx_lm", "--help"], { stdio: "pipe" });
+    await execa(getLocalPython(), ["-m", "mlx_lm", "--help"], { stdio: "pipe" });
     return true;
   } catch {
     return false;
   }
 };
 var installMlxLm = async () => {
-  const installArgs = ["-m", "pip", "install", "--user", "mlx-lm"];
+  const venvPython = getVenvPythonPath();
   try {
-    await execa("python3", installArgs, { stdio: "inherit" });
+    if ((0, import_fs5.existsSync)(venvPython) !== true) {
+      await execa("python3", ["-m", "venv", LOCAL_VENV_DIR], {
+        stdio: "inherit"
+      });
+    }
+    await execa(venvPython, ["-m", "pip", "install", "--upgrade", "pip"], {
+      stdio: "inherit"
+    });
+    await execa(venvPython, ["-m", "pip", "install", "mlx-lm"], {
+      stdio: "inherit"
+    });
   } catch (error) {
+    const detail = error instanceof Error ? error.message : "";
     throw new Error(
-      `Failed to install mlx-lm. Try manually: python3 -m pip install --user mlx-lm. ${error instanceof Error ? error.message : ""}`
+      [
+        `Failed to install mlx-lm into ${LOCAL_VENV_DIR}.`,
+        "Try manually:",
+        `  python3 -m venv "${LOCAL_VENV_DIR}"`,
+        `  "${venvPython}" -m pip install mlx-lm`,
+        detail
+      ].filter((line) => line !== "").join("\n")
     );
   }
 };
 var spawnEphemeralMlxServer = async (modelRepo, port) => {
   return execa(
-    "python3",
+    getLocalPython(),
     ["-m", "mlx_lm.server", "--model", modelRepo, "--port", String(port)],
     {
       stdio: "pipe",
@@ -58519,7 +58543,7 @@ var generateWithMlxDaemon = async (messages, options) => {
 };
 var spawnMlxDaemon = async (modelRepo, port, background = false) => {
   return execa(
-    "python3",
+    getLocalPython(),
     ["-m", "mlx_lm.server", "--model", modelRepo, "--port", String(port)],
     {
       stdio: background ? "ignore" : "inherit",
@@ -58531,11 +58555,11 @@ var spawnMlxDaemon = async (modelRepo, port, background = false) => {
 // src/local/daemon.ts
 var DEFAULT_DAEMON_PORT = 11435;
 var readDaemonInfo = () => {
-  if ((0, import_fs5.existsSync)(LOCAL_DAEMON_FILE) !== true)
+  if ((0, import_fs6.existsSync)(LOCAL_DAEMON_FILE) !== true)
     return void 0;
   try {
     return JSON.parse(
-      (0, import_fs5.readFileSync)(LOCAL_DAEMON_FILE, "utf8")
+      (0, import_fs6.readFileSync)(LOCAL_DAEMON_FILE, "utf8")
     );
   } catch {
     return void 0;
@@ -58543,11 +58567,11 @@ var readDaemonInfo = () => {
 };
 var writeDaemonInfo = (info) => {
   ensureLocalDirs();
-  (0, import_fs5.writeFileSync)(LOCAL_DAEMON_FILE, JSON.stringify(info, null, 2), "utf8");
+  (0, import_fs6.writeFileSync)(LOCAL_DAEMON_FILE, JSON.stringify(info, null, 2), "utf8");
 };
 var clearDaemonInfo = () => {
-  if ((0, import_fs5.existsSync)(LOCAL_DAEMON_FILE) === true) {
-    (0, import_fs5.unlinkSync)(LOCAL_DAEMON_FILE);
+  if ((0, import_fs6.existsSync)(LOCAL_DAEMON_FILE) === true) {
+    (0, import_fs6.unlinkSync)(LOCAL_DAEMON_FILE);
   }
 };
 var isProcessAlive = (pid) => {
@@ -67561,7 +67585,7 @@ var startElapsedHeartbeat = ({
 };
 
 // src/utils/git.ts
-var import_fs6 = require("fs");
+var import_fs7 = require("fs");
 var import_ignore = __toESM(require_ignore());
 var isDefaultExcludedFromAIDiff = (file) => {
   const excludedExtensions = [".svg", ".png", ".jpg", ".jpeg", ".webp", ".gif"];
@@ -67581,7 +67605,7 @@ var assertGitRepo = async () => {
 var getCommitAIIgnore = () => {
   const ig = (0, import_ignore.default)();
   try {
-    ig.add((0, import_fs6.readFileSync)(".commit-aiignore").toString().split("\n"));
+    ig.add((0, import_fs7.readFileSync)(".commit-aiignore").toString().split("\n"));
   } catch (e3) {
   }
   return ig;
@@ -67589,7 +67613,7 @@ var getCommitAIIgnore = () => {
 var getCommitAIReviewIgnore = () => {
   const ig = (0, import_ignore.default)();
   try {
-    ig.add((0, import_fs6.readFileSync)(".commit-ai-review-ignore").toString().split("\n"));
+    ig.add((0, import_fs7.readFileSync)(".commit-ai-review-ignore").toString().split("\n"));
   } catch (e3) {
   }
   return ig;
@@ -67771,7 +67795,7 @@ var trytm = async (promise) => {
 };
 
 // src/commands/standards.ts
-var import_fs7 = require("fs");
+var import_fs8 = require("fs");
 var import_path65 = require("path");
 var STANDARDS_FILE = ".commit-ai-standards";
 var POPULAR_STANDARDS = {
@@ -68648,18 +68672,18 @@ function getStandardsFilePath() {
   return (0, import_path65.join)(process.cwd(), STANDARDS_FILE);
 }
 function standardsFileExists() {
-  return (0, import_fs7.existsSync)(getStandardsFilePath());
+  return (0, import_fs8.existsSync)(getStandardsFilePath());
 }
 function getStandards() {
   const filePath = getStandardsFilePath();
-  if (!(0, import_fs7.existsSync)(filePath)) {
+  if (!(0, import_fs8.existsSync)(filePath)) {
     return null;
   }
-  return (0, import_fs7.readFileSync)(filePath, "utf-8");
+  return (0, import_fs8.readFileSync)(filePath, "utf-8");
 }
 function writeStandards(content) {
   const filePath = getStandardsFilePath();
-  (0, import_fs7.writeFileSync)(filePath, content, "utf-8");
+  (0, import_fs8.writeFileSync)(filePath, content, "utf-8");
 }
 var standardsSetCommand = G3(
   {
@@ -68807,7 +68831,7 @@ var standardsCommand = G3(
 
 // src/utils/reviewCache.ts
 var import_crypto4 = require("crypto");
-var import_fs8 = require("fs");
+var import_fs9 = require("fs");
 var import_path66 = require("path");
 var import_os3 = require("os");
 var CACHE_DIR = (0, import_path66.join)((0, import_os3.homedir)(), ".commit-ai-cache");
@@ -68822,17 +68846,17 @@ function getCacheTTL() {
   return ttlHours * 60 * 60 * 1e3;
 }
 function ensureCacheDirectory() {
-  if (!(0, import_fs8.existsSync)(CACHE_DIR)) {
-    (0, import_fs8.mkdirSync)(CACHE_DIR, { recursive: true });
+  if (!(0, import_fs9.existsSync)(CACHE_DIR)) {
+    (0, import_fs9.mkdirSync)(CACHE_DIR, { recursive: true });
   }
 }
 function loadCache() {
   ensureCacheDirectory();
-  if (!(0, import_fs8.existsSync)(CACHE_FILE)) {
+  if (!(0, import_fs9.existsSync)(CACHE_FILE)) {
     return { version: CACHE_VERSION, entries: {} };
   }
   try {
-    const content = (0, import_fs8.readFileSync)(CACHE_FILE, "utf-8");
+    const content = (0, import_fs9.readFileSync)(CACHE_FILE, "utf-8");
     const cache = JSON.parse(content);
     if (cache.version !== CACHE_VERSION) {
       return { version: CACHE_VERSION, entries: {} };
@@ -68845,7 +68869,7 @@ function loadCache() {
 function saveCache(cache) {
   ensureCacheDirectory();
   try {
-    (0, import_fs8.writeFileSync)(CACHE_FILE, JSON.stringify(cache, null, 2), "utf-8");
+    (0, import_fs9.writeFileSync)(CACHE_FILE, JSON.stringify(cache, null, 2), "utf-8");
   } catch (error) {
     console.error("Warning: Failed to save review cache:", error);
   }
@@ -68914,7 +68938,7 @@ function getCacheStats() {
   const totalEntries = Object.keys(cache.entries).length;
   const validEntries = Object.keys(cleanedCache.entries).length;
   let cacheSize = "0 KB";
-  if ((0, import_fs8.existsSync)(CACHE_FILE)) {
+  if ((0, import_fs9.existsSync)(CACHE_FILE)) {
     try {
       const stats = require("fs").statSync(CACHE_FILE);
       cacheSize = `${(stats.size / 1024).toFixed(2)} KB`;
@@ -69368,7 +69392,7 @@ var openInEditor = async (message) => {
   const editor = process.env.EDITOR || process.env.VISUAL || "vi";
   const tmpFile = (0, import_path67.join)((0, import_os4.tmpdir)(), `COMMIT_EDITMSG_${Date.now()}`);
   try {
-    (0, import_fs9.writeFileSync)(tmpFile, message, "utf-8");
+    (0, import_fs10.writeFileSync)(tmpFile, message, "utf-8");
     await execa(editor, [tmpFile], {
       stdio: "inherit",
       shell: true
@@ -69377,7 +69401,7 @@ var openInEditor = async (message) => {
     return stdout.trim();
   } finally {
     try {
-      (0, import_fs9.unlinkSync)(tmpFile);
+      (0, import_fs10.unlinkSync)(tmpFile);
     } catch (e3) {
     }
   }
@@ -69961,7 +69985,7 @@ var commitLog = async (branch = "master", fullGitMojiSpec = false) => {
 };
 
 // src/commands/check.ts
-var import_fs10 = require("fs");
+var import_fs11 = require("fs");
 var import_os5 = require("os");
 var import_path68 = require("path");
 
@@ -70089,14 +70113,14 @@ var runCheck = async () => {
   const globalConfigPath = (0, import_path68.join)((0, import_os5.homedir)(), ".commit-ai");
   results.push({
     label: "Global config",
-    status: (0, import_fs10.existsSync)(globalConfigPath) ? "pass" : "warn",
-    details: (0, import_fs10.existsSync)(globalConfigPath) ? "~/.commit-ai" : "not found"
+    status: (0, import_fs11.existsSync)(globalConfigPath) ? "pass" : "warn",
+    details: (0, import_fs11.existsSync)(globalConfigPath) ? "~/.commit-ai" : "not found"
   });
   const envPath = (0, import_path68.join)(process.cwd(), ".env");
   results.push({
     label: "Repo .env",
-    status: (0, import_fs10.existsSync)(envPath) ? "pass" : "warn",
-    details: (0, import_fs10.existsSync)(envPath) ? "found" : "not found (optional)"
+    status: (0, import_fs11.existsSync)(envPath) ? "pass" : "warn",
+    details: (0, import_fs11.existsSync)(envPath) ? "found" : "not found (optional)"
   });
   const config9 = getConfig();
   const provider = config9.CMT_AI_PROVIDER;
@@ -70117,7 +70141,7 @@ var runCheck = async () => {
     status: apiKey !== void 0 && apiKey !== "" ? "pass" : "warn",
     details: apiKey !== void 0 && apiKey !== "" ? "set" : "not set (required for hosted providers)"
   });
-  const commitlintConfigExists = (0, import_fs10.existsSync)(COMMITLINT_LLM_CONFIG_PATH);
+  const commitlintConfigExists = (0, import_fs11.existsSync)(COMMITLINT_LLM_CONFIG_PATH);
   results.push({
     label: "Commitlint prompts",
     status: commitlintConfigExists ? "pass" : "warn",
@@ -70128,7 +70152,7 @@ var runCheck = async () => {
   );
   const presetId = isLocalModelPresetId(config9.CMT_LOCAL_MODEL_PRESET) ? config9.CMT_LOCAL_MODEL_PRESET : DEFAULT_LOCAL_PRESET;
   const preset = resolvePreset(presetId);
-  const localSetupDone = (0, import_fs10.existsSync)(LOCAL_SETUP_MARKER);
+  const localSetupDone = (0, import_fs11.existsSync)(LOCAL_SETUP_MARKER);
   const daemon = await isDaemonRunning(config9.CMT_LOCAL_DAEMON_PORT ?? 11435);
   results.push({
     label: "Local runtime",
@@ -70291,7 +70315,7 @@ var commitlintConfigCommand = G3(
 );
 
 // src/commands/githook.ts
-var import_fs11 = require("fs");
+var import_fs12 = require("fs");
 var import_promises3 = __toESM(require("fs/promises"));
 var import_path69 = __toESM(require("path"));
 var HOOK_NAME = "prepare-commit-msg";
@@ -70310,7 +70334,7 @@ var isHookCalled = async () => {
 };
 var isHookExists = async () => {
   const hooksPath = await getHooksPath();
-  return (0, import_fs11.existsSync)(hooksPath);
+  return (0, import_fs12.existsSync)(hooksPath);
 };
 var hookCommand = G3(
   {
@@ -70449,7 +70473,7 @@ var prepareCommitMessageHook = async (isStageAllFlag = false) => {
 };
 
 // src/commands/pr.ts
-var import_fs12 = require("fs");
+var import_fs13 = require("fs");
 var config8 = getConfig();
 var PR_DESCRIPTION_PROMPT = (baseBranch) => `You are an expert at writing clear, comprehensive pull request descriptions.
 
@@ -70641,7 +70665,7 @@ var prCommand = G3(
       );
       const description = await generatePRDescription(baseBranch);
       if (output) {
-        (0, import_fs12.writeFileSync)(output, description, "utf-8");
+        (0, import_fs13.writeFileSync)(output, description, "utf-8");
         ce(source_default.green(`\u2713 PR description saved to ${output}`));
       } else {
         console.log("\n" + source_default.bold("\u2550".repeat(80)));
@@ -70697,7 +70721,7 @@ var changelogCommand = G3(
         toRef
       );
       if (output) {
-        (0, import_fs12.writeFileSync)(output, changelog + "\n", "utf-8");
+        (0, import_fs13.writeFileSync)(output, changelog + "\n", "utf-8");
         ce(source_default.green(`\u2713 Changelog saved to ${output}`));
       } else {
         console.log("\n" + source_default.bold("\u2550".repeat(80)));
@@ -70778,7 +70802,7 @@ Run: cmt update`
 );
 
 // src/commands/local.ts
-var import_fs13 = require("fs");
+var import_fs14 = require("fs");
 var runSetup = async () => {
   const config9 = getConfig();
   const runtime = detectRuntime(
@@ -70796,7 +70820,7 @@ var runSetup = async () => {
     if (installed !== true) {
       spin.stop("mlx-lm not found");
       const installSpin = le();
-      installSpin.start("Installing mlx-lm via pip\u2026");
+      installSpin.start("Installing mlx-lm in an isolated environment\u2026");
       await installMlxLm();
       installSpin.stop("mlx-lm ready");
     } else {
@@ -70841,7 +70865,7 @@ var runSetup = async () => {
   ];
   await engine.generateCommitMessage(testMessages);
   testSpin.stop("Smoke test passed");
-  (0, import_fs13.writeFileSync)(
+  (0, import_fs14.writeFileSync)(
     LOCAL_SETUP_MARKER,
     JSON.stringify(
       {
@@ -70920,7 +70944,7 @@ var runStatus = async () => {
   );
   console.log(
     source_default.cyan("Setup marker:"),
-    (0, import_fs13.existsSync)(LOCAL_SETUP_MARKER) ? "yes" : "no \u2014 run cmt local setup"
+    (0, import_fs14.existsSync)(LOCAL_SETUP_MARKER) ? "yes" : "no \u2014 run cmt local setup"
   );
   if (daemon !== void 0) {
     console.log(
@@ -71093,7 +71117,7 @@ Current version: ${result.currentVersion}. Latest version: ${result.latestVersio
 };
 
 // src/migrations/_run.ts
-var import_fs14 = __toESM(require("fs"));
+var import_fs15 = __toESM(require("fs"));
 var import_os6 = require("os");
 var import_path70 = require("path");
 
@@ -71192,16 +71216,16 @@ var migrations = [
 // src/migrations/_run.ts
 var migrationsFile = (0, import_path70.join)((0, import_os6.homedir)(), ".commit-ai_migrations");
 var getCompletedMigrations = () => {
-  if (!import_fs14.default.existsSync(migrationsFile)) {
+  if (!import_fs15.default.existsSync(migrationsFile)) {
     return [];
   }
-  const data = import_fs14.default.readFileSync(migrationsFile, "utf-8");
+  const data = import_fs15.default.readFileSync(migrationsFile, "utf-8");
   return data ? JSON.parse(data) : [];
 };
 var saveCompletedMigration = (migrationName) => {
   const completedMigrations = getCompletedMigrations();
   completedMigrations.push(migrationName);
-  import_fs14.default.writeFileSync(
+  import_fs15.default.writeFileSync(
     migrationsFile,
     JSON.stringify(completedMigrations, null, 2)
   );
