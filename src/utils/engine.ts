@@ -19,9 +19,67 @@ import { MLXEngine } from '../engine/mlx';
 import { DeepseekEngine } from '../engine/deepseek';
 import type { OnEngineStatus } from '../local/types';
 
+/**
+ * Per-run engine selection override. Lets the user flip between their local and
+ * cloud models for a single invocation without changing CMT_AI_PROVIDER.
+ */
+export type EngineOverride = 'local' | 'cloud';
+
 export interface GetEngineOptions {
   onStatus?: OnEngineStatus;
+  /**
+   * Force a specific engine for this call. When omitted, the process-level
+   * override (see {@link setEngineOverride}) is used, then CMT_AI_PROVIDER.
+   */
+  engineOverride?: EngineOverride;
 }
+
+let processEngineOverride: EngineOverride | undefined;
+
+/**
+ * Sets a process-wide engine override, applied by every subsequent getEngine
+ * call that doesn't pass its own. Intended to be set once from CLI flags.
+ */
+export const setEngineOverride = (
+  override: EngineOverride | undefined
+): void => {
+  processEngineOverride = override;
+};
+
+export const getEngineOverride = (): EngineOverride | undefined =>
+  processEngineOverride;
+
+/**
+ * Resolves the requested engine override from mutually-exclusive CLI flags.
+ * Throws when both are supplied so the caller can surface a clear error.
+ */
+export const resolveEngineOverrideFromFlags = (flags: {
+  local?: boolean;
+  cloud?: boolean;
+}): EngineOverride | undefined => {
+  const wantsLocal = flags.local === true;
+  const wantsCloud = flags.cloud === true;
+
+  if (wantsLocal === true && wantsCloud === true) {
+    throw new Error(
+      'Cannot use --local and --cloud together. Pick one engine for this run.'
+    );
+  }
+
+  if (wantsLocal === true) return 'local';
+  if (wantsCloud === true) return 'cloud';
+  return undefined;
+};
+
+/**
+ * Whether a cloud model is configured well enough to run (an API key exists).
+ * Unlike CMT_LOCAL_CLOUD_FALLBACK, this ignores the automatic-fallback toggle
+ * because an explicit --cloud request is a deliberate user choice.
+ */
+export const hasCloudModelConfigured = (config: ConfigType): boolean => {
+  const apiKey = config.CMT_LOCAL_FALLBACK_API_KEY ?? config.CMT_API_KEY ?? '';
+  return apiKey.length > 0;
+};
 
 const buildEngineConfig = (
   config: ConfigType,
@@ -116,31 +174,49 @@ const canUseCloudFallback = (config: ConfigType): boolean => {
   return apiKey.length > 0;
 };
 
-export function getEngine(options: GetEngineOptions = {}): AiEngine {
-  const config = getConfig();
-  const provider = config.CMT_AI_PROVIDER;
-  const engineConfig = buildEngineConfig(config, options.onStatus);
+/**
+ * Builds the local engine, wrapping it with the configured cloud fallback when
+ * one is available (mirrors the default CMT_AI_PROVIDER=local behaviour).
+ */
+const buildLocalEngine = (
+  config: ConfigType,
+  onStatus?: OnEngineStatus
+): AiEngine => {
+  const localEngine = new LocalEngine(buildEngineConfig(config, onStatus));
 
-  if (provider === CMT_AI_PROVIDER_ENUM.LOCAL) {
-    const localEngine = new LocalEngine(engineConfig);
-    if (canUseCloudFallback(config) === true) {
-      const fallbackModel =
-        config.CMT_LOCAL_FALLBACK_MODEL ?? 'gpt-4o-mini';
-      return new FallbackEngine(
-        localEngine,
-        createFallbackEngine(config, options.onStatus),
-        {
-          onStatus: options.onStatus,
-          fallbackModelLabel: fallbackModel
-        }
-      );
-    }
-    return localEngine;
+  if (canUseCloudFallback(config) === true) {
+    const fallbackModel = config.CMT_LOCAL_FALLBACK_MODEL ?? 'gpt-4o-mini';
+    return new FallbackEngine(localEngine, createFallbackEngine(config, onStatus), {
+      onStatus,
+      fallbackModelLabel: fallbackModel
+    });
   }
 
-  return createProviderEngine(
-    provider ?? CMT_AI_PROVIDER_ENUM.OPENAI,
-    engineConfig,
-    config
-  );
+  return localEngine;
+};
+
+export function getEngine(options: GetEngineOptions = {}): AiEngine {
+  const config = getConfig();
+  const onStatus = options.onStatus;
+  const override = options.engineOverride ?? processEngineOverride;
+  const provider = config.CMT_AI_PROVIDER ?? CMT_AI_PROVIDER_ENUM.OPENAI;
+
+  if (override === 'local') {
+    return buildLocalEngine(config, onStatus);
+  }
+
+  if (override === 'cloud') {
+    // When the base provider is local, the "cloud model" is the configured
+    // fallback provider. Otherwise the base provider already is a cloud one.
+    if (provider === CMT_AI_PROVIDER_ENUM.LOCAL) {
+      return createFallbackEngine(config, onStatus);
+    }
+    return createProviderEngine(provider, buildEngineConfig(config, onStatus), config);
+  }
+
+  if (provider === CMT_AI_PROVIDER_ENUM.LOCAL) {
+    return buildLocalEngine(config, onStatus);
+  }
+
+  return createProviderEngine(provider, buildEngineConfig(config, onStatus), config);
 }

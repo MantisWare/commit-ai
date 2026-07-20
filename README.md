@@ -117,6 +117,18 @@ CMT_LOCAL_FALLBACK_MODEL=gpt-4o-mini
 
 While a local model loads, CommitAI shows an animated warmup indicator with the model name (e.g. `Warming up Qwen2.5-0.5B-Instruct (MLX 4-bit)…`).
 
+**Switching between local and cloud per run:** When you have both a local model and a cloud model configured, `CMT_AI_PROVIDER` sets the default (e.g. `local`), and you can override it for a single run with a flag:
+
+```sh
+# Force the local model for this commit
+cmt --local
+
+# Force the cloud model for this commit (uses your CMT_LOCAL_FALLBACK_* / cloud config)
+cmt --cloud
+```
+
+`--local` and `--cloud` are mutually exclusive. `--cloud` requires a configured cloud model (an API key). When your default provider is `local`, `--cloud` uses the provider/model from `CMT_LOCAL_FALLBACK_PROVIDER` / `CMT_LOCAL_FALLBACK_MODEL` (falling back to your `CMT_API_KEY`).
+
 **Note:** The GitHub Action does not support `local` (no GPU in CI). Use a cloud provider for CI workflows.
 
 ### Running Locally with Ollama

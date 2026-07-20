@@ -1,14 +1,60 @@
 /**
  * Post-processing for local SLM output.
  *
- * Small models (e.g. Qwen2.5 0.5B) are prone to degenerate repetition: they
- * get stuck emitting the same word, phrase, or line over and over until the
- * token budget is exhausted. That produces bloated commit messages and wastes
- * generation time. These helpers collapse that runaway repetition so the caller
- * receives a clean, bounded message regardless of the model's behaviour.
+ * Small models (e.g. Qwen2.5 0.5B) misbehave in a few predictable ways:
+ *  - degenerate repetition: the same word, phrase, or line is emitted over and
+ *    over until the token budget is exhausted;
+ *  - conversational preamble: e.g. "Here's the commit message:" or "To create a
+ *    clean commit message, ...", instead of just the message;
+ *  - diff regurgitation/hallucination: the model echoes raw `git diff` lines
+ *    (sometimes pairing unrelated files) straight back into the "message".
+ *
+ * These helpers strip that noise so the caller receives a clean, bounded commit
+ * message regardless of the model's behaviour. When nothing usable remains,
+ * `sanitizeLocalOutput` returns undefined so the caller can treat it as an empty
+ * generation rather than committing garbage.
  */
 
 const THINK_TAG_PATTERN = /<think>[\s\S]*?<\/think>/g;
+
+/**
+ * Raw git-diff artifacts the model sometimes echoes or hallucinates. These are
+ * never valid commit-message content and are dropped wholesale.
+ */
+const DIFF_ARTIFACT_PATTERNS: readonly RegExp[] = [
+  /^diff --git /i,
+  /^index [0-9a-f]{4,}\.\.[0-9a-f]{4,}/i,
+  /^--- (a\/|"a\/|\/dev\/null)/,
+  /^\+\+\+ (b\/|"b\/|\/dev\/null)/,
+  /^@@ -\d+(,\d+)? \+\d+(,\d+)? @@/,
+  /^new file mode /i,
+  /^deleted file mode /i,
+  /^old mode /i,
+  /^new mode /i,
+  /^rename (from|to) /i,
+  /^copy (from|to) /i,
+  /^similarity index /i,
+  /^Binary files /i
+];
+
+/**
+ * Leading conversational filler the model prepends before (or instead of) the
+ * actual commit message. Only matched against leading lines so it never touches
+ * a real message body.
+ */
+const PREAMBLE_PATTERNS: readonly RegExp[] = [
+  /^(sure|certainly|of course|okay|ok|got it|understood|absolutely|great)\b[\s!,.:]*$/i,
+  /^here('?s| is| are)\b/i,
+  /^below (is|are)\b/i,
+  /^to (create|write|craft|generate|make|produce|build)\b/i,
+  /^this (is|commit|message|will)\b/i,
+  /^the (commit|following|changes?|message)\b/i,
+  /^(i'?ll|i will|i've|i have|let me|let's|we (need|can|should|will))\b/i,
+  /^based on\b/i,
+  /^as (an?|the|per|requested)\b/i,
+  /^(following|according to|per) the\b/i,
+  /commit message[^\n]*:$/i
+];
 
 /** Minimum consecutive repeats before a single-word loop is collapsed. */
 const SINGLE_WORD_REPEAT_THRESHOLD = 3;
@@ -87,6 +133,50 @@ export const collapseRepeatedNgrams = (line: string): string => {
   return result.join(' ');
 };
 
+const isCodeFence = (line: string): boolean => /^\s*(```|~~~)/.test(line);
+
+const isDiffArtifact = (line: string): boolean => {
+  const trimmed = line.trimStart();
+  return DIFF_ARTIFACT_PATTERNS.some((pattern) => pattern.test(trimmed));
+};
+
+/**
+ * Removes markdown code-fence markers and raw git-diff lines the model echoed
+ * or hallucinated back into its output.
+ */
+export const stripDiffArtifacts = (lines: readonly string[]): Array<string> =>
+  lines.filter(
+    (line) => isCodeFence(line) !== true && isDiffArtifact(line) !== true
+  );
+
+const isPreambleLine = (line: string): boolean => {
+  const trimmed = line.trim();
+  if (trimmed === '') {
+    return false;
+  }
+  return PREAMBLE_PATTERNS.some((pattern) => pattern.test(trimmed));
+};
+
+/**
+ * Drops leading blank and conversational-preamble lines so the message starts
+ * at the first line of real content. Only the leading run is inspected, so a
+ * genuine body is never altered.
+ */
+export const stripLeadingPreamble = (
+  lines: readonly string[]
+): Array<string> => {
+  let start = 0;
+  while (start < lines.length) {
+    const trimmed = lines[start].trim();
+    if (trimmed === '' || isPreambleLine(lines[start]) === true) {
+      start += 1;
+      continue;
+    }
+    break;
+  }
+  return lines.slice(start);
+};
+
 /** Removes consecutive duplicate lines (ignoring surrounding whitespace). */
 const collapseRepeatedLines = (lines: readonly string[]): Array<string> => {
   const result: Array<string> = [];
@@ -115,9 +205,11 @@ export const sanitizeLocalOutput = (
   }
 
   const withoutThinking = stripThinkingTags(content);
-  const lines = withoutThinking.split('\n').map(collapseRepeatedNgrams);
-  const deduped = collapseRepeatedLines(lines);
-  const cleaned = deduped.join('\n').trim();
+  const withoutArtifacts = stripDiffArtifacts(withoutThinking.split('\n'));
+  const collapsedNgrams = withoutArtifacts.map(collapseRepeatedNgrams);
+  const deduped = collapseRepeatedLines(collapsedNgrams);
+  const withoutPreamble = stripLeadingPreamble(deduped);
+  const cleaned = withoutPreamble.join('\n').trim();
 
   return cleaned.length > 0 ? cleaned : undefined;
 };

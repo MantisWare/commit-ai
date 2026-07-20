@@ -1,6 +1,8 @@
 import {
   collapseRepeatedNgrams,
-  sanitizeLocalOutput
+  sanitizeLocalOutput,
+  stripDiffArtifacts,
+  stripLeadingPreamble
 } from '../../src/local/sanitizeOutput';
 
 describe('collapseRepeatedNgrams', () => {
@@ -58,5 +60,89 @@ describe('sanitizeLocalOutput', () => {
 
   it('returns undefined when output is only whitespace', () => {
     expect(sanitizeLocalOutput('   \n  \n')).toBeUndefined();
+  });
+
+  it('strips leading conversational preamble', () => {
+    const input =
+      "Here's the commit message:\nfeat: add local model support";
+    expect(sanitizeLocalOutput(input)).toBe('feat: add local model support');
+  });
+
+  it('strips a multi-sentence preamble line', () => {
+    const input =
+      "To create a clean and comprehensive commit message, we need to follow the guidelines. Here's a condensed commit message per file:\nrefactor: clean up local runtime";
+    expect(sanitizeLocalOutput(input)).toBe('refactor: clean up local runtime');
+  });
+
+  it('removes hallucinated diff blocks wrapped in code fences', () => {
+    const input = [
+      '```diff',
+      ' diff --git a/src/utils/sanitizeOutput.js b/.github/workflows/server-config.yml',
+      '```',
+      'feat: add output sanitization for local models'
+    ].join('\n');
+    expect(sanitizeLocalOutput(input)).toBe(
+      'feat: add output sanitization for local models'
+    );
+  });
+
+  it('drops full echoed diff hunks but keeps the real message', () => {
+    const input = [
+      'chore: update server config',
+      'diff --git a/src/server.ts b/src/server.ts',
+      'index ad4db42..f3b18a9 100644',
+      '--- a/src/server.ts',
+      '+++ b/src/server.ts',
+      '@@ -10,7 +10,7 @@'
+    ].join('\n');
+    expect(sanitizeLocalOutput(input)).toBe('chore: update server config');
+  });
+
+  it('returns undefined when only preamble and diffs remain', () => {
+    const input = [
+      "Here's a condensed commit message per file:",
+      '```diff',
+      ' diff --git a/src/local/ggufRuntime.js b/.github/workflows/server-config.yml',
+      '```'
+    ].join('\n');
+    expect(sanitizeLocalOutput(input)).toBeUndefined();
+  });
+});
+
+describe('stripDiffArtifacts', () => {
+  it('removes diff headers and code fences, keeping real lines', () => {
+    const lines = [
+      '```diff',
+      'diff --git a/a.ts b/a.ts',
+      'index ad4db42..f3b18a9 100644',
+      '--- a/a.ts',
+      '+++ b/a.ts',
+      '@@ -1,2 +1,2 @@',
+      'feat: keep me'
+    ];
+    expect(stripDiffArtifacts(lines)).toEqual(['feat: keep me']);
+  });
+
+  it('does not remove bullet lines that start with a dash', () => {
+    const lines = ['fix: thing', '- adjusts the retry logic'];
+    expect(stripDiffArtifacts(lines)).toEqual([
+      'fix: thing',
+      '- adjusts the retry logic'
+    ]);
+  });
+});
+
+describe('stripLeadingPreamble', () => {
+  it('drops leading blank and preamble lines only', () => {
+    const lines = ['', 'Sure!', 'feat: add thing', 'The change is small'];
+    expect(stripLeadingPreamble(lines)).toEqual([
+      'feat: add thing',
+      'The change is small'
+    ]);
+  });
+
+  it('leaves a message with no preamble untouched', () => {
+    const lines = ['feat: add thing', 'body line'];
+    expect(stripLeadingPreamble(lines)).toEqual(['feat: add thing', 'body line']);
   });
 });

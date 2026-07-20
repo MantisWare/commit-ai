@@ -16,6 +16,7 @@ import { updateCommand } from './commands/update';
 import { localCommand } from './commands/local';
 import { checkIsLatestVersion } from './utils/checkIsLatestVersion';
 import { runMigrations } from './migrations/_run';
+import { applyEngineOverrideFromFlags } from './utils/applyEngineOverride';
 
 const extraArgs = process.argv.slice(2);
 
@@ -71,6 +72,18 @@ cli(
         alias: 'r',
         description: 'Run code review before committing',
         default: false
+      },
+      local: {
+        type: Boolean,
+        description:
+          'Force the local model for this run (overrides CMT_AI_PROVIDER)',
+        default: false
+      },
+      cloud: {
+        type: Boolean,
+        description:
+          'Force the cloud model for this run (overrides CMT_AI_PROVIDER)',
+        default: false
       }
     },
     ignoreArgv: (type) => type === 'unknown-flag' || type === 'argument',
@@ -79,6 +92,8 @@ cli(
   async ({ flags }) => {
     await runMigrations();
     await checkIsLatestVersion();
+
+    applyEngineOverrideFromFlags({ local: flags.local, cloud: flags.cloud });
 
     // console.log(flags);
 
