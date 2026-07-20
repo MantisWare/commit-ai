@@ -66,10 +66,17 @@ export const installMlxLm = async (): Promise<void> => {
   }
 };
 
-const spawnEphemeralMlxServer = async (
+/**
+ * Spawns the MLX server and returns the subprocess handle. This must NOT be an
+ * async function that returns the execa result: because an execa subprocess is
+ * a thenable, an `async` wrapper (or awaiting the caller) would suspend until
+ * the process *exits* — and a long-running server never exits, hanging forever.
+ * We return the live handle synchronously instead.
+ */
+const spawnEphemeralMlxServer = (
   modelRepo: string,
   port: number
-): Promise<ReturnType<typeof execa>> => {
+): ReturnType<typeof execa> => {
   return execa(
     getLocalPython(),
     ['-m', 'mlx_lm.server', '--model', modelRepo, '--port', String(port)],
@@ -110,7 +117,10 @@ export const generateWithMlx = async (
     port: ephemeralPort
   });
 
-  const serverProcess = await spawnEphemeralMlxServer(modelRepo, ephemeralPort);
+  const serverProcess = spawnEphemeralMlxServer(modelRepo, ephemeralPort);
+  // Prevent an unhandled rejection when we later SIGTERM the server (or if it
+  // fails to spawn). A spawn failure surfaces as a health-check timeout below.
+  serverProcess.catch(() => undefined);
 
   try {
     await waitForServerHealth(baseUrl, { timeoutMs: 120_000 });
@@ -145,11 +155,16 @@ export const generateWithMlxDaemon = async (
   });
 };
 
-export const spawnMlxDaemon = async (
+/**
+ * Spawns the long-running MLX daemon and returns the live subprocess handle.
+ * Non-async on purpose (see spawnEphemeralMlxServer): awaiting an execa
+ * subprocess would block until the never-exiting server process terminates.
+ */
+export const spawnMlxDaemon = (
   modelRepo: string,
   port: number,
   background = false
-): Promise<ReturnType<typeof execa>> => {
+): ReturnType<typeof execa> => {
   return execa(
     getLocalPython(),
     ['-m', 'mlx_lm.server', '--model', modelRepo, '--port', String(port)],

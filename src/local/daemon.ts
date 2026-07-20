@@ -99,11 +99,12 @@ export const startDaemon = async (
   const startedAt = new Date().toISOString();
 
   if (runtime === 'mlx') {
-    const serverProcess = await spawnMlxDaemon(
+    const serverProcess = spawnMlxDaemon(
       preset.mlx.repo,
       port,
       options.background === true
     );
+    serverProcess.catch(() => undefined);
 
     if (options.background === true && serverProcess.pid !== undefined) {
       serverProcess.unref?.();
