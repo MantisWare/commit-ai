@@ -66727,6 +66727,7 @@ var CONFIG_KEYS = /* @__PURE__ */ ((CONFIG_KEYS2) => {
   CONFIG_KEYS2["CMT_REVIEW_MIN_SCORE"] = "CMT_REVIEW_MIN_SCORE";
   CONFIG_KEYS2["CMT_GITPUSH"] = "CMT_GITPUSH";
   CONFIG_KEYS2["CMT_AUTO_UPDATE"] = "CMT_AUTO_UPDATE";
+  CONFIG_KEYS2["CMT_RELOAD_SHELL_AFTER_UPDATE"] = "CMT_RELOAD_SHELL_AFTER_UPDATE";
   CONFIG_KEYS2["CMT_LOCAL_MODEL_PRESET"] = "CMT_LOCAL_MODEL_PRESET";
   CONFIG_KEYS2["CMT_LOCAL_RUNTIME"] = "CMT_LOCAL_RUNTIME";
   CONFIG_KEYS2["CMT_LOCAL_CONTEXT_SIZE"] = "CMT_LOCAL_CONTEXT_SIZE";
@@ -67033,6 +67034,14 @@ var configValidators = {
     );
     return value;
   },
+  ["CMT_RELOAD_SHELL_AFTER_UPDATE" /* CMT_RELOAD_SHELL_AFTER_UPDATE */](value) {
+    validateConfig(
+      "CMT_RELOAD_SHELL_AFTER_UPDATE" /* CMT_RELOAD_SHELL_AFTER_UPDATE */,
+      typeof value === "boolean",
+      "Must be true or false"
+    );
+    return value;
+  },
   ["CMT_LOCAL_MODEL_PRESET" /* CMT_LOCAL_MODEL_PRESET */](value) {
     validateConfig(
       "CMT_LOCAL_MODEL_PRESET" /* CMT_LOCAL_MODEL_PRESET */,
@@ -67239,6 +67248,7 @@ var DEFAULT_CONFIG = {
   CMT_SYNTHESIZE_CHUNKS: true,
   CMT_GITPUSH: true,
   CMT_AUTO_UPDATE: false,
+  CMT_RELOAD_SHELL_AFTER_UPDATE: true,
   CMT_LOCAL_MODEL_PRESET: "qwen-0.5b",
   CMT_LOCAL_RUNTIME: "auto",
   CMT_LOCAL_CONTEXT_SIZE: 4096,
@@ -67298,6 +67308,9 @@ var getEnvConfig = (envPath) => {
     CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH),
     CMT_AUTO_UPDATE: parseConfigVarValue(process.env.CMT_AUTO_UPDATE),
+    CMT_RELOAD_SHELL_AFTER_UPDATE: parseConfigVarValue(
+      process.env.CMT_RELOAD_SHELL_AFTER_UPDATE
+    ),
     CMT_LOCAL_MODEL_PRESET: process.env.CMT_LOCAL_MODEL_PRESET,
     CMT_LOCAL_RUNTIME: process.env.CMT_LOCAL_RUNTIME,
     CMT_LOCAL_CONTEXT_SIZE: parseConfigVarValue(
@@ -67529,6 +67542,11 @@ var CONFIG_HELP = {
     description: "Automatically install the latest CommitAI version when an update is available (checked on each cmt run)",
     example: "true",
     default: "false"
+  },
+  CMT_RELOAD_SHELL_AFTER_UPDATE: {
+    description: "After running `cmt update`, reload the shell in place so the new version is used without manually refreshing the terminal",
+    example: "false",
+    default: "true"
   },
   CMT_LOCAL_MODEL_PRESET: {
     description: "Local SLM preset (qwen-0.5b, qwen-1.5b, gemma-2b)",
@@ -77756,13 +77774,138 @@ var ensureLocalDirs = () => {
 };
 var getGgufModelPath = (fileName) => (0, import_path3.join)(LOCAL_GGUF_DIR, fileName);
 
-// src/local/chatCompletions.ts
+// src/local/sanitizeOutput.ts
+var THINK_TAG_PATTERN = /<think>[\s\S]*?<\/think>/g;
+var DIFF_ARTIFACT_PATTERNS = [
+  /^diff --git /i,
+  /^index [0-9a-f]{4,}\.\.[0-9a-f]{4,}/i,
+  /^--- (a\/|"a\/|\/dev\/null)/,
+  /^\+\+\+ (b\/|"b\/|\/dev\/null)/,
+  /^@@ -\d+(,\d+)? \+\d+(,\d+)? @@/,
+  /^new file mode /i,
+  /^deleted file mode /i,
+  /^old mode /i,
+  /^new mode /i,
+  /^rename (from|to) /i,
+  /^copy (from|to) /i,
+  /^similarity index /i,
+  /^Binary files /i
+];
+var PREAMBLE_PATTERNS = [
+  /^(sure|certainly|of course|okay|ok|got it|understood|absolutely|great)\b[\s!,.:]*$/i,
+  /^here('?s| is| are)\b/i,
+  /^below (is|are)\b/i,
+  /^to (create|write|craft|generate|make|produce|build)\b/i,
+  /^this (is|commit|message|will)\b/i,
+  /^the (commit|following|changes?|message)\b/i,
+  /^(i'?ll|i will|i've|i have|let me|let's|we (need|can|should|will))\b/i,
+  /^based on\b/i,
+  /^as (an?|the|per|requested)\b/i,
+  /^(following|according to|per) the\b/i,
+  /commit message[^\n]*:$/i
+];
+var SINGLE_WORD_REPEAT_THRESHOLD = 3;
+var MAX_REPEAT_PERIOD = 40;
 var stripThinkingTags = (content) => {
-  if (content.includes("<think>")) {
-    return content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+  if (content.includes("<think>") === true) {
+    return content.replace(THINK_TAG_PATTERN, "").trim();
   }
   return content;
 };
+var blocksEqual = (words, aStart, bStart, length) => {
+  for (let offset = 0; offset < length; offset += 1) {
+    if (words[aStart + offset] !== words[bStart + offset]) {
+      return false;
+    }
+  }
+  return true;
+};
+var collapseRepeatedNgrams = (line) => {
+  const words = line.split(/\s+/).filter((word) => word.length > 0);
+  if (words.length < 4) {
+    return words.join(" ");
+  }
+  const result = [];
+  let index = 0;
+  while (index < words.length) {
+    const remaining = words.length - index;
+    const maxPeriod = Math.min(MAX_REPEAT_PERIOD, Math.floor(remaining / 2));
+    let collapsed = false;
+    for (let period = 1; period <= maxPeriod; period += 1) {
+      let reps = 1;
+      while (index + (reps + 1) * period <= words.length && blocksEqual(words, index, index + reps * period, period) === true) {
+        reps += 1;
+      }
+      const isLoop = reps >= SINGLE_WORD_REPEAT_THRESHOLD || reps >= 2 && period >= 2;
+      if (reps >= 2 && isLoop === true) {
+        for (let offset = 0; offset < period; offset += 1) {
+          result.push(words[index + offset]);
+        }
+        index += reps * period;
+        collapsed = true;
+        break;
+      }
+    }
+    if (collapsed !== true) {
+      result.push(words[index]);
+      index += 1;
+    }
+  }
+  return result.join(" ");
+};
+var isCodeFence = (line) => /^\s*(```|~~~)/.test(line);
+var isDiffArtifact = (line) => {
+  const trimmed = line.trimStart();
+  return DIFF_ARTIFACT_PATTERNS.some((pattern) => pattern.test(trimmed));
+};
+var stripDiffArtifacts = (lines) => lines.filter(
+  (line) => isCodeFence(line) !== true && isDiffArtifact(line) !== true
+);
+var isPreambleLine = (line) => {
+  const trimmed = line.trim();
+  if (trimmed === "") {
+    return false;
+  }
+  return PREAMBLE_PATTERNS.some((pattern) => pattern.test(trimmed));
+};
+var stripLeadingPreamble = (lines) => {
+  let start = 0;
+  while (start < lines.length) {
+    const trimmed = lines[start].trim();
+    if (trimmed === "" || isPreambleLine(lines[start]) === true) {
+      start += 1;
+      continue;
+    }
+    break;
+  }
+  return lines.slice(start);
+};
+var collapseRepeatedLines = (lines) => {
+  const result = [];
+  let previous;
+  for (const line of lines) {
+    const normalized = line.trim();
+    if (normalized !== previous || normalized === "") {
+      result.push(line);
+    }
+    previous = normalized;
+  }
+  return result;
+};
+var sanitizeLocalOutput = (content) => {
+  if (content === void 0) {
+    return void 0;
+  }
+  const withoutThinking = stripThinkingTags(content);
+  const withoutArtifacts = stripDiffArtifacts(withoutThinking.split("\n"));
+  const collapsedNgrams = withoutArtifacts.map(collapseRepeatedNgrams);
+  const deduped = collapseRepeatedLines(collapsedNgrams);
+  const withoutPreamble = stripLeadingPreamble(deduped);
+  const cleaned = withoutPreamble.join("\n").trim();
+  return cleaned.length > 0 ? cleaned : void 0;
+};
+
+// src/local/chatCompletions.ts
 var postChatCompletions = async (messages, options) => {
   const url2 = `${options.baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
   const params = {
@@ -77785,7 +77928,7 @@ var postChatCompletions = async (messages, options) => {
   const content = response.data?.choices?.[0]?.message?.content;
   if (typeof content !== "string")
     return void 0;
-  return stripThinkingTags(content);
+  return sanitizeLocalOutput(content);
 };
 var checkServerHealth = async (baseUrl, timeoutMs = 2e3) => {
   try {
@@ -79182,7 +79325,7 @@ var generateWithGguf = async (messages, options) => {
   options.onStatus?.({ phase: "ready", modelLabel, runtime: "gguf" });
   await context2.dispose();
   await model.dispose();
-  return response.trim() || void 0;
+  return sanitizeLocalOutput(response);
 };
 var generateWithGgufDaemon = async (messages, options) => {
   return postChatCompletions(messages, {
@@ -86626,6 +86769,7 @@ var DeepseekEngine = class {
 };
 
 // src/utils/engine.ts
+var processEngineOverride;
 var buildEngineConfig = (config6, onStatus) => ({
   model: config6.CMT_MODEL ?? "",
   maxTokensOutput: config6.CMT_TOKENS_MAX_OUTPUT ?? 512,
@@ -86685,30 +86829,35 @@ var canUseCloudFallback = (config6) => {
   const apiKey = config6.CMT_LOCAL_FALLBACK_API_KEY ?? config6.CMT_API_KEY ?? "";
   return apiKey.length > 0;
 };
+var buildLocalEngine = (config6, onStatus) => {
+  const localEngine = new LocalEngine(buildEngineConfig(config6, onStatus));
+  if (canUseCloudFallback(config6) === true) {
+    const fallbackModel = config6.CMT_LOCAL_FALLBACK_MODEL ?? "gpt-4o-mini";
+    return new FallbackEngine(localEngine, createFallbackEngine(config6, onStatus), {
+      onStatus,
+      fallbackModelLabel: fallbackModel
+    });
+  }
+  return localEngine;
+};
 function getEngine(options = {}) {
   const config6 = getConfig();
-  const provider = config6.CMT_AI_PROVIDER;
-  const engineConfig = buildEngineConfig(config6, options.onStatus);
-  if (provider === "local" /* LOCAL */) {
-    const localEngine = new LocalEngine(engineConfig);
-    if (canUseCloudFallback(config6) === true) {
-      const fallbackModel = config6.CMT_LOCAL_FALLBACK_MODEL ?? "gpt-4o-mini";
-      return new FallbackEngine(
-        localEngine,
-        createFallbackEngine(config6, options.onStatus),
-        {
-          onStatus: options.onStatus,
-          fallbackModelLabel: fallbackModel
-        }
-      );
-    }
-    return localEngine;
+  const onStatus = options.onStatus;
+  const override = options.engineOverride ?? processEngineOverride;
+  const provider = config6.CMT_AI_PROVIDER ?? "openai" /* OPENAI */;
+  if (override === "local") {
+    return buildLocalEngine(config6, onStatus);
   }
-  return createProviderEngine(
-    provider ?? "openai" /* OPENAI */,
-    engineConfig,
-    config6
-  );
+  if (override === "cloud") {
+    if (provider === "local" /* LOCAL */) {
+      return createFallbackEngine(config6, onStatus);
+    }
+    return createProviderEngine(provider, buildEngineConfig(config6, onStatus), config6);
+  }
+  if (provider === "local" /* LOCAL */) {
+    return buildLocalEngine(config6, onStatus);
+  }
+  return createProviderEngine(provider, buildEngineConfig(config6, onStatus), config6);
 }
 
 // src/modules/commitlint/constants.ts

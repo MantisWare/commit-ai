@@ -44517,7 +44517,7 @@ function G3(t2, e3) {
 // package.json
 var package_default = {
   name: "@mantisware/commit-ai",
-  version: "1.0.28",
+  version: "1.0.29",
   description: "Create amazing commits in just seconds. Say farewell to boring commits with AI! \u{1F92F}\u{1F525}",
   keywords: [
     "git",
@@ -47148,6 +47148,7 @@ var CONFIG_KEYS = /* @__PURE__ */ ((CONFIG_KEYS2) => {
   CONFIG_KEYS2["CMT_REVIEW_MIN_SCORE"] = "CMT_REVIEW_MIN_SCORE";
   CONFIG_KEYS2["CMT_GITPUSH"] = "CMT_GITPUSH";
   CONFIG_KEYS2["CMT_AUTO_UPDATE"] = "CMT_AUTO_UPDATE";
+  CONFIG_KEYS2["CMT_RELOAD_SHELL_AFTER_UPDATE"] = "CMT_RELOAD_SHELL_AFTER_UPDATE";
   CONFIG_KEYS2["CMT_LOCAL_MODEL_PRESET"] = "CMT_LOCAL_MODEL_PRESET";
   CONFIG_KEYS2["CMT_LOCAL_RUNTIME"] = "CMT_LOCAL_RUNTIME";
   CONFIG_KEYS2["CMT_LOCAL_CONTEXT_SIZE"] = "CMT_LOCAL_CONTEXT_SIZE";
@@ -47454,6 +47455,14 @@ var configValidators = {
     );
     return value;
   },
+  ["CMT_RELOAD_SHELL_AFTER_UPDATE" /* CMT_RELOAD_SHELL_AFTER_UPDATE */](value) {
+    validateConfig(
+      "CMT_RELOAD_SHELL_AFTER_UPDATE" /* CMT_RELOAD_SHELL_AFTER_UPDATE */,
+      typeof value === "boolean",
+      "Must be true or false"
+    );
+    return value;
+  },
   ["CMT_LOCAL_MODEL_PRESET" /* CMT_LOCAL_MODEL_PRESET */](value) {
     validateConfig(
       "CMT_LOCAL_MODEL_PRESET" /* CMT_LOCAL_MODEL_PRESET */,
@@ -47660,6 +47669,7 @@ var DEFAULT_CONFIG = {
   CMT_SYNTHESIZE_CHUNKS: true,
   CMT_GITPUSH: true,
   CMT_AUTO_UPDATE: false,
+  CMT_RELOAD_SHELL_AFTER_UPDATE: true,
   CMT_LOCAL_MODEL_PRESET: "qwen-0.5b",
   CMT_LOCAL_RUNTIME: "auto",
   CMT_LOCAL_CONTEXT_SIZE: 4096,
@@ -47719,6 +47729,9 @@ var getEnvConfig = (envPath) => {
     CMT_REVIEW_CACHE_DISABLED: parseConfigVarValue(process.env.CMT_REVIEW_CACHE_DISABLED),
     CMT_GITPUSH: parseConfigVarValue(process.env.CMT_GITPUSH),
     CMT_AUTO_UPDATE: parseConfigVarValue(process.env.CMT_AUTO_UPDATE),
+    CMT_RELOAD_SHELL_AFTER_UPDATE: parseConfigVarValue(
+      process.env.CMT_RELOAD_SHELL_AFTER_UPDATE
+    ),
     CMT_LOCAL_MODEL_PRESET: process.env.CMT_LOCAL_MODEL_PRESET,
     CMT_LOCAL_RUNTIME: process.env.CMT_LOCAL_RUNTIME,
     CMT_LOCAL_CONTEXT_SIZE: parseConfigVarValue(
@@ -47950,6 +47963,11 @@ var CONFIG_HELP = {
     description: "Automatically install the latest CommitAI version when an update is available (checked on each cmt run)",
     example: "true",
     default: "false"
+  },
+  CMT_RELOAD_SHELL_AFTER_UPDATE: {
+    description: "After running `cmt update`, reload the shell in place so the new version is used without manually refreshing the terminal",
+    example: "false",
+    default: "true"
   },
   CMT_LOCAL_MODEL_PRESET: {
     description: "Local SLM preset (qwen-0.5b, qwen-1.5b, gemma-2b)",
@@ -58183,13 +58201,138 @@ var ensureLocalDirs = () => {
 };
 var getGgufModelPath = (fileName) => (0, import_path3.join)(LOCAL_GGUF_DIR, fileName);
 
-// src/local/chatCompletions.ts
+// src/local/sanitizeOutput.ts
+var THINK_TAG_PATTERN = /<think>[\s\S]*?<\/think>/g;
+var DIFF_ARTIFACT_PATTERNS = [
+  /^diff --git /i,
+  /^index [0-9a-f]{4,}\.\.[0-9a-f]{4,}/i,
+  /^--- (a\/|"a\/|\/dev\/null)/,
+  /^\+\+\+ (b\/|"b\/|\/dev\/null)/,
+  /^@@ -\d+(,\d+)? \+\d+(,\d+)? @@/,
+  /^new file mode /i,
+  /^deleted file mode /i,
+  /^old mode /i,
+  /^new mode /i,
+  /^rename (from|to) /i,
+  /^copy (from|to) /i,
+  /^similarity index /i,
+  /^Binary files /i
+];
+var PREAMBLE_PATTERNS = [
+  /^(sure|certainly|of course|okay|ok|got it|understood|absolutely|great)\b[\s!,.:]*$/i,
+  /^here('?s| is| are)\b/i,
+  /^below (is|are)\b/i,
+  /^to (create|write|craft|generate|make|produce|build)\b/i,
+  /^this (is|commit|message|will)\b/i,
+  /^the (commit|following|changes?|message)\b/i,
+  /^(i'?ll|i will|i've|i have|let me|let's|we (need|can|should|will))\b/i,
+  /^based on\b/i,
+  /^as (an?|the|per|requested)\b/i,
+  /^(following|according to|per) the\b/i,
+  /commit message[^\n]*:$/i
+];
+var SINGLE_WORD_REPEAT_THRESHOLD = 3;
+var MAX_REPEAT_PERIOD = 40;
 var stripThinkingTags = (content) => {
-  if (content.includes("<think>")) {
-    return content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+  if (content.includes("<think>") === true) {
+    return content.replace(THINK_TAG_PATTERN, "").trim();
   }
   return content;
 };
+var blocksEqual = (words, aStart, bStart, length) => {
+  for (let offset = 0; offset < length; offset += 1) {
+    if (words[aStart + offset] !== words[bStart + offset]) {
+      return false;
+    }
+  }
+  return true;
+};
+var collapseRepeatedNgrams = (line) => {
+  const words = line.split(/\s+/).filter((word) => word.length > 0);
+  if (words.length < 4) {
+    return words.join(" ");
+  }
+  const result = [];
+  let index = 0;
+  while (index < words.length) {
+    const remaining = words.length - index;
+    const maxPeriod = Math.min(MAX_REPEAT_PERIOD, Math.floor(remaining / 2));
+    let collapsed = false;
+    for (let period = 1; period <= maxPeriod; period += 1) {
+      let reps = 1;
+      while (index + (reps + 1) * period <= words.length && blocksEqual(words, index, index + reps * period, period) === true) {
+        reps += 1;
+      }
+      const isLoop = reps >= SINGLE_WORD_REPEAT_THRESHOLD || reps >= 2 && period >= 2;
+      if (reps >= 2 && isLoop === true) {
+        for (let offset = 0; offset < period; offset += 1) {
+          result.push(words[index + offset]);
+        }
+        index += reps * period;
+        collapsed = true;
+        break;
+      }
+    }
+    if (collapsed !== true) {
+      result.push(words[index]);
+      index += 1;
+    }
+  }
+  return result.join(" ");
+};
+var isCodeFence = (line) => /^\s*(```|~~~)/.test(line);
+var isDiffArtifact = (line) => {
+  const trimmed = line.trimStart();
+  return DIFF_ARTIFACT_PATTERNS.some((pattern) => pattern.test(trimmed));
+};
+var stripDiffArtifacts = (lines) => lines.filter(
+  (line) => isCodeFence(line) !== true && isDiffArtifact(line) !== true
+);
+var isPreambleLine = (line) => {
+  const trimmed = line.trim();
+  if (trimmed === "") {
+    return false;
+  }
+  return PREAMBLE_PATTERNS.some((pattern) => pattern.test(trimmed));
+};
+var stripLeadingPreamble = (lines) => {
+  let start = 0;
+  while (start < lines.length) {
+    const trimmed = lines[start].trim();
+    if (trimmed === "" || isPreambleLine(lines[start]) === true) {
+      start += 1;
+      continue;
+    }
+    break;
+  }
+  return lines.slice(start);
+};
+var collapseRepeatedLines = (lines) => {
+  const result = [];
+  let previous;
+  for (const line of lines) {
+    const normalized = line.trim();
+    if (normalized !== previous || normalized === "") {
+      result.push(line);
+    }
+    previous = normalized;
+  }
+  return result;
+};
+var sanitizeLocalOutput = (content) => {
+  if (content === void 0) {
+    return void 0;
+  }
+  const withoutThinking = stripThinkingTags(content);
+  const withoutArtifacts = stripDiffArtifacts(withoutThinking.split("\n"));
+  const collapsedNgrams = withoutArtifacts.map(collapseRepeatedNgrams);
+  const deduped = collapseRepeatedLines(collapsedNgrams);
+  const withoutPreamble = stripLeadingPreamble(deduped);
+  const cleaned = withoutPreamble.join("\n").trim();
+  return cleaned.length > 0 ? cleaned : void 0;
+};
+
+// src/local/chatCompletions.ts
 var postChatCompletions = async (messages, options) => {
   const url2 = `${options.baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
   const params = {
@@ -58212,7 +58355,7 @@ var postChatCompletions = async (messages, options) => {
   const content = response.data?.choices?.[0]?.message?.content;
   if (typeof content !== "string")
     return void 0;
-  return stripThinkingTags(content);
+  return sanitizeLocalOutput(content);
 };
 var checkServerHealth = async (baseUrl, timeoutMs = 2e3) => {
   try {
@@ -58760,7 +58903,7 @@ var generateWithGguf = async (messages, options) => {
   options.onStatus?.({ phase: "ready", modelLabel, runtime: "gguf" });
   await context.dispose();
   await model.dispose();
-  return response.trim() || void 0;
+  return sanitizeLocalOutput(response);
 };
 var generateWithGgufDaemon = async (messages, options) => {
   return postChatCompletions(messages, {
@@ -66204,6 +66347,28 @@ var DeepseekEngine = class {
 };
 
 // src/utils/engine.ts
+var processEngineOverride;
+var setEngineOverride = (override) => {
+  processEngineOverride = override;
+};
+var resolveEngineOverrideFromFlags = (flags) => {
+  const wantsLocal = flags.local === true;
+  const wantsCloud = flags.cloud === true;
+  if (wantsLocal === true && wantsCloud === true) {
+    throw new Error(
+      "Cannot use --local and --cloud together. Pick one engine for this run."
+    );
+  }
+  if (wantsLocal === true)
+    return "local";
+  if (wantsCloud === true)
+    return "cloud";
+  return void 0;
+};
+var hasCloudModelConfigured = (config9) => {
+  const apiKey = config9.CMT_LOCAL_FALLBACK_API_KEY ?? config9.CMT_API_KEY ?? "";
+  return apiKey.length > 0;
+};
 var buildEngineConfig = (config9, onStatus) => ({
   model: config9.CMT_MODEL ?? "",
   maxTokensOutput: config9.CMT_TOKENS_MAX_OUTPUT ?? 512,
@@ -66263,30 +66428,35 @@ var canUseCloudFallback = (config9) => {
   const apiKey = config9.CMT_LOCAL_FALLBACK_API_KEY ?? config9.CMT_API_KEY ?? "";
   return apiKey.length > 0;
 };
+var buildLocalEngine = (config9, onStatus) => {
+  const localEngine = new LocalEngine(buildEngineConfig(config9, onStatus));
+  if (canUseCloudFallback(config9) === true) {
+    const fallbackModel = config9.CMT_LOCAL_FALLBACK_MODEL ?? "gpt-4o-mini";
+    return new FallbackEngine(localEngine, createFallbackEngine(config9, onStatus), {
+      onStatus,
+      fallbackModelLabel: fallbackModel
+    });
+  }
+  return localEngine;
+};
 function getEngine(options = {}) {
   const config9 = getConfig();
-  const provider = config9.CMT_AI_PROVIDER;
-  const engineConfig = buildEngineConfig(config9, options.onStatus);
-  if (provider === "local" /* LOCAL */) {
-    const localEngine = new LocalEngine(engineConfig);
-    if (canUseCloudFallback(config9) === true) {
-      const fallbackModel = config9.CMT_LOCAL_FALLBACK_MODEL ?? "gpt-4o-mini";
-      return new FallbackEngine(
-        localEngine,
-        createFallbackEngine(config9, options.onStatus),
-        {
-          onStatus: options.onStatus,
-          fallbackModelLabel: fallbackModel
-        }
-      );
-    }
-    return localEngine;
+  const onStatus = options.onStatus;
+  const override = options.engineOverride ?? processEngineOverride;
+  const provider = config9.CMT_AI_PROVIDER ?? "openai" /* OPENAI */;
+  if (override === "local") {
+    return buildLocalEngine(config9, onStatus);
   }
-  return createProviderEngine(
-    provider ?? "openai" /* OPENAI */,
-    engineConfig,
-    config9
-  );
+  if (override === "cloud") {
+    if (provider === "local" /* LOCAL */) {
+      return createFallbackEngine(config9, onStatus);
+    }
+    return createProviderEngine(provider, buildEngineConfig(config9, onStatus), config9);
+  }
+  if (provider === "local" /* LOCAL */) {
+    return buildLocalEngine(config9, onStatus);
+  }
+  return createProviderEngine(provider, buildEngineConfig(config9, onStatus), config9);
 }
 
 // src/modules/commitlint/constants.ts
@@ -70738,6 +70908,81 @@ var changelogCommand = G3(
   }
 );
 
+// src/utils/refreshShell.ts
+var import_path70 = require("path");
+var detectShell = (shellPath = process.env.SHELL) => {
+  if (shellPath === void 0 || shellPath === "") {
+    return "unknown";
+  }
+  const name = (0, import_path70.basename)(shellPath).toLowerCase();
+  if (name.includes("zsh"))
+    return "zsh";
+  if (name.includes("bash"))
+    return "bash";
+  if (name.includes("fish"))
+    return "fish";
+  if (name.includes("tcsh") || name.includes("csh"))
+    return "tcsh";
+  if (name === "sh" || name === "dash")
+    return "sh";
+  return "unknown";
+};
+var getRehashCommand = (shell = detectShell()) => {
+  switch (shell) {
+    case "zsh":
+    case "tcsh":
+      return "rehash";
+    case "bash":
+    case "sh":
+      return "hash -r";
+    case "fish":
+      return void 0;
+    default:
+      return "hash -r";
+  }
+};
+var printShellRefreshHint = (shell = detectShell()) => {
+  const rehashCommand = getRehashCommand(shell);
+  if (rehashCommand === void 0) {
+    return;
+  }
+  console.log(
+    source_default.gray(
+      `Tip: run ${source_default.cyan(rehashCommand)} (or open a new terminal) so this shell uses the updated version.`
+    )
+  );
+};
+var isInteractiveSession = () => process.stdout.isTTY === true && process.stdin.isTTY === true;
+var reloadShell = async (shellPath = process.env.SHELL) => {
+  if (shellPath === void 0 || shellPath === "") {
+    return "skipped";
+  }
+  if (!isInteractiveSession()) {
+    return "skipped";
+  }
+  console.log(
+    source_default.gray(
+      `Reloading your shell so the update takes effect (type ${source_default.cyan("exit")} to return)...`
+    )
+  );
+  try {
+    await execa(shellPath, ["-l", "-i"], { stdio: "inherit" });
+    return "reloaded";
+  } catch {
+    return "skipped";
+  }
+};
+var refreshShellAfterUpdate = async (options = {}) => {
+  const shouldReload = options.reload ?? true;
+  if (shouldReload) {
+    const result = await reloadShell();
+    if (result === "reloaded") {
+      return;
+    }
+  }
+  printShellRefreshHint();
+};
+
 // src/commands/update.ts
 var updateCommand = G3(
   {
@@ -70753,6 +70998,11 @@ var updateCommand = G3(
         alias: "y",
         description: "Install update without confirmation",
         default: false
+      },
+      reload: {
+        type: Boolean,
+        description: "Reload the shell after updating so the new version is used immediately (use --no-reload to disable)",
+        default: true
       }
     },
     help: {
@@ -70793,6 +71043,9 @@ Run: cmt update`
     try {
       await runUpdate();
       ce(source_default.green(`CommitAI updated to ${result.latestVersion}.`));
+      const config9 = getConfig();
+      const shouldReload = flags.reload !== false && config9.CMT_RELOAD_SHELL_AFTER_UPDATE !== false;
+      await refreshShellAfterUpdate({ reload: shouldReload });
       process.exit(0);
     } catch {
       ce(
@@ -71097,6 +71350,7 @@ var checkIsLatestVersion = async (options = {}) => {
       );
       await runUpdate();
       ce(source_default.green(`CommitAI updated to ${result.latestVersion}.`));
+      printShellRefreshHint();
     } catch {
       ce(
         source_default.yellow(
@@ -71121,7 +71375,7 @@ Current version: ${result.currentVersion}. Latest version: ${result.latestVersio
 // src/migrations/_run.ts
 var import_fs15 = __toESM(require("fs"));
 var import_os6 = require("os");
-var import_path70 = require("path");
+var import_path71 = require("path");
 
 // src/migrations/00_use_single_api_key_and_url.ts
 function use_single_api_key_and_url_default() {
@@ -71216,7 +71470,7 @@ var migrations = [
 ];
 
 // src/migrations/_run.ts
-var migrationsFile = (0, import_path70.join)((0, import_os6.homedir)(), ".commit-ai_migrations");
+var migrationsFile = (0, import_path71.join)((0, import_os6.homedir)(), ".commit-ai_migrations");
 var getCompletedMigrations = () => {
   if (!import_fs15.default.existsSync(migrationsFile)) {
     return [];
@@ -71264,6 +71518,32 @@ var runMigrations = async () => {
     );
     process.exit(0);
   }
+};
+
+// src/utils/applyEngineOverride.ts
+var applyEngineOverrideFromFlags = (flags) => {
+  let override;
+  try {
+    override = resolveEngineOverrideFromFlags(flags);
+  } catch (error) {
+    ce(`${source_default.red("\u2716")} ${error.message}`);
+    process.exit(1);
+  }
+  if (override === void 0) {
+    return void 0;
+  }
+  const config9 = getConfig();
+  if (override === "cloud" && hasCloudModelConfigured(config9) !== true) {
+    ce(
+      `${source_default.red("\u2716")} No cloud model is configured. Set an API key first, e.g.
+  ${source_default.cyan("cmt config set CMT_API_KEY=<your_key> CMT_LOCAL_FALLBACK_PROVIDER=openai CMT_LOCAL_FALLBACK_MODEL=gpt-4o-mini")}`
+    );
+    process.exit(1);
+  }
+  setEngineOverride(override);
+  const usingLabel = override === "local" ? "local model" : config9.CMT_AI_PROVIDER === "local" /* LOCAL */ ? `cloud model (${config9.CMT_LOCAL_FALLBACK_PROVIDER ?? "openai" /* OPENAI */})` : `cloud model (${config9.CMT_AI_PROVIDER ?? "openai" /* OPENAI */})`;
+  console.log(source_default.dim(`Using ${usingLabel} for this run.`));
+  return override;
 };
 
 // src/cli.ts
@@ -71320,6 +71600,16 @@ Z2(
         alias: "r",
         description: "Run code review before committing",
         default: false
+      },
+      local: {
+        type: Boolean,
+        description: "Force the local model for this run (overrides CMT_AI_PROVIDER)",
+        default: false
+      },
+      cloud: {
+        type: Boolean,
+        description: "Force the cloud model for this run (overrides CMT_AI_PROVIDER)",
+        default: false
       }
     },
     ignoreArgv: (type2) => type2 === "unknown-flag" || type2 === "argument",
@@ -71328,6 +71618,7 @@ Z2(
   async ({ flags }) => {
     await runMigrations();
     await checkIsLatestVersion();
+    applyEngineOverrideFromFlags({ local: flags.local, cloud: flags.cloud });
     if (flags.log !== void 0) {
       const branch = flags.log !== "" ? flags.log : "master";
       commitLog(branch, flags.fgm);
